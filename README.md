@@ -1,49 +1,33 @@
-CKD Staging Report Generator
-This project is designed to generate patient-specific Chronic Kidney Disease (CKD) staging reports from data downloaded directly from the GP EMIS system. By following the instructions below, users can streamline the CKD staging process, producing clear, concise, and individualized reports for patient management.
+The "CKD Staging Report Generator" is a tool designed to streamline the process of creating Chronic Kidney Disease (CKD) staging reports for patients, utilizing data exported from the EMIS system used in UK healthcare settings. Here's a breakdown of the setup and usage:
 
-Features
-Automated Report Generation: Generates personalized CKD staging reports for each patient.
-EMIS Data Integration: Utilizes specific EMIS exports to ensure compatibility and accuracy.
-Comprehensive CKD Staging: Includes detailed CKD stages, based on current NICE guidelines, and relevant patient-specific information.
-Getting Started
+Key Features
+Automated Reports: Creates patient-specific CKD staging reports based on EMIS data.
+NICE Guidelines Compliance: Incorporates the latest NICE CKD guidelines for accurate staging.
+Medication Recommendations: Provides drug adjustments and contraindicated medications based on kidney function.
+
 Prerequisites
-Python 3.x: Ensure that Python is installed on your machine.
-Required Packages: Install required libraries by running:
-bash
-Copy code
-pip install pandas numpy
-EMIS Data Export
-To generate reports, an export from the EMIS system is required. Specific EMIS configuration details will follow below.
+NephroPath.exe: This executable handles report generation and comes with built-in dependencies.
 
-Log into EMIS and access the report/export section.
-Download the patient data according to the configured report criteria (see EMIS Configuration).
-Save the export file in .csv format to the same directory as this project.
-Running the Report Generator
-Once you have your EMIS data file, follow these steps:
+Required Files:
+report_template.html: HTML template for report formatting.
+contrindicated_drugs.csv: List of drugs contraindicated in CKD.
+drug_adjustment.csv: Guidelines for dosage adjustments based on CKD stage.
 
-Clone this repository:
+Getting Started
+EMIS Data Export:
+Log into EMIS and access the report/export functionality.
+Configure and export the patient data following CKD-specific criteria.
+Save the data as Creatinine.csv in the project directory.
+
+Setting Up:
+Clone the repository:
 bash
 Copy code
-git clone https://github.com/yourusername/CKD-Staging-Report-Generator.git
-Change directory to the project folder:
-bash
-Copy code
-cd CKD-Staging-Report-Generator
-Place the EMIS data export file in the project folder.
-Run the report generation script:
-bash
-Copy code
-python generate_ckd_report.py emis_export.csv
+git clone https://github.com/NKillough32/CKD-Review.git
+Ensure Creatinine.csv and the template files are in the same directory.
+Running the Report Generator:
+
+Execute NephroPath.exe, which will read the CSV file and create individualized CKD staging reports.
 Output
-The script will produce a report for each patient, detailing their current CKD stage and relevant information.
-
-EMIS Configuration
-To ensure compatibility, please follow these guidelines when exporting data from the EMIS system:
-
-Fields to include: [Specify exact fields such as "Patient ID", "eGFR", "Albumin", etc., according to your EMIS setup]
-File Format: .csv
-Date Range: [Specify as needed, e.g., “Last 12 months”]
-For further information, consult the full EMIS Configuration Guide included in this repository.
-
-License
-This project is licensed under the MIT License.
+For each patient, the generator will produce a report specifying their CKD stage, required interventions, and medication adjustments, if applicable.
+This tool is an efficient resource for healthcare providers to manage CKD patients systematically, ensuring adherence to clinical guidelines and facilitating proactive patient care.
