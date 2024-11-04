@@ -7,6 +7,7 @@ import shutil
 import requests # type: ignore
 import zipfile
 from datetime import datetime
+from datetime import timedelta
 import pdfkit # type: ignore
 from jinja2 import Environment, FileSystemLoader # type: ignore
 
@@ -26,6 +27,40 @@ if not os.path.exists(creatinine_file):
     raise FileNotFoundError(f"{creatinine_file} not found.")
 creatinine = pd.read_csv(creatinine_file)
 
+# Convert date columns to datetime format
+creatinine['Date.1'] = pd.to_datetime(creatinine['Date.1'], errors='coerce')
+creatinine['Date.2'] = pd.to_datetime(creatinine['Date.2'], errors='coerce')
+
+def select_closest_3m_prior_creatinine(row):
+    # Set the 3-month threshold (90 days)
+    three_month_threshold = timedelta(days=90)
+    
+    # Collect prior dates and values in lists
+    prior_dates = [row['Date.2']]
+    prior_values = [row['Value.2']]
+    
+    # Filter out missing dates and values
+    valid_prior_dates = [date for date in prior_dates if pd.notna(date)]
+    valid_prior_values = [prior_values[i] for i, date in enumerate(prior_dates) if pd.notna(date)]
+    
+    if not pd.notna(row['Date.1']) or not valid_prior_dates:
+        return np.nan  # Return NaN if there are no valid dates for comparison
+    
+    # Calculate absolute differences from the 3-month threshold
+    differences = [abs((row['Date.1'] - date) - three_month_threshold) for date in valid_prior_dates]
+    
+    # Find the index of the minimum difference
+    min_diff_index = differences.index(min(differences))
+    
+    # Return the creatinine value closest to the 3-month threshold
+    return valid_prior_values[min_diff_index]
+
+# Apply the function to populate the 'Creatinine_3m_prior' column based on the closest 3-month rule
+creatinine['Creatinine_3m_prior'] = creatinine.apply(select_closest_3m_prior_creatinine, axis=1)
+
+# Convert the 'Name..Dosage.and.Quantity' column to string to handle any non-string values
+creatinine['Name..Dosage.and.Quantity'] = creatinine['Name..Dosage.and.Quantity'].astype(str)
+
 # Fill HC.Number column
 creatinine['HC.Number'] = creatinine['HC.Number'].replace("", np.nan)
 creatinine['HC.Number'] = creatinine['HC.Number'].ffill()
@@ -39,7 +74,7 @@ creatinine.dropna(subset=['Age'], inplace=True)
 
 # Rename columns for clarity
 creatinine.rename(columns={
-    'Value': 'Creatinine', 'Value.1': 'ACR', 'Value.2': 'Creatinine_3m_prior',
+    'Value': 'Creatinine', 'Value.1': 'ACR', #'Value.2': 'Creatinine_3m_prior',
     'Value.3': 'Systolic_BP', 'Value.4': 'Diastolic_BP', 'Value.5': 'haemoglobin',
     'Value.6': 'HbA1c', 'Value.7': 'Potassium', 'Value.8': 'Phosphate',
     'Value.9': 'Calcium', 'Value.10': 'Vitamin_D'
@@ -480,8 +515,11 @@ data['risk_5yr'] = pd.to_numeric(data['risk_5yr'], errors='coerce')
 # Define review message based on NICE guideline criteria
 def review_message(row):
     try:
-        if pd.notna(row['Sample_Date1']) and row['Sample_Date1'] != "":
-            eGFR_date = pd.to_datetime(row['Sample_Date1'], format="%d/%m/%Y", errors='coerce')
+        # Parse 'Sample_Date1' to ensure it's in datetime format if not already
+        eGFR_date = pd.to_datetime(row['Sample_Date1'], errors='coerce', dayfirst=True)
+
+        # Check if 'eGFR_date' is valid
+        if pd.notna(eGFR_date):
             days_since_eGFR = (datetime.now().date() - eGFR_date.date()).days
             
             if row['CKD_Stage'] in ["Stage 1", "Stage 2"]:
@@ -499,6 +537,7 @@ def review_message(row):
             else:
                 return "No CKD stage specified"
         else:
+            # Handle case where 'Sample_Date1' is missing or invalid
             return "Review Required (eGFR date unavailable)"
     except Exception as e:
         return "Review Required (eGFR date unavailable)"
