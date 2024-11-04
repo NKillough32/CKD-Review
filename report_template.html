@@ -13,8 +13,8 @@
   </style>
 </head>
 <body>
-
-<h1>Parkside Surgery <br> Chronic Kidney Disease Review</h1>
+<!--EDIT THE NAME HERE -->
+<h1>Surgery Name <br> Chronic Kidney Disease Review</h1>
 
 <div class="center">
   <strong>Review Status:</strong> {{ patient.review_message }}
@@ -47,7 +47,7 @@
   </li>
   <li><strong>Anaemia Overview:</strong>
     <ul>
-      <li><strong>Haemoglobin:</strong> {{ patient.haemoglobin | default(0, true) | int }} g/L | <strong>Date:</strong> {{ patient.Sample_Date4 }}</li>
+      <li><strong>Haemoglobin:</strong> {{ patient.haemoglobin | default(0, true) | int }} g/L | <strong>Date:</strong> {{ patient.Sample_Date5 }}</li>
       <li><strong>Current Status:</strong> {{ patient.Anaemia_Classification }}</li>
     </ul>
   </li>
@@ -103,7 +103,7 @@
 
 <h3>Diabetes and HbA1c Management</h3>
 <ul>
-  <li><strong>HbA1c Level:</strong> {{ patient.HbA1c | default(0, true) | int  }} mmol/mol | <strong>Date:</strong> {{ patient.Sample_Date5 }}</li>
+  <li><strong>HbA1c Level:</strong> {{ patient.HbA1c | default(0, true) | int  }} mmol/mol | <strong>Date:</strong> {{ patient.Sample_Date6 }}</li>
   <li><strong>HbA1c Management:</strong> {{ patient.HbA1c_Target }}</li>
 </ul>
 
@@ -116,7 +116,19 @@
 
 <h2>NICE Guideline Recommendations</h2>
 
-{% if patient.CKD_Stage == "Normal Function" %}
+{% if patient.CKD_Stage == "Acute Kidney Injury" %}
+<h3>Acute Kidney Injury (AKI) Management and Prevention</h3>
+<ul>
+  <li><strong>Risk Identification:</strong> Identify high-risk patients, including those with CKD, diabetes, heart failure, sepsis, or recent surgery. Ensure adequate hydration unless contraindicated.</li>
+  <li><strong>Medication Review:</strong> Avoid or withhold nephrotoxic drugs such as NSAIDs and ACE inhibitors in acutely ill patients.</li>
+  <li><strong>Monitoring:</strong> Regularly assess kidney function (serum creatinine, urine output) and electrolytes, particularly in hospitalized or high-risk patients.</li>
+  <li><strong>Fluid Management:</strong> Optimize fluid balance with IV fluids if hypovolemic; avoid fluid overload in patients with heart or renal issues.</li>
+  <li><strong>Treat Underlying Causes:</strong> Address underlying conditions promptly, such as sepsis, obstruction, or hypovolemia.</li>
+  <li><strong>Escalate Care:</strong> Refer to nephrology for severe or persistent AKI or potential need for dialysis.</li>
+  <li><strong>Patient Education:</strong> Educate on avoiding nephrotoxic drugs, staying hydrated, and arrange follow-up to monitor for potential CKD development.</li>
+</ul>
+
+{% elif patient.CKD_Stage == "Normal Function" %}
 <h3>Recommendations for Normal Kidney Function:</h3>
 <ul>
   <li><strong>General Health Maintenance:</strong> Encourage a balanced diet and regular physical activity. Avoid excessive use of NSAIDs and other nephrotoxic agents. Regular monitoring is not required unless risk factors are present.</li>
@@ -187,7 +199,7 @@
 {% endif %}
 
 <hr>
-
+<!-- EDIT THESE DETAILS-->
 <div class="center">
   Surgery Name, <br>
   Add 1, <br>
