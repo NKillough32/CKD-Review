@@ -451,54 +451,41 @@ print("Writing Output Data ...")
 # Save output to CSV
 creatinine.to_csv(f"eGFR_check_{pd.Timestamp.today().date()}.csv", index=False)
 
-# Define path to wkhtmltopdf executable
+# Define path to wkhtmltopdf executable and installer
 path_to_wkhtmltopdf = "C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe"  # Adjust for your system
+installer_path = "wkhtmltox-installer.exe"
 
-def download_latest_wkhtmltopdf():
-    # Check if wkhtmltopdf is already installed
-    if shutil.which("wkhtmltopdf"):
-        print("wkhtmltopdf is already installed.")
-        return
+# Function to download wkhtmltopdf installer
+def download_wkhtmltopdf():
+    print("Downloading wkhtmltopdf installer...")
+    url = "https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox-0.12.6-1.msvc2015-win64.exe"
     
-    # Get the latest release info from GitHub
-    api_url = "https://api.github.com/repos/wkhtmltopdf/packaging/releases/latest"
-    response = requests.get(api_url)
+    # Download the installer file
+    with requests.get(url, stream=True) as response:
+        response.raise_for_status()
+        with open(installer_path, "wb") as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
     
-    if response.status_code == 200:
-        latest_release = response.json()
-        # Get the download URL for the Windows 64-bit installer
-        download_url = None
-        for asset in latest_release.get("assets", []):
-            if "win64" in asset["name"]:  # Adjust this condition for other OS if needed
-                download_url = asset["browser_download_url"]
-                break
-        
-        if download_url:
-            print(f"Downloading wkhtmltopdf from {download_url}...")
-            download_path = "wkhtmltox-installer.exe"
-            with requests.get(download_url, stream=True) as download_response:
-                with open(download_path, "wb") as file:
-                    for chunk in download_response.iter_content(chunk_size=8192):
-                        file.write(chunk)
-            print("wkhtmltopdf downloaded successfully.")
-        else:
-            print("Could not find a suitable wkhtmltopdf installer for your OS in the latest release.")
-    else:
-        print("Failed to retrieve the latest release information from GitHub.")
+    print("Download completed. The installer is saved as 'wkhtmltox-installer.exe'.")
+    print("Please install wkhtmltopdf manually by running 'wkhtmltox-installer.exe'.")
+    print("After installation, press Enter to continue.")
 
-    # Run the installer silently (requires admin privileges)
-    print("Installing wkhtmltopdf...")
-    os.system(f'"{download_path}" /SILENT /DIR="C:\\Program Files\\wkhtmltopdf"')
-
-    # Remove installer after installation
-    os.remove(download_path)
-    print("wkhtmltopdf installed successfully.")
-
-# Check if wkhtmltopdf exists, and download if not
-if not os.path.exists(path_to_wkhtmltopdf):
-    download_latest_wkhtmltopdf()
-else:
-    print("wkhtmltopdf is already installed.")
+# Check if wkhtmltopdf is installed; download installer if not
+while not os.path.exists(path_to_wkhtmltopdf):
+    print("wkhtmltopdf executable not found.")
+    
+    # Download installer if it doesn't exist yet
+    if not os.path.exists(installer_path):
+        download_wkhtmltopdf()
+    
+    # Wait for user to install manually
+    input("Once wkhtmltopdf is installed, press Enter to continue...")
+    
+# Remove the installer after successful installation
+if os.path.exists(installer_path):
+    os.remove(installer_path)
+    print("Installer removed successfully.")
 
 # Configure pdfkit to use wkhtmltopdf
 config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
