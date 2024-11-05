@@ -23,6 +23,13 @@ drug_adjustment_file = os.path.join(current_dir, "drug_adjustment.csv")
 template_dir = os.path.join(current_dir, "report_template.html")  # Assuming template file is in current folder
 output_dir = os.path.join(current_dir, "Patient_Summaries")  # Output directory for PDFs
 
+def check_files_exist(*file_paths):
+ missing_files = [file for file in file_paths if not os.path.exists(file)]
+ if missing_files:
+     raise FileNotFoundError(f"Missing files: {', '.join(missing_files)}")
+
+check_files_exist(creatinine_file, CKD_check_file, contraindicated_drugs_file, drug_adjustment_file)
+
 print("Starting Data Analysis...")
 
 # Read the files
@@ -117,8 +124,6 @@ CKD_review = pd.read_csv(CKD_review)
 # Confirm conversion of dates
 CKD_review['Date.1'] = pd.to_datetime(CKD_review['Date.1'], errors='coerce')
 CKD_review['Date.2'] = pd.to_datetime(CKD_review['Date.2'], errors='coerce')
-print("Date.1 type after conversion:", CKD_review['Date.1'].dtype)
-print("Date.2 type after conversion:", CKD_review['Date.2'].dtype)
 
 # Rename columns for clarity
 CKD_review.rename(columns={
@@ -139,6 +144,10 @@ for col in ['Date.1', 'Date.2', 'Date.3', 'Date.4', 'Date.5', 'Date.6', 'Date.7'
 CKD_review['Creatinine'] = pd.to_numeric(CKD_review['Creatinine'], errors='coerce')
 CKD_review['Age'] = pd.to_numeric(CKD_review['Age'], errors='coerce')
 CKD_review['Gender'] = CKD_review['Gender'].astype('category')
+
+def calculate_eGFR(Age, Gender, Creatinine):
+ if pd.isna(Age) or pd.isna(Gender) or pd.isna(Creatinine):
+     return np.nan  # or a default value if needed
 
 # eGFR Calculation function
 def calculate_eGFR(Age, Gender, Creatinine):
@@ -348,7 +357,7 @@ def get_contraindicated_drugs(eGFR):
     return contraindicated
 
 def check_contraindications(medications, contraindicated):
-    prescribed_contraindicated = [drug for drug in contraindicated if drug in medications]
+    prescribed_contraindicated = [drug for drug in contraindicated if re.search(r'\b' + re.escape(drug) + r'\b', medications, re.IGNORECASE)]
     return ", ".join(prescribed_contraindicated) if prescribed_contraindicated else "No contraindications"
 
 CKD_review['contraindicated_prescribed'] = CKD_review.apply(lambda row: check_contraindications(row['Medications'], get_contraindicated_drugs(row['eGFR'])), axis=1)
