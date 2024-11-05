@@ -12,7 +12,7 @@ The code will download wkhtmltopdf. You will be asked to manually install this. 
 Required Files:  
 report_template.html: HTML template for report formatting.  
 contrindicated_drugs.csv: List of drugs contraindicated in CKD.  
-drug_adjustment.csv: Guidelines for dosage adjustments based on CKD stage.
+drug_adjustment.csv: Guidelines for dosage adjustments based on CKD stage.  
 Creatinine.csv: Grenerated using the XML file imported into the EMIS system.  
 CKD_check.csv: Grenerated using the XML file imported into the EMIS system. 
 
