@@ -26,10 +26,9 @@ Save the CKD coded data as CKD_check.csv in the project directory.
 
 Setting Up:  
 Clone the repository:  
-bash  
-Copy code  
-git clone https://github.com/NKillough32/CKD-Review.git  
-Ensure Creatinine.csv, CKD_check.csv and the template files are in the same directory.  
+1) bash  "C:\Windows\System32\bash.exe"
+2) Copy code: git clone https://github.com/NKillough32/CKD-Review.git  
+3) Move EMIS downloads Creatinine.csv, CKD_check.csv into the same directory e.g. /CKD-Review.  
 
 Running the Report Generator:  
 Execute NephroPath.exe, which will read the CSV files and create individualized CKD staging reports.
