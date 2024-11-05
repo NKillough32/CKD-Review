@@ -1,4 +1,4 @@
-The "CKD Staging Report Generator" is a tool designed to streamline the process of creating Chronic Kidney Disease (CKD) staging reports for patients, utilizing data exported from the EMIS system used in UK healthcare settings. Here's a breakdown of the setup and usage:
+The "NephroPath program" is a tool designed to streamline the process of creating Chronic Kidney Disease (CKD) staging reports for patients, utilizing data exported from the EMIS system used in UK healthcare settings. Here's a breakdown of the setup and usage:
 
 Key Features:  
 Automated Reports: Creates patient-specific CKD staging reports based on EMIS data.
