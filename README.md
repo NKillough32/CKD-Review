@@ -10,9 +10,11 @@ NephroPath.exe: This executable handles report generation and comes with built-i
 The code will download wkhtmltopdf. You will be asked to manually install this. (Project maintained to by Ashish Kulkarni, originally created by and credit to Jakob Truelsen.)
 
 Required Files:  
-report_template.html: HTML template for report formatting.
-contrindicated_drugs.csv: List of drugs contraindicated in CKD.
+report_template.html: HTML template for report formatting.  
+contrindicated_drugs.csv: List of drugs contraindicated in CKD.  
 drug_adjustment.csv: Guidelines for dosage adjustments based on CKD stage.
+Creatinine.csv: Grenerated using the XML file imported into the EMIS system.  
+CKD_check.csv: Grenerated using the XML file imported into the EMIS system. 
 
 Getting Started  
 EMIS Data Export:
