@@ -1,12 +1,13 @@
 The "CKD Staging Report Generator" is a tool designed to streamline the process of creating Chronic Kidney Disease (CKD) staging reports for patients, utilizing data exported from the EMIS system used in UK healthcare settings. Here's a breakdown of the setup and usage:
 
-Key Features  
+Key Features:  
 Automated Reports: Creates patient-specific CKD staging reports based on EMIS data.
 NICE Guidelines Compliance: Incorporates the latest NICE CKD guidelines for accurate staging.
 Medication Recommendations: Provides drug adjustments and contraindicated medications based on kidney function.
 
 Prerequisites  
-NephroPath.exe: This executable handles report generation and comes with built-in dependencies.
+NephroPath.exe: This executable handles report generation and comes with built-in dependencies.   
+The code will download wkhtmltopdf. You will be asked to manually install this. (Project maintained to by Ashish Kulkarni, originally created by and credit to Jakob Truelsen.)
 
 Required Files:  
 report_template.html: HTML template for report formatting.
@@ -29,7 +30,7 @@ git clone https://github.com/NKillough32/CKD-Review.git
 Ensure Creatinine.csv, CKD_check.csv and the template files are in the same directory.  
 
 Running the Report Generator:  
-Execute NephroPath.exe, which will read the CSV file and create individualized CKD staging reports.
+Execute NephroPath.exe, which will read the CSV files and create individualized CKD staging reports.
 
 Output:  
 For each patient, the generator will produce a report specifying their CKD stage, required interventions, and medication adjustments, if applicable.
