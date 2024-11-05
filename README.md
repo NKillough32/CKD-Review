@@ -22,11 +22,11 @@ Save the Creatainine data as Creatinine.csv in the project directory.
 Save the CKD coded data as CKD_check.csv in the project directory.
 
 Setting Up:  
-Clone the repository:
-bash
-Copy code
-git clone https://github.com/NKillough32/CKD-Review.git
-Ensure Creatinine.csv, CKD_check.csv and the template files are in the same directory.
+Clone the repository:  
+bash  
+Copy code  
+git clone https://github.com/NKillough32/CKD-Review.git  
+Ensure Creatinine.csv, CKD_check.csv and the template files are in the same directory.  
 
 Running the Report Generator:  
 Execute NephroPath.exe, which will read the CSV file and create individualized CKD staging reports.
