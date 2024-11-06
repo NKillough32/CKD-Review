@@ -24,23 +24,28 @@ template_dir = os.path.join(current_dir, "report_template.html")  # Assuming tem
 output_dir = os.path.join(current_dir, "Patient_Summaries")  # Output directory for PDFs
 
 def check_files_exist(*file_paths):
- missing_files = [file for file in file_paths if not os.path.exists(file)]
- if missing_files:
-     raise FileNotFoundError(f"Missing files: {', '.join(missing_files)}")
+    missing_files = [file for file in file_paths if not os.path.exists(file)]
+    if missing_files:
+        print("\nThe following required files are missing:")
+        for file in missing_files:
+            print(f"  - {file} (Missing)")
+        print("\nProceeding with available files. Missing files may limit the analysis.\n")
+    else:
+        print("All required files are present.")
 
 check_files_exist(creatinine_file, CKD_check_file, contraindicated_drugs_file, drug_adjustment_file)
 
-print("Starting Data Analysis...")
+print("Starting CKD Data Analysis Pipeline....")
 
 # Read the files
-if not os.path.exists(creatinine_file):
-    raise FileNotFoundError(f"{creatinine_file} not found.")
-if not os.path.exists(CKD_check_file):
-    raise FileNotFoundError(f"{CKD_check_file} not found.")
+#if not os.path.exists(creatinine_file):
+#    raise FileNotFoundError(f"{creatinine_file} not found.")
+#if not os.path.exists(CKD_check_file):
+#    raise FileNotFoundError(f"{CKD_check_file} not found.")
 
 # Load the data
-creatinine = pd.read_csv(creatinine_file)
-CKD_check = pd.read_csv(CKD_check_file)
+creatinine = pd.read_csv(creatinine_file) if os.path.exists(creatinine_file) else pd.DataFrame()
+CKD_check = pd.read_csv(CKD_check_file) if os.path.exists(CKD_check_file) else pd.DataFrame()
 
 # Function to preprocess data
 def preprocess_data(df):
@@ -59,8 +64,10 @@ def preprocess_data(df):
     return df
 
 # Apply preprocessing to both datasets
-creatinine = preprocess_data(creatinine)
-CKD_check = preprocess_data(CKD_check)
+if not creatinine.empty:
+    creatinine = preprocess_data(creatinine)
+if not CKD_check.empty:
+    CKD_check = preprocess_data(CKD_check)
 
 # Function to select the closest 3-month prior creatinine value
 def select_closest_3m_prior_creatinine(row):
@@ -81,45 +88,65 @@ def select_closest_3m_prior_creatinine(row):
     return valid_prior_values[min_diff_index]
 
 # Apply the function to both datasets if needed
-creatinine['Creatinine_3m_prior'] = creatinine.apply(select_closest_3m_prior_creatinine, axis=1)
-CKD_check['Creatinine_3m_prior'] = CKD_check.apply(select_closest_3m_prior_creatinine, axis=1)
+if not creatinine.empty:
+    creatinine['Creatinine_3m_prior'] = creatinine.apply(select_closest_3m_prior_creatinine, axis=1)
+if not CKD_check.empty:
+    CKD_check['Creatinine_3m_prior'] = CKD_check.apply(select_closest_3m_prior_creatinine, axis=1)
 
 # Summarise medications by HC.Number, renaming the result to avoid conflicts
-medications_summary_creatinine = (
-    creatinine.groupby('HC.Number')['Name..Dosage.and.Quantity']
-    .apply(lambda x: ', '.join(x.dropna()))
-    .reset_index()
-    .rename(columns={'Name..Dosage.and.Quantity': 'Medications'})
-)
-
-medications_summary_ckd = (
-    CKD_check.groupby('HC.Number')['Name..Dosage.and.Quantity']
-    .apply(lambda x: ', '.join(x.dropna()))
-    .reset_index()
-    .rename(columns={'Name..Dosage.and.Quantity': 'Medications'})
-)
+def summarize_medications(df):
+    return (
+        df.groupby('HC.Number')['Name..Dosage.and.Quantity']
+        .apply(lambda x: ', '.join(x.dropna()))
+        .reset_index()
+        .rename(columns={'Name..Dosage.and.Quantity': 'Medications'})
+    )
 
 # Merge the aggregated lists back into the main datasets
-creatinine = creatinine.merge(medications_summary_creatinine, on="HC.Number", how="left")
-CKD_check = CKD_check.merge(medications_summary_ckd, on="HC.Number", how="left")
+if not creatinine.empty:
+    medications_summary_creatinine = summarize_medications(creatinine)
+    creatinine = creatinine.merge(medications_summary_creatinine, on="HC.Number", how="left")
+    creatinine["Value.11"] = "No EMIS CKD entry"
 
+if not CKD_check.empty:
+    medications_summary_ckd = summarize_medications(CKD_check)
+    CKD_check = CKD_check.merge(medications_summary_ckd, on="HC.Number", how="left")
+    
 # Remove rows with missing Age
-creatinine.dropna(subset=['Age'], inplace=True)
-CKD_check.dropna(subset=['Age'], inplace=True)
-# Add a new column 'Value.11' with the specified value in each row
-creatinine["Value.11"] = "No EMIS CKD entry"
+if not creatinine.empty:
+    creatinine.dropna(subset=['Age'], inplace=True)
+if not CKD_check.empty:    
+    CKD_check.dropna(subset=['Age'], inplace=True)
 
 # Merge CKD_check and Creatinine based on HC.Number, selecting only rows in Creatinine not present in CKD_check
-merged_data = pd.concat([CKD_check, creatinine[~creatinine['HC.Number'].isin(CKD_check['HC.Number'])]])
+# Prepare merged data based on available files
+if not CKD_check.empty and not creatinine.empty:
+    merged_data = pd.concat([CKD_check, creatinine[~creatinine['HC.Number'].isin(CKD_check['HC.Number'])]])
+else:
+    merged_data = CKD_check if not CKD_check.empty else creatinine  # Fallback to whichever file is available
 
-# Save the merged data as a new CKD_review file
-merged_data.to_csv("CKD_review.csv", index=False)
-print("Updated CKD_review file with additional records from Creatinine and CKD_check.")
+# Allow mode selection at the end of the processing
+mode = 'merged'  # Change to 'creatinine', 'ckd_check', or 'merged' as needed
+
+# Select the dataset to save based on mode
+if mode == 'creatinine' and not creatinine.empty:
+    creatinine.to_csv("CKD_review.csv", index=False)
+    print("Creatinine data saved to CKD_review.csv")
+elif mode == 'ckd_check' and not CKD_check.empty:
+    CKD_check.to_csv("CKD_review.csv", index=False)
+    print("CKD Check data saved to CKD_review.csv")
+elif mode == 'merged' and not merged_data.empty:
+    merged_data.to_csv("CKD_review.csv", index=False)
+    print("Merged data saved to CKD_review.csv")
+else:
+    print("No data available for the selected mode.")
 
 # Optional: Further processing on the final merged dataset (if needed)
 if not os.path.exists(CKD_review):
     raise FileNotFoundError(f"{CKD_review} not found.")
 CKD_review = pd.read_csv(CKD_review)
+
+print("Preprocessing data and performing CKD metrics calculations...")
 
 # Confirm conversion of dates
 CKD_review['Date.1'] = pd.to_datetime(CKD_review['Date.1'], errors='coerce')
@@ -361,10 +388,19 @@ def check_contraindications(medications, contraindicated):
     return ", ".join(prescribed_contraindicated) if prescribed_contraindicated else "No contraindications"
 
 CKD_review['contraindicated_prescribed'] = CKD_review.apply(lambda row: check_contraindications(row['Medications'], get_contraindicated_drugs(row['eGFR'])), axis=1)
+
+# Define list of statin medications
+statins = ["Atorvastatin", "Simvastatin", "Rosuvastatin" ,"Pravastatin", "Fluvastatin", "Pitavastatin"]
+
 CKD_review['Statin_Recommendation'] = CKD_review.apply(
-    lambda row: "Consider Statin" if pd.isna(row['Medications']) or not any(drug in row['Medications'] for drug in ["Atorvastatin", "Simvastatin", "Rosuvastatin"]) and row['eGFR'] < 60 else "On Statin", 
+    lambda row: (
+        "On Statin" if any(statin in row['Medications'] for statin in statins)
+        else "Consider Statin" if row['eGFR'] < 60 or pd.isna(row['Medications'])
+        else "Not on Statin"
+    ),
     axis=1
 )
+
 # Recommended medications based on eGFR level with examples included
 def recommended_medications(eGFR):
     """Recommend medications based on eGFR level with examples included."""
@@ -502,7 +538,7 @@ CKD_review.rename(columns={
 
 # Convert HC_Number to integer after forward-filling
 CKD_review['HC_Number'] = CKD_review['HC_Number'].astype(int)
-
+print("Data preprocessing and metrics calculation complete.")
 print("Writing Output Data ...")
 # Save output to CSV
 CKD_review.to_csv(f"eGFR_check_{pd.Timestamp.today().date()}.csv", index=False)
@@ -605,6 +641,10 @@ def generate_patient_pdf(data, template_dir=current_dir, output_dir="Patient_Sum
     
     # Loop through each patient's data and generate PDF
     for _, patient in data.iterrows():
+        # Print info message before generating report
+        print(f"Generating report for Patient HC_Number: {patient['HC_Number']}...")
+        
+        # Render the HTML content for each patient
         review_message = patient['review_message'] if patient['review_message'] else "Uncategorized"
         sanitized_review_folder = "".join([c if c.isalnum() or c.isspace() else "_" for c in review_message]).replace(" ", "_")
         
@@ -618,6 +658,9 @@ def generate_patient_pdf(data, template_dir=current_dir, output_dir="Patient_Sum
         
         # Generate and save the PDF
         pdfkit.from_string(html_content, file_name, configuration=config)
+        
+        # Print success message after saving report
+        print(f"Report saved as Patient_Summary_{patient['HC_Number']}.pdf in {review_folder}")
 
  # Return the date folder path for further use
     return date_folder
@@ -686,4 +729,6 @@ def move_ckd_files(date_folder):
 date_folder = generate_patient_pdf(data)  # Generate PDFs and capture the returned date folder path
 rename_folders(date_folder)               # Rename folders within the date-stamped directory
 move_ckd_files(date_folder)  # Moves both eGFR and CKD_review files to the date-stamped folder
-print("Reporting complete!")
+print("\nCKD Analysis and Reporting Completed ")
+print(f"All reports and data saved in the folder: {date_folder}")
+print("Please review missing file alerts above if applicable.\n")
