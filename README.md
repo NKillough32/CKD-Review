@@ -33,7 +33,9 @@ Or clone the repository:
 1) bash  "C:\Windows\System32\bash.exe"
 2) cd cd /mnt/c/Users/"Name"/Desktop/ Change "Name" to your profile or computer name
 3) Copy code: git clone https://github.com/NKillough32/CKD-Review.git  
-4) Move EMIS downloads Creatinine.csv, CKD_check.csv into the same directory e.g. /CKD-Review.  
+4) Move EMIS downloads Creatinine.csv, CKD_check.csv into the same directory e.g. /CKD-Review.
+
+This program will allow you to review those coded with CKD on the EMIS system and those that have not been coded. This can be achieved by placing only one EMIS export into the CKD-review folder. 
 
 Running the Report Generator:  
 Execute NephroPath.exe, which will read the CSV files and create individualized CKD staging reports.
