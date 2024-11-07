@@ -7,7 +7,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/upload-art
 
       - name: Set up Python
         uses: actions/setup-python@v2
@@ -24,7 +24,7 @@ jobs:
           python -m PyInstaller --onefile --name=NephroPath CKD_auto.py
 
       - name: Upload macOS executable
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-art
         with:
           name: NephroPath-macOS
           path: dist/NephroPath
