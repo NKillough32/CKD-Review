@@ -1,0 +1,30 @@
+name: Build NephroPath for macOS
+
+on: [push]
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+
+      - name: Build with PyInstaller
+        run: |
+          python -m PyInstaller --onefile --name=NephroPath CKD_auto.py
+
+      - name: Upload macOS executable
+        uses: actions/upload-artifact@v2
+        with:
+          name: NephroPath-macOS
+          path: dist/NephroPath
