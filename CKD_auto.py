@@ -37,15 +37,36 @@ check_files_exist(creatinine_file, CKD_check_file, contraindicated_drugs_file, d
 
 print("Starting CKD Data Analysis Pipeline....")
 
-# Read the files
-#if not os.path.exists(creatinine_file):
-#    raise FileNotFoundError(f"{creatinine_file} not found.")
-#if not os.path.exists(CKD_check_file):
-#    raise FileNotFoundError(f"{CKD_check_file} not found.")
-
 # Load the data
 creatinine = pd.read_csv(creatinine_file) if os.path.exists(creatinine_file) else pd.DataFrame()
 CKD_check = pd.read_csv(CKD_check_file) if os.path.exists(CKD_check_file) else pd.DataFrame()
+
+# Function to preprocess data with a specified date format
+def preprocess_data(df):
+    # Define the date format
+    date_format = "%d-%b-%y"
+    
+    # Identify columns with 'Date' in the name
+    date_columns = [col for col in df.columns if 'Date' in col]
+    
+    # Convert identified date columns using the specified format
+    for date_col in date_columns:
+        df[date_col] = pd.to_datetime(df[date_col], format=date_format, errors='coerce')
+    
+    # Convert Name, Dosage, and Quantity to string
+    if 'Name, Dosage and Quantity' in df.columns:
+        df['Name, Dosage and Quantity'] = df['Name, Dosage and Quantity'].astype(str)
+    
+    # Fill missing HC Number values forward
+    df['HC Number'] = df['HC Number'].replace("", np.nan).ffill()
+        
+    return df
+
+# Apply preprocessing to both datasets
+if not creatinine.empty:
+    creatinine = preprocess_data(creatinine)
+if not CKD_check.empty:
+    CKD_check = preprocess_data(CKD_check)
 
 # Function to preprocess data
 def preprocess_data(df):
@@ -152,6 +173,8 @@ print("Preprocessing data and performing CKD metrics calculations...")
 CKD_review['Date'] = pd.to_datetime(CKD_review['Date'], errors='coerce')
 CKD_review['Date.2'] = pd.to_datetime(CKD_review['Date.2'], errors='coerce')
 
+
+
 # Rename columns for clarity
 CKD_review.rename(columns={
     'Value': 'Creatinine', 'Value.1': 'ACR',
@@ -161,7 +184,7 @@ CKD_review.rename(columns={
 }, inplace=True)
 
 # Replace missing ACR values with 0.3
-CKD_review['ACR'] = CKD_review['ACR'].fillna(0.3)
+CKD_review['ACR'] = CKD_review['ACR'].fillna(0)
 
 # Handle empty date fields by replacing with "missing"
 for col in ['Date','Date.1', 'Date.2', 'Date.3', 'Date.4', 'Date.5', 'Date.6', 'Date.7', 'Date.8', 'Date.9', 'Date.10']:
@@ -593,32 +616,35 @@ data['risk_5yr'] = pd.to_numeric(data['risk_5yr'], errors='coerce')
 
 # Define review message based on NICE guideline criteria
 def review_message(row):
-    try:
-        # Parse 'Sample_Date1' to ensure it's in datetime format if not already
-        eGFR_date = pd.to_datetime(row['Sample_Date1'], errors='coerce', dayfirst=True)
+    # Parse 'Sample_Date' to ensure it's in datetime format if not already
+    eGFR_date = pd.to_datetime(row['Sample_Date'], errors='coerce').date() if pd.notna(row['Sample_Date']) else None
 
-        # Check if 'eGFR_date' is valid
-        if pd.notna(eGFR_date):
-            days_since_eGFR = (datetime.now().date() - eGFR_date.date()).days
-            
-            if row['CKD_Stage'] in ["Stage 1", "Stage 2"]:
-                if days_since_eGFR > 365 or row['CKD_ACR'] > 3:
-                    return "Review Required (CKD Stage 1-2 with >1 year since last eGFR or ACR >3)"
-                else:
-                    return "No immediate review required"
-            elif row['CKD_Stage'] in ["Stage 3", "Stage 3a", "Stage 3b", "Stage 4", "Stage 5"]:
-                if row['CKD_ACR'] > 30 or row['risk_5yr'] > 5 or days_since_eGFR > 180:
-                    return "Review Required (CKD Stage 3-5 with >6 months since last eGFR, ACR >30, or high-risk)"
-                elif days_since_eGFR > 90:
-                    return "Review Required (CKD Stage 3-5 with >3 months since last eGFR)"
-                else:
-                    return "No immediate review required"
+    # Convert CKD_ACR and risk_5yr to numeric values, setting errors='coerce' to handle non-numeric entries
+    CKD_ACR = pd.to_numeric(row['CKD_ACR'], errors='coerce')
+    risk_5yr = pd.to_numeric(row['risk_5yr'], errors='coerce')
+
+    # Check if 'eGFR_date' is valid and calculate days since eGFR
+    if eGFR_date:
+        days_since_eGFR = (datetime.now().date() - eGFR_date).days
+        print(f"Patient HC_Number {row['HC_Number']} - eGFR Date: {eGFR_date}, Days since eGFR: {days_since_eGFR}")
+
+        # NICE guideline checks based on CKD stage and ACR
+        if row['CKD_Stage'] in ["Stage 1", "Stage 2"]:
+            if days_since_eGFR > 365 or CKD_ACR > 3:
+                return "Review Required (CKD Stage 1-2 with >1 year since last eGFR or ACR >3)"
             else:
-                return "No CKD stage specified"
+                return "No immediate review required"
+        elif row['CKD_Stage'] in ["Stage 3", "Stage 3a", "Stage 3b", "Stage 4", "Stage 5"]:
+            if CKD_ACR > 30 or risk_5yr > 5 or days_since_eGFR > 180:
+                return "Review Required (CKD Stage 3-5 with >6 months since last eGFR, ACR >30, or high-risk)"
+            elif days_since_eGFR > 90:
+                return "Review Required (CKD Stage 3-5 with >3 months since last eGFR)"
+            else:
+                return "No immediate review required"
         else:
-            # Handle case where 'Sample_Date1' is missing or invalid
-            return "Review Required (eGFR date unavailable)"
-    except Exception as e:
+            return "No CKD stage specified"
+    else:
+        # Handle case where 'Sample_Date' is missing or invalid
         return "Review Required (eGFR date unavailable)"
 
 # Apply review message function to add 'review_message' column
@@ -628,6 +654,12 @@ print("Generating reports...")
 
 # Modify generate_patient_pdf to use absolute paths
 def generate_patient_pdf(data, template_dir=current_dir, output_dir="Patient_Summaries"):
+    
+    # Format date columns to "YYYY-MM-DD" if present
+    date_columns = [col for col in data.columns if "Date" in col]
+    for date_col in date_columns:
+        data[date_col] = pd.to_datetime(data[date_col]).dt.strftime("%Y-%m-%d")
+    
     # Create the absolute path for output directory
     output_dir = os.path.abspath(output_dir)
     
@@ -671,7 +703,7 @@ def rename_folders(date_folder):
     folder_mapping = {
         "Review_Required__CKD_Stage_1_2_with__1_year_since_last_eGFR_or_ACR__3_": "Stage_1_2_Year_eGFR_or_ACR3",
         "No_immediate_review_required": "No_Immediate_Review",
-        "Review_Required__CKD_Stage_3_5_with__6_months_since_last_eGFR_ACR__30_or_highrisk": "Stage_3_5_6Months_eGFR_ACR30_HighRisk",
+        "Review_Required__CKD_Stage_3_5_with__6_months_since_last_eGFR__ACR__30__or_high_risk_": "Stage_3_5_6Months_eGFR_ACR30_HighRisk",
         "Review_Required__CKD_Stage_3_5_with__3_months_since_last_eGFR": "Stage_3_5_3Months_eGFR",
         "No_CKD_stage_specified": "No_CKD_Stage_Specified",
         "Review_Required__eGFR_date_unavailable_": "Review_eGFR_Date_Unavailable"
