@@ -55,11 +55,11 @@ def preprocess_data(df):
         df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
     
     # Convert Name..Dosage.and.Quantity to string
-    if 'Name..Dosage.and.Quantity' in df.columns:
-        df['Name..Dosage.and.Quantity'] = df['Name..Dosage.and.Quantity'].astype(str)
+    if 'Name, Dosage and Quantity' in df.columns:
+        df['Name, Dosage and Quantity'] = df['Name, Dosage and Quantity'].astype(str)
     
     # Fill missing HC.Number values forward
-    df['HC.Number'] = df['HC.Number'].replace("", np.nan).ffill()
+    df['HC Number'] = df['HC Number'].replace("", np.nan).ffill()
         
     return df
 
@@ -79,10 +79,10 @@ def select_closest_3m_prior_creatinine(row):
     valid_prior_dates = [date for date in prior_dates if pd.notna(date)]
     valid_prior_values = [prior_values[i] for i, date in enumerate(prior_dates) if pd.notna(date)]
     
-    if not pd.notna(row.get('Date.1')) or not valid_prior_dates:
+    if not pd.notna(row.get('Date')) or not valid_prior_dates:
         return np.nan
     
-    differences = [abs((row['Date.1'] - date) - three_month_threshold) for date in valid_prior_dates]
+    differences = [abs((row['Date'] - date) - three_month_threshold) for date in valid_prior_dates]
     min_diff_index = differences.index(min(differences))
     
     return valid_prior_values[min_diff_index]
@@ -96,21 +96,21 @@ if not CKD_check.empty:
 # Summarise medications by HC.Number, renaming the result to avoid conflicts
 def summarize_medications(df):
     return (
-        df.groupby('HC.Number')['Name..Dosage.and.Quantity']
+        df.groupby('HC Number')['Name, Dosage and Quantity']
         .apply(lambda x: ', '.join(x.dropna()))
         .reset_index()
-        .rename(columns={'Name..Dosage.and.Quantity': 'Medications'})
+        .rename(columns={'Name, Dosage and Quantity': 'Medications'})
     )
 
 # Merge the aggregated lists back into the main datasets
 if not creatinine.empty:
     medications_summary_creatinine = summarize_medications(creatinine)
-    creatinine = creatinine.merge(medications_summary_creatinine, on="HC.Number", how="left")
+    creatinine = creatinine.merge(medications_summary_creatinine, on="HC Number", how="left")
     creatinine["Value.11"] = "No EMIS CKD entry"
 
 if not CKD_check.empty:
     medications_summary_ckd = summarize_medications(CKD_check)
-    CKD_check = CKD_check.merge(medications_summary_ckd, on="HC.Number", how="left")
+    CKD_check = CKD_check.merge(medications_summary_ckd, on="HC Number", how="left")
     
 # Remove rows with missing Age
 if not creatinine.empty:
@@ -121,7 +121,7 @@ if not CKD_check.empty:
 # Merge CKD_check and Creatinine based on HC.Number, selecting only rows in Creatinine not present in CKD_check
 # Prepare merged data based on available files
 if not CKD_check.empty and not creatinine.empty:
-    merged_data = pd.concat([CKD_check, creatinine[~creatinine['HC.Number'].isin(CKD_check['HC.Number'])]])
+    merged_data = pd.concat([CKD_check, creatinine[~creatinine['HC Number'].isin(CKD_check['HC Number'])]])
 else:
     merged_data = CKD_check if not CKD_check.empty else creatinine  # Fallback to whichever file is available
 
@@ -149,12 +149,12 @@ CKD_review = pd.read_csv(CKD_review)
 print("Preprocessing data and performing CKD metrics calculations...")
 
 # Confirm conversion of dates
-CKD_review['Date.1'] = pd.to_datetime(CKD_review['Date.1'], errors='coerce')
+CKD_review['Date'] = pd.to_datetime(CKD_review['Date'], errors='coerce')
 CKD_review['Date.2'] = pd.to_datetime(CKD_review['Date.2'], errors='coerce')
 
 # Rename columns for clarity
 CKD_review.rename(columns={
-    'Value': 'Creatinine', 'Value.1': 'ACR', #'Value.2': 'Creatinine_3m_prior',
+    'Value': 'Creatinine', 'Value.1': 'ACR',
     'Value.3': 'Systolic_BP', 'Value.4': 'Diastolic_BP', 'Value.5': 'haemoglobin',
     'Value.6': 'HbA1c', 'Value.7': 'Potassium', 'Value.8': 'Phosphate',
     'Value.9': 'Calcium', 'Value.10': 'Vitamin_D', 'Value.11' :'EMIS_CKD_Code'
@@ -164,7 +164,7 @@ CKD_review.rename(columns={
 CKD_review['ACR'] = CKD_review['ACR'].fillna(0.3)
 
 # Handle empty date fields by replacing with "missing"
-for col in ['Date.1', 'Date.2', 'Date.3', 'Date.4', 'Date.5', 'Date.6', 'Date.7', 'Date.8', 'Date.9', 'Date.10']:
+for col in ['Date','Date.1', 'Date.2', 'Date.3', 'Date.4', 'Date.5', 'Date.6', 'Date.7', 'Date.8', 'Date.9', 'Date.10']:
     CKD_review[col] = CKD_review[col].replace("", "Missing value")
 
 # Ensure numeric types for Age and Creatinine
@@ -262,11 +262,11 @@ def classify_CKD_ACR_grade(ACR):
 CKD_review['CKD_ACR'] = CKD_review['ACR'].apply(classify_CKD_ACR_grade)
 
 CKD_review['CKD_Stage'] = CKD_review.apply(
-    lambda row: "Normal Function" if row['ACR'] <= 3 and row['eGFR'] > 60 and row['Date.1'] != "missing" else row['CKD_Stage'], 
+    lambda row: "Normal Function" if row['ACR'] <= 3 and row['eGFR'] > 60 and row['Date'] != "missing" else row['CKD_Stage'], 
     axis=1
 )
 CKD_review['CKD_Stage'] = CKD_review.apply(
-    lambda row: "Normal/Stage1" if row['CKD_Stage'] == "Stage 1" and row['Date.1'] == "missing" else row['CKD_Stage'], 
+    lambda row: "Normal/Stage1" if row['CKD_Stage'] == "Stage 1" and row['Date'] == "missing" else row['CKD_Stage'], 
     axis=1
 )
 CKD_review['Nephrology_Referral'] = CKD_review.apply(
@@ -530,10 +530,10 @@ CKD_review['risk_5yr'] = CKD_review['risk_5yr'].round(0)
 
 # Rename columns for clarity
 CKD_review.rename(columns={
-    'Date.1': 'Sample_Date1', 'Date.2': 'Sample_Date2', 'Date.3': 'Sample_Date3', 
+    'Date': 'Sample_Date','Date.1': 'Sample_Date1', 'Date.2': 'Sample_Date2', 'Date.3': 'Sample_Date3', 
     'Date.4': 'Sample_Date4', 'Date.5': 'Sample_Date5', 'Date.6': 'Sample_Date6', 
     'Date.7': 'Sample_Date7', 'Date.8': 'Sample_Date8', 'Date.9': 'Sample_Date9', 
-    'Date.10': 'Sample_Date10', 'Date.11': 'Sample_Date11','HC.Number' :'HC_Number'
+    'Date.10': 'Sample_Date10', 'Date.11': 'Sample_Date11','HC Number' :'HC_Number'
 }, inplace=True)
 
 # Convert HC_Number to integer after forward-filling
