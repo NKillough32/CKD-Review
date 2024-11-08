@@ -106,7 +106,7 @@ def summarize_medications(df):
 if not creatinine.empty:
     medications_summary_creatinine = summarize_medications(creatinine)
     creatinine = creatinine.merge(medications_summary_creatinine, on="HC Number", how="left")
-    creatinine["Value.11"] = "No EMIS CKD entry"
+    creatinine["Code Term"] = "No EMIS CKD entry"
 
 if not CKD_check.empty:
     medications_summary_ckd = summarize_medications(CKD_check)
@@ -157,7 +157,7 @@ CKD_review.rename(columns={
     'Value': 'Creatinine', 'Value.1': 'ACR',
     'Value.3': 'Systolic_BP', 'Value.4': 'Diastolic_BP', 'Value.5': 'haemoglobin',
     'Value.6': 'HbA1c', 'Value.7': 'Potassium', 'Value.8': 'Phosphate',
-    'Value.9': 'Calcium', 'Value.10': 'Vitamin_D', 'Value.11' :'EMIS_CKD_Code'
+    'Value.9': 'Calcium', 'Value.10': 'Vitamin_D', 'Code Term' :'EMIS_CKD_Code'
 }, inplace=True)
 
 # Replace missing ACR values with 0.3
