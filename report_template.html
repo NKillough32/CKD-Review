@@ -25,7 +25,7 @@
 
 <h3>Patient Information</h3>
 <ul>
-  <li><strong>HC Number:</strong> {{ patient.HC_Number | default(0, true) | int  }}</li>
+  <li><strong>NHS Number:</strong> {{ patient.HC_Number | default(0, true) | int  }}</li>
   <li><strong>Age:</strong> {{ patient.Age | default(0, true) | int }} | <strong>Gender:</strong> {{ patient.Gender | default("N/A", true) }}</li>
   
 </ul>
@@ -36,13 +36,13 @@
   <li><strong>Albumin-Creatinine Ratio (ACR):</strong> {{ patient.ACR }} mg/mmol</li>
   <li><strong>Creatinine:</strong>
     <ul>
-      <li><strong>Current:</strong> {{ patient.Creatinine | default(0, true) | int }} µmol/L | <strong>Date:</strong> {{ patient.Sample_Date1 | default("N/A", true) }}</li>
+      <li><strong>Current:</strong> {{ patient.Creatinine | default(0, true) | int }} µmol/L | <strong>Date:</strong> {{ patient.Sample_Date | default("N/A", true) }}</li>
       <li><strong>3 Months Prior:</strong> {{ patient.Creatinine_3m_prior | default(0, true) | int }} µmol/L | Date: {{ patient.Sample_Date2 | default("N/A", true) }}</li>
     </ul>
   </li> 
   <li><strong>eGFR:</strong>
     <ul>
-      <li><strong>Current:</strong> {{ patient.eGFR | default(0, true) | int  }} ml/min/1.73m2 | <strong>Date:</strong> {{ patient.Sample_Date1 }}</li>
+      <li><strong>Current:</strong> {{ patient.eGFR | default(0, true) | int  }} ml/min/1.73m2 | <strong>Date:</strong> {{ patient.Sample_Date }}</li>
       <li><strong>3 Months Prior:</strong> {{ patient.eGFR_3m_prior | default(0, true) | int }} ml/min/1.73m2 | Date: {{ patient.Sample_Date2 }}</li>
     </ul>
   </li>
