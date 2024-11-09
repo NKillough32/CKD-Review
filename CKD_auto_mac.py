@@ -293,7 +293,9 @@ CKD_review['CKD_Stage'] = CKD_review.apply(
     axis=1
 )
 CKD_review['Nephrology_Referral'] = CKD_review.apply(
-    lambda row: "Indicated on the basis of risk calculation" if row['CKD_Stage'] in ["Stage 3a", "Stage 3b", "Stage 4", "Stage 5"] and 3 <= row['risk_5yr'] <= 5 else "Not Indicated", 
+    lambda row: "Indicated on the basis of risk calculation" 
+                if row['CKD_Stage'] in ["Stage 3a", "Stage 3b", "Stage 4", "Stage 5"] and row['risk_5yr'] >= 5 
+                else "Not Indicated", 
     axis=1
 )
 CKD_review['Multidisciplinary_Care'] = CKD_review.apply(
