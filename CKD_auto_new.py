@@ -270,7 +270,7 @@ CKD_review_clean['ACR_ln_centered'] = np.log(CKD_review_clean['ACR'] / 0.113) - 
 # Linear predictor L for 5-year risk
 CKD_review_clean['L_5yr'] = (
     coefficients['Age_coef_5yr'] * CKD_review_clean['Age_centered'] +
-    coefficients['Sex_coef'] * CKD_review_clean['Sex_centered'] +
+    coefficients['Sex_coef'] * CKD_review_clean['Sex_centered'] -
     coefficients['eGFR_coef'] * CKD_review_clean['eGFR_centered'] +
     coefficients['ACR_ln_coef'] * CKD_review_clean['ACR_ln_centered']
 )
@@ -281,7 +281,7 @@ CKD_review_clean['risk_5yr'] = 1 - (Baseline_survival_5yr) ** np.exp(CKD_review_
 # Linear predictor L for 2-year risk
 CKD_review_clean['L_2yr'] = (
     coefficients['Age_coef_2yr'] * CKD_review_clean['Age_centered'] +
-    coefficients['Sex_coef'] * CKD_review_clean['Sex_centered'] +
+    coefficients['Sex_coef'] * CKD_review_clean['Sex_centered'] -
     coefficients['eGFR_coef'] * CKD_review_clean['eGFR_centered'] +
     coefficients['ACR_ln_coef'] * CKD_review_clean['ACR_ln_centered']
 )
@@ -293,9 +293,10 @@ CKD_review_clean['risk_2yr'] = 1 - (Baseline_survival_2yr) ** np.exp(CKD_review_
 CKD_review_clean['eGFR'] = CKD_review_clean['eGFR'].round(0)
 if 'eGFR_3m_prior' in CKD_review_clean.columns:
     CKD_review_clean['eGFR_3m_prior'] = CKD_review_clean['eGFR_3m_prior'].round(0)
+CKD_review_clean['risk_2yr'] = CKD_review_clean['risk_2yr']*100
+CKD_review_clean['risk_5yr'] = CKD_review_clean['risk_5yr']*100
 CKD_review_clean['risk_2yr'] = CKD_review_clean['risk_2yr'].round(2)
 CKD_review_clean['risk_5yr'] = CKD_review_clean['risk_5yr'].round(2)
-
 # Assign the cleaned DataFrame back to CKD_review for further processing
 CKD_review = CKD_review_clean
 
