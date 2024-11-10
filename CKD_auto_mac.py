@@ -17,10 +17,10 @@ current_dir = os.getcwd()
 # Set up relative paths for data and output files
 creatinine_file = os.path.join(current_dir, "Creatinine.csv")
 CKD_check_file = os.path.join(current_dir, "CKD_check.csv")
-CKD_review = os.path.join(current_dir, "CKD_review.csv")
+CKD_review_file = os.path.join(current_dir, "CKD_review.csv")
 contraindicated_drugs_file = os.path.join(current_dir, "contraindicated_drugs.csv")
 drug_adjustment_file = os.path.join(current_dir, "drug_adjustment.csv")
-template_dir = os.path.join(current_dir, "report_template.html")  # Assuming template file is in current folder
+template_dir = current_dir  # Assuming template file is in current folder
 output_dir = os.path.join(current_dir, "Patient_Summaries")  # Output directory for PDFs
 
 def check_files_exist(*file_paths):
@@ -29,7 +29,11 @@ def check_files_exist(*file_paths):
         print("\nThe following required files are missing:")
         for file in missing_files:
             print(f"  - {file} (Missing)")
-        print("\nProceeding with available files. Missing files may limit the analysis.\n")
+        print("\nPlease add the required files to the directory.")
+        
+        # Wait for user input after adding the files
+        for file in missing_files:
+            input(f"Please add '{file}' to the directory for a full analysis, or press Enter to proceed with limited analysis...")
     else:
         print("All required files are present.")
 
@@ -68,28 +72,6 @@ if not creatinine.empty:
 if not CKD_check.empty:
     CKD_check = preprocess_data(CKD_check)
 
-# Function to preprocess data
-def preprocess_data(df):
-    # Convert date columns to datetime
-    date_columns = [col for col in df.columns if 'Date' in col]
-    for date_col in date_columns:
-        df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
-    
-    # Convert Name..Dosage.and.Quantity to string
-    if 'Name, Dosage and Quantity' in df.columns:
-        df['Name, Dosage and Quantity'] = df['Name, Dosage and Quantity'].astype(str)
-    
-    # Fill missing HC.Number values forward
-    df['HC Number'] = df['HC Number'].replace("", np.nan).ffill()
-        
-    return df
-
-# Apply preprocessing to both datasets
-if not creatinine.empty:
-    creatinine = preprocess_data(creatinine)
-if not CKD_check.empty:
-    CKD_check = preprocess_data(CKD_check)
-
 # Function to select the closest 3-month prior creatinine value
 def select_closest_3m_prior_creatinine(row):
     three_month_threshold = timedelta(days=90)
@@ -114,7 +96,7 @@ if not creatinine.empty:
 if not CKD_check.empty:
     CKD_check['Creatinine_3m_prior'] = CKD_check.apply(select_closest_3m_prior_creatinine, axis=1)
 
-# Summarise medications by HC.Number, renaming the result to avoid conflicts
+# Summarise medications by HC Number, renaming the result to avoid conflicts
 def summarize_medications(df):
     return (
         df.groupby('HC Number')['Name, Dosage and Quantity']
@@ -139,7 +121,7 @@ if not creatinine.empty:
 if not CKD_check.empty:    
     CKD_check.dropna(subset=['Age'], inplace=True)
 
-# Merge CKD_check and Creatinine based on HC.Number, selecting only rows in Creatinine not present in CKD_check
+# Merge CKD_check and Creatinine based on HC Number, selecting only rows in Creatinine not present in CKD_check
 # Prepare merged data based on available files
 if not CKD_check.empty and not creatinine.empty:
     merged_data = pd.concat([CKD_check, creatinine[~creatinine['HC Number'].isin(CKD_check['HC Number'])]])
@@ -163,9 +145,9 @@ else:
     print("No data available for the selected mode.")
 
 # Optional: Further processing on the final merged dataset (if needed)
-if not os.path.exists(CKD_review):
-    raise FileNotFoundError(f"{CKD_review} not found.")
-CKD_review = pd.read_csv(CKD_review)
+if not os.path.exists(CKD_review_file):
+    raise FileNotFoundError(f"{CKD_review_file} not found.")
+CKD_review = pd.read_csv(CKD_review_file)
 
 print("Preprocessing data and performing CKD metrics calculations...")
 
@@ -173,21 +155,19 @@ print("Preprocessing data and performing CKD metrics calculations...")
 CKD_review['Date'] = pd.to_datetime(CKD_review['Date'], errors='coerce')
 CKD_review['Date.2'] = pd.to_datetime(CKD_review['Date.2'], errors='coerce')
 
-
-
 # Rename columns for clarity
 CKD_review.rename(columns={
     'Value': 'Creatinine', 'Value.1': 'ACR',
     'Value.3': 'Systolic_BP', 'Value.4': 'Diastolic_BP', 'Value.5': 'haemoglobin',
     'Value.6': 'HbA1c', 'Value.7': 'Potassium', 'Value.8': 'Phosphate',
-    'Value.9': 'Calcium', 'Value.10': 'Vitamin_D', 'Code Term' :'EMIS_CKD_Code'
+    'Value.9': 'Calcium', 'Value.10': 'Vitamin_D', 'Code Term': 'EMIS_CKD_Code'
 }, inplace=True)
 
-# Replace missing ACR values with 0.3
+# Replace missing ACR values with 0
 CKD_review['ACR'] = CKD_review['ACR'].fillna(0)
 
-# Handle empty date fields by replacing with "missing"
-for col in ['Date','Date.1', 'Date.2', 'Date.3', 'Date.4', 'Date.5', 'Date.6', 'Date.7', 'Date.8', 'Date.9', 'Date.10']:
+# Handle empty date fields by replacing with "Missing value"
+for col in ['Date', 'Date.1', 'Date.2', 'Date.3', 'Date.4', 'Date.5', 'Date.6', 'Date.7', 'Date.8', 'Date.9', 'Date.10']:
     CKD_review[col] = CKD_review[col].replace("", "Missing value")
 
 # Ensure numeric types for Age and Creatinine
@@ -195,12 +175,11 @@ CKD_review['Creatinine'] = pd.to_numeric(CKD_review['Creatinine'], errors='coerc
 CKD_review['Age'] = pd.to_numeric(CKD_review['Age'], errors='coerce')
 CKD_review['Gender'] = CKD_review['Gender'].astype('category')
 
-def calculate_eGFR(Age, Gender, Creatinine):
- if pd.isna(Age) or pd.isna(Gender) or pd.isna(Creatinine):
-     return np.nan  # or a default value if needed
-
 # eGFR Calculation function
 def calculate_eGFR(Age, Gender, Creatinine):
+    if pd.isna(Age) or pd.isna(Gender) or pd.isna(Creatinine):
+        return np.nan  # Return NaN if any input is missing
+
     Creatinine_mg_dL = Creatinine / 88.4
     is_female = Gender == 'Female'
     K = 0.7 if is_female else 0.9
@@ -216,7 +195,9 @@ CKD_review['eGFR_3m_prior'] = CKD_review.apply(lambda row: calculate_eGFR(row['A
 
 # CKD Stage classification
 def classify_CKD_stage(eGFR):
-    if eGFR >= 90:
+    if pd.isna(eGFR):
+        return None
+    elif eGFR >= 90:
         return "Stage 1"
     elif eGFR >= 60:
         return "Stage 2"
@@ -232,22 +213,91 @@ def classify_CKD_stage(eGFR):
 CKD_review['CKD_Stage'] = CKD_review['eGFR'].apply(classify_CKD_stage)
 CKD_review['CKD_Stage_3m'] = CKD_review['eGFR_3m_prior'].apply(classify_CKD_stage)
 
-# KFRE Risk calculation
-def calculate_KFRE(Age, sex, eGFR, ACR):
-    intercept_2yr = -0.220
-    intercept_5yr = -0.530
-    coef_age = 0.012
-    coef_sex = 0.220
-    coef_eGFR = -0.015
-    coef_ACR = 0.012
-    linear_predictor_2yr = intercept_2yr + (coef_age * Age) + (coef_sex * sex) + (coef_eGFR * eGFR) + (coef_ACR * ACR)
-    linear_predictor_5yr = intercept_5yr + (coef_age * Age) + (coef_sex * sex) + (coef_eGFR * eGFR) + (coef_ACR * ACR)
-    risk_2yr = 1 / (1 + np.exp(-linear_predictor_2yr))
-    risk_5yr = 1 / (1 + np.exp(-linear_predictor_5yr))
-    return risk_2yr * 100, risk_5yr * 100
+#KFRE calculation 
+# Constants and centering values
+Age_mean = 7.036
+Sex_mean = 0.5642
+eGFR_mean = 7.222
+ACR_ln_mean = 5.137
 
-# Apply KFRE Risk calculation
-CKD_review['risk_2yr'], CKD_review['risk_5yr'] = zip(*CKD_review.apply(lambda row: calculate_KFRE(row['Age'], int(row['Gender'] == "Male"), row['eGFR'], row['ACR']), axis=1))
+# Baseline survival rates
+Baseline_survival_5yr = 0.9570
+Baseline_survival_2yr = 0.9878
+
+# Coefficients for 5-year and 2-year risks
+coefficients = {
+    'Age_coef': -0.2201,
+    'Sex_coef': 0.2467,
+    'eGFR_coef': 0.5567,
+    'ACR_ln_coef': 0.4510
+}
+
+# Data Cleaning
+required_columns = ['Age', 'Gender', 'eGFR', 'ACR']
+missing_columns = [col for col in required_columns if col not in CKD_review.columns]
+if missing_columns:
+    raise ValueError(f"Missing required columns: {missing_columns}")
+
+CKD_review_clean = CKD_review.dropna(subset=required_columns)
+CKD_review_clean = CKD_review_clean[
+    (CKD_review_clean['Age'] > 0) &
+    (CKD_review_clean['eGFR'] > 0)
+].copy()
+
+# Map 'Gender' to binary 'sex' column and convert to float
+gender_mapping = {'Male': 1, 'Female': 0}
+
+# Handle unexpected or missing 'Gender' values by mapping them to NaN
+CKD_review_clean['sex'] = CKD_review_clean['Gender'].map(gender_mapping)
+
+# Drop rows with missing or invalid 'sex' values
+CKD_review_clean = CKD_review_clean.dropna(subset=['sex'])
+
+# Convert 'sex' column to float
+CKD_review_clean['sex'] = CKD_review_clean['sex'].astype(float)
+
+# Adjust ACR to avoid math domain error (log of zero or negative)
+CKD_review_clean['ACR'] = CKD_review_clean['ACR'].replace(0, 0.01)
+CKD_review_clean['ACR'] = CKD_review_clean['ACR'].fillna(0.01)
+
+# Centering variables
+CKD_review_clean['Age_centered'] = (CKD_review_clean['Age'] / 10) - Age_mean
+CKD_review_clean['Sex_centered'] = CKD_review_clean['sex'] - Sex_mean
+CKD_review_clean['eGFR_centered'] = (CKD_review_clean['eGFR'] / 5) - eGFR_mean
+CKD_review_clean['ACR_ln_centered'] = np.log(CKD_review_clean['ACR'] / 0.113) - ACR_ln_mean
+
+# Linear predictor L for 5-year risk
+CKD_review_clean['L_5yr'] = (
+    coefficients['Age_coef'] * CKD_review_clean['Age_centered'] +
+    coefficients['Sex_coef'] * CKD_review_clean['Sex_centered'] -
+    coefficients['eGFR_coef'] * CKD_review_clean['eGFR_centered'] +
+    coefficients['ACR_ln_coef'] * CKD_review_clean['ACR_ln_centered']
+)
+
+# Calculating the 5-year risk
+CKD_review_clean['risk_5yr'] = 1 - (Baseline_survival_5yr) ** np.exp(CKD_review_clean['L_5yr'])
+
+# Linear predictor L for 2-year risk
+CKD_review_clean['L_2yr'] = (
+    coefficients['Age_coef'] * CKD_review_clean['Age_centered'] +
+    coefficients['Sex_coef'] * CKD_review_clean['Sex_centered'] -
+    coefficients['eGFR_coef'] * CKD_review_clean['eGFR_centered'] +
+    coefficients['ACR_ln_coef'] * CKD_review_clean['ACR_ln_centered']
+)
+
+# Calculating the 2-year risk
+CKD_review_clean['risk_2yr'] = 1 - (Baseline_survival_2yr) ** np.exp(CKD_review_clean['L_2yr'])
+
+# Round eGFR and risk scores
+CKD_review_clean['eGFR'] = CKD_review_clean['eGFR'].round(0)
+if 'eGFR_3m_prior' in CKD_review_clean.columns:
+    CKD_review_clean['eGFR_3m_prior'] = CKD_review_clean['eGFR_3m_prior'].round(0)
+CKD_review_clean['risk_2yr'] = CKD_review_clean['risk_2yr']*100
+CKD_review_clean['risk_5yr'] = CKD_review_clean['risk_5yr']*100
+CKD_review_clean['risk_2yr'] = CKD_review_clean['risk_2yr'].round(2)
+CKD_review_clean['risk_5yr'] = CKD_review_clean['risk_5yr'].round(2)
+# Assign the cleaned DataFrame back to CKD_review for further processing
+CKD_review = CKD_review_clean
 
 # BP classification
 def classify_BP(systolic, diastolic):
@@ -267,12 +317,6 @@ def classify_BP(systolic, diastolic):
 # Classify BP
 CKD_review['BP_Classification'] = CKD_review.apply(lambda row: classify_BP(row['Systolic_BP'], row['Diastolic_BP']), axis=1)
 
-# Round eGFR, risk scores
-CKD_review['eGFR'] = CKD_review['eGFR'].round()
-CKD_review['eGFR_3m_prior'] = CKD_review['eGFR_3m_prior'].round()
-CKD_review['risk_2yr'] = CKD_review['risk_2yr'].round()
-CKD_review['risk_5yr'] = CKD_review['risk_5yr'].round()
-
 # CKD-ACR Grade Classification
 def classify_CKD_ACR_grade(ACR):
     if ACR <= 3:
@@ -284,14 +328,17 @@ def classify_CKD_ACR_grade(ACR):
 
 CKD_review['CKD_ACR'] = CKD_review['ACR'].apply(classify_CKD_ACR_grade)
 
+# Adjust CKD Stage based on conditions
 CKD_review['CKD_Stage'] = CKD_review.apply(
-    lambda row: "Normal Function" if row['ACR'] <= 3 and row['eGFR'] > 60 and row['Date'] != "missing" else row['CKD_Stage'], 
+    lambda row: "Normal Function" if row['ACR'] <= 3 and row['eGFR'] > 60 and row['Date'] != "Missing value" else row['CKD_Stage'], 
     axis=1
 )
 CKD_review['CKD_Stage'] = CKD_review.apply(
-    lambda row: "Normal/Stage1" if row['CKD_Stage'] == "Stage 1" and row['Date'] == "missing" else row['CKD_Stage'], 
+    lambda row: "Normal/Stage1" if row['CKD_Stage'] == "Stage 1" and row['Date'] == "Missing value" else row['CKD_Stage'], 
     axis=1
 )
+
+# Nephrology Referral
 CKD_review['Nephrology_Referral'] = CKD_review.apply(
     lambda row: "Indicated on the basis of risk calculation" 
                 if row['CKD_Stage'] in ["Stage 3a", "Stage 3b", "Stage 4", "Stage 5"] and row['risk_5yr'] >= 5 
@@ -299,18 +346,25 @@ CKD_review['Nephrology_Referral'] = CKD_review.apply(
     axis=1
 )
 CKD_review['Multidisciplinary_Care'] = CKD_review.apply(
-    lambda row: "Indicated on the basis of risk calculation" if row['CKD_Stage'] in ["Stage 3a", "Stage 3b", "Stage 4", "Stage 5"] and row['risk_2yr'] > 10 else "Not Indicated", 
+    lambda row: "Indicated on the basis of risk calculation" 
+                if row['CKD_Stage'] in ["Stage 3a", "Stage 3b", "Stage 4", "Stage 5"] and row['risk_2yr'] > 10 
+                else "Not Indicated", 
     axis=1
 )
 CKD_review['Modality_Education'] = CKD_review.apply(
-    lambda row: "Indicated on the basis of risk calculation" if row['CKD_Stage'] in ["Stage 3a", "Stage 3b", "Stage 4", "Stage 5"] and row['risk_2yr'] > 40 else "Not Indicated", 
+    lambda row: "Indicated on the basis of risk calculation" 
+                if row['CKD_Stage'] in ["Stage 3a", "Stage 3b", "Stage 4", "Stage 5"] and row['risk_2yr'] > 40 
+                else "Not Indicated", 
     axis=1
 )
+
 # Check for "Normal Function" in CKD_Stage_3m and overwrite CKD_Stage with "Acute Kidney Injury"
 CKD_review['CKD_Stage'] = CKD_review.apply(
     lambda row: "Acute Kidney Injury" if row['CKD_Stage_3m'] == "Normal Function" else row['CKD_Stage'],
     axis=1
 )
+
+# Anemia Classification
 def classify_anaemia(haemoglobin, gender):
     if pd.isna(haemoglobin):
         return None
@@ -336,57 +390,56 @@ def classify_anaemia(haemoglobin, gender):
         return None
 
 CKD_review['Anaemia_Classification'] = CKD_review.apply(lambda row: classify_anaemia(row['haemoglobin'], row['Gender']), axis=1)
+
+# BP Target and Flag
 CKD_review['BP_Target'] = CKD_review.apply(
     lambda row: "<130/80" if row['ACR'] >= 70 or not pd.isna(row['HbA1c']) else "<140/90", 
     axis=1
 )
 CKD_review['BP_Flag'] = CKD_review.apply(
-    lambda row: "Above Target" if ((row['Systolic_BP'] >= 140 or row['Diastolic_BP'] >= 90) and row['BP_Target'] == "<140/90") or 
-                               ((row['Systolic_BP'] >= 130 or row['Diastolic_BP'] >= 80) and row['BP_Target'] == "<130/80") 
-                               else "On Target", 
+    lambda row: "Above Target" if (
+        ((row['Systolic_BP'] >= 140 or row['Diastolic_BP'] >= 90) and row['BP_Target'] == "<140/90") or 
+        ((row['Systolic_BP'] >= 130 or row['Diastolic_BP'] >= 80) and row['BP_Target'] == "<130/80")
+    ) else "On Target", 
     axis=1
 )
-# Define flag for Potassium level Calcium and Phosphate levels based on clinical guidelines
+
+# Potassium, Calcium, and Phosphate Flags
 def classify_potassium(potassium):
-    """Classify potassium levels."""
     if pd.isna(potassium):
         return "Missing"
     elif potassium > 5.5:
-        return "Hyperkalemia"  # Above normal range
+        return "Hyperkalemia"
     elif potassium < 3.5:
-        return "Hypokalemia"   # Below normal range
+        return "Hypokalemia"
     else:
-        return "Normal"  # Within normal range
+        return "Normal"
 
 def classify_calcium(calcium):
-    """Classify calcium levels."""
     if pd.isna(calcium):
         return "Missing"
     elif calcium < 2.2:
-        return "Hypocalcemia"  # Below normal range
+        return "Hypocalcemia"
     elif calcium > 2.6:
-        return "Hypercalcemia"  # Above normal range
+        return "Hypercalcemia"
     else:
-        return "Normal"  # Within normal range
+        return "Normal"
 
 def classify_phosphate(phosphate):
-    """Classify phosphate levels."""
     if pd.isna(phosphate):
         return "Missing"
     elif phosphate < 0.8:
-        return "Hypophosphatemia"  # Below normal range
+        return "Hypophosphatemia"
     elif phosphate > 1.5:
-        return "Hyperphosphatemia"  # Above normal range
+        return "Hyperphosphatemia"
     else:
-        return "Normal"  # Within normal range
+        return "Normal"
 
-# Apply the classification functions to the creatinine DataFrame
 CKD_review['Potassium_Flag'] = CKD_review['Potassium'].apply(classify_potassium)
 CKD_review['Calcium_Flag'] = CKD_review['Calcium'].apply(classify_calcium)
 CKD_review['Phosphate_Flag'] = CKD_review['Phosphate'].apply(classify_phosphate)
 
 def classify_ckd_mbd(calcium_flag, phosphate_flag):
-    """Flag CKD-MBD risk based on calcium and phosphate levels."""
     return "Check CKD-MBD" if calcium_flag != "Normal" or phosphate_flag != "Normal" else "Normal"
 
 CKD_review['CKD_MBD_Flag'] = CKD_review.apply(
@@ -394,14 +447,16 @@ CKD_review['CKD_MBD_Flag'] = CKD_review.apply(
     axis=1
 )
 
+# Proteinuria Flag
 CKD_review['Proteinuria_Flag'] = CKD_review.apply(
     lambda row: "Persistent Proteinuria - Consider Referral" if row['ACR'] >= 3 and row['eGFR'] > 60 else "No Referral Needed", 
     axis=1
 )
 
+# Contraindicated Medications
 def get_contraindicated_drugs(eGFR):
     contraindicated = []
-    with open("contraindicated_drugs.csv", 'r') as file:
+    with open(contraindicated_drugs_file, 'r') as file:
         reader = csv.DictReader(file)
         for row in reader:
             if float(row['eGFR']) >= eGFR:
@@ -412,10 +467,13 @@ def check_contraindications(medications, contraindicated):
     prescribed_contraindicated = [drug for drug in contraindicated if re.search(r'\b' + re.escape(drug) + r'\b', medications, re.IGNORECASE)]
     return ", ".join(prescribed_contraindicated) if prescribed_contraindicated else "No contraindications"
 
-CKD_review['contraindicated_prescribed'] = CKD_review.apply(lambda row: check_contraindications(row['Medications'], get_contraindicated_drugs(row['eGFR'])), axis=1)
+CKD_review['contraindicated_prescribed'] = CKD_review.apply(
+    lambda row: check_contraindications(row['Medications'], get_contraindicated_drugs(row['eGFR'])), 
+    axis=1
+)
 
-# Define list of statin medications
-statins = ["Atorvastatin", "Simvastatin", "Rosuvastatin" ,"Pravastatin", "Fluvastatin", "Pitavastatin"]
+# Statin Recommendation
+statins = ["Atorvastatin", "Simvastatin", "Rosuvastatin", "Pravastatin", "Fluvastatin", "Pitavastatin"]
 
 CKD_review['Statin_Recommendation'] = CKD_review.apply(
     lambda row: (
@@ -426,9 +484,8 @@ CKD_review['Statin_Recommendation'] = CKD_review.apply(
     axis=1
 )
 
-# Recommended medications based on eGFR level with examples included
+# Recommended Medications
 def recommended_medications(eGFR):
-    """Recommend medications based on eGFR level with examples included."""
     if eGFR < 15:
         return [
             "Erythropoiesis-stimulating agents for anaemia (e.g., Epoetin alfa, Darbepoetin alfa, Methoxy polyethylene glycol-epoetin beta)",
@@ -447,49 +504,45 @@ def recommended_medications(eGFR):
     elif eGFR < 45:
         return [
             "Statin (e.g., Atorvastatin, Rosuvastatin, Simvastatin)",
-            "ACE inhibitors (e.g., Ramipril, Enalapril, Lisinopril) or ARBs (e.g., Losartan, Valsartan, Candesartan) (if not contraindicated) for proteinuria",
+            "ACE inhibitors (if not contraindicated) for proteinuria",
             "Phosphate binders (e.g., Sevelamer, Lanthanum carbonate, Calcium acetate)"
         ]
     elif eGFR < 60:
         return [
             "Statin (e.g., Atorvastatin, Rosuvastatin, Simvastatin)",
-            "ACE inhibitors (e.g., Ramipril, Enalapril, Lisinopril) or ARBs (e.g., Losartan, Valsartan, Candesartan) (if not contraindicated) for proteinuria",
+            "ACE inhibitors (if not contraindicated) for proteinuria",
             "Oral iron supplement (e.g., Ferrous sulfate, Ferrous gluconate, Ferrous fumarate) if needed"
         ]
     else:
         return [
             "Statin (e.g., Atorvastatin, Rosuvastatin, Simvastatin)",
-            "ACE inhibitors (e.g., Ramipril, Enalapril, Lisinopril) or ARBs (e.g., Losartan, Valsartan, Candesartan) (if not contraindicated) for proteinuria (if indicated)",
+            "ACE inhibitors (if not contraindicated) for proteinuria (if indicated)",
             "Lifestyle modifications"
         ]
 
 def check_recommendations(medications, recommended):
-    """Check recommended medications, excluding any example if already present in Medications."""
     recommended_missing = []
     
     for drug in recommended:
-        # Split the drug into examples by "(" and "," to capture individual names (ignoring parentheses content)
         examples = re.split(r"[(),]", drug)
-        # Remove empty strings and strip extra whitespace
         examples = [example.strip() for example in examples if example.strip()]
         
-        # Check if any example is in the medications list
         if not any(re.search(r'\b' + re.escape(example) + r'\b', medications, re.IGNORECASE) for example in examples):
-            # Append the full recommendation if none of the examples are in medications
             recommended_missing.append(drug)
 
-    # Join the missing recommendations into a single string
     return ", ".join(recommended_missing)
 
-# Applying the function to suggest medications based on eGFR
 CKD_review['Recommended_Medications'] = CKD_review.apply(
     lambda row: check_recommendations(row['Medications'], recommended_medications(row['eGFR'])), 
     axis=1
 )
 
+# HbA1c Target
 CKD_review['HbA1c_Target'] = CKD_review['HbA1c'].apply(
-    lambda x: "Adjust Diabetes Management" if x > 53 else "On Target" if pd.notna(x) else None
+    lambda x: "Adjust Diabetes Management" if pd.notna(x) and x > 53 else "On Target" if pd.notna(x) else None
 )
+
+# Lifestyle Advice
 def lifestyle_advice(ckd_stage):
     if ckd_stage in ["Stage 1", "Stage 2"]:
         return (
@@ -515,16 +568,18 @@ def lifestyle_advice(ckd_stage):
             "Avoid over-the-counter NSAIDs and consult a healthcare provider for any new symptoms."
         )
 
-
 CKD_review['Lifestyle_Advice'] = CKD_review['CKD_Stage'].apply(lifestyle_advice)
+
+# Dose Adjustment
 def drug_adjustment(eGFR):
     adjustments = []
-    with open("drug_adjustment.csv", 'r') as file:
+    with open(drug_adjustment_file, 'r') as file:
         reader = csv.DictReader(file)
         for row in reader:
             if float(row['eGFR']) >= eGFR:
                 adjustments.append(row['drug_adjustment'])
     return adjustments
+
 def check_dose_adjustments(medications, adjustment_list):
     prescribed_adjustments = [drug for drug in adjustment_list if drug in medications]
     return ", ".join(prescribed_adjustments) if prescribed_adjustments else "No adjustments needed"
@@ -533,12 +588,18 @@ CKD_review['dose_adjustment_prescribed'] = CKD_review.apply(
     lambda row: check_dose_adjustments(row['Medications'], drug_adjustment(row['eGFR'])), 
     axis=1
 )
+
+# Anaemia Flag
 CKD_review['Anaemia_Flag'] = CKD_review['haemoglobin'].apply(
-    lambda x: "Consider ESA/Iron" if x < 110 else "No Action Needed"
+    lambda x: "Consider ESA/Iron" if pd.notna(x) and x < 110 else "No Action Needed"
 )
+
+# Vitamin D Flag
 CKD_review['Vitamin_D_Flag'] = CKD_review['Vitamin_D'].apply(
     lambda x: "Vitamin D Deficiency" if pd.notna(x) and x < 30 else "Normal"
 )
+
+# All Contraindications
 def check_all_contraindications(medications, eGFR):
     contraindicated = get_contraindicated_drugs(eGFR)
     contraindicated_in_meds = [drug for drug in contraindicated if drug in medications]
@@ -548,25 +609,24 @@ CKD_review['All_Contraindications'] = CKD_review.apply(
     lambda row: check_all_contraindications(row['Medications'], row['eGFR']), 
     axis=1
 )
-CKD_review['eGFR'] = CKD_review['eGFR'].round(0)
-CKD_review['eGFR_3m_prior'] = CKD_review['eGFR_3m_prior'].round(0)
-CKD_review['risk_2yr'] = CKD_review['risk_2yr'].round(0)
-CKD_review['risk_5yr'] = CKD_review['risk_5yr'].round(0)
 
 # Rename columns for clarity
 CKD_review.rename(columns={
-    'Date': 'Sample_Date','Date.1': 'Sample_Date1', 'Date.2': 'Sample_Date2', 'Date.3': 'Sample_Date3', 
+    'Date': 'Sample_Date', 'Date.1': 'Sample_Date1', 'Date.2': 'Sample_Date2', 'Date.3': 'Sample_Date3', 
     'Date.4': 'Sample_Date4', 'Date.5': 'Sample_Date5', 'Date.6': 'Sample_Date6', 
     'Date.7': 'Sample_Date7', 'Date.8': 'Sample_Date8', 'Date.9': 'Sample_Date9', 
-    'Date.10': 'Sample_Date10', 'Date.11': 'Sample_Date11','HC Number' :'HC_Number'
+    'Date.10': 'Sample_Date10', 'Date.11': 'Sample_Date11', 'HC Number': 'HC_Number'
 }, inplace=True)
 
-# Convert HC_Number to integer after forward-filling
-CKD_review['HC_Number'] = CKD_review['HC_Number'].astype(int)
+# Convert HC_Number to integer safely
+CKD_review['HC_Number'] = pd.to_numeric(CKD_review['HC_Number'], errors='coerce').astype('Int64')
+
 print("Data preprocessing and metrics calculation complete.")
 print("Writing Output Data ...")
+
 # Save output to CSV
-CKD_review.to_csv(f"eGFR_check_{pd.Timestamp.today().date()}.csv", index=False)
+output_file_name = f"eGFR_check_{pd.Timestamp.today().date()}.csv"
+CKD_review.to_csv(output_file_name, index=False)
 
 def is_homebrew_installed():
     """Check if Homebrew is installed on the system."""
