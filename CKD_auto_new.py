@@ -4,9 +4,7 @@ import os
 import re
 import csv
 import shutil
-import math
 import requests  # type: ignore
-import zipfile
 from datetime import datetime, timedelta
 import pdfkit  # type: ignore
 from jinja2 import Environment, FileSystemLoader  # type: ignore
