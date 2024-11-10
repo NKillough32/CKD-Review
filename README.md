@@ -35,7 +35,11 @@ Or clone the repository:
 3) Copy code: git clone https://github.com/NKillough32/CKD-Review.git  
 4) Move EMIS downloads Creatinine.csv, CKD_check.csv into the same directory e.g. /CKD-Review.
 
-This program will allow you to review those coded with CKD on the EMIS system and those that have not been coded. This can be achieved by placing only one EMIS export into the CKD-review folder. 
+This program enables the review of patients with potential or confirmed Chronic Kidney Disease (CKD) within the EMIS system. It offers three analysis options:  
+1) Patients with Two eGFR Results Below 90: Identifies individuals with at least two eGFR measurements under 90 mL/min/1.73m² alongside signs of kidney dysfunction, even if not formally coded as CKD.
+2) Patients Coded as CKD: Focuses on reviewing those already coded with CKD within EMIS to ensure accurate monitoring and management.
+3) Combined Analysis: Merges data from both groups, providing a comprehensive view of individuals with either a CKD diagnosis or lab evidence of kidney dysfunction.  
+This approach enhances CKD case identification, supporting proactive management for both coded and potential cases, aligned with NICE guidance for optimal patient care.
 
 Running the Report Generator:  
 Execute NephroPath.exe, which will read the CSV files and create individualized CKD staging reports.
