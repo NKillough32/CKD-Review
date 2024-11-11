@@ -1,3 +1,13 @@
+import pandas as pd  # type: ignore
+import numpy as np  # type: ignore
+import os
+import re
+import csv
+import shutil
+from datetime import datetime, timedelta
+import pdfkit  # type: ignore
+from jinja2 import Environment, FileSystemLoader  # type: ignore
+
 # Get the current working directory
 current_dir = os.getcwd()
 
