@@ -211,8 +211,17 @@ def classify_CKD_stage(eGFR):
 CKD_review['CKD_Stage'] = CKD_review['eGFR'].apply(classify_CKD_stage)
 CKD_review['CKD_Stage_3m'] = CKD_review['eGFR_3m_prior'].apply(classify_CKD_stage)
 
-#KFRE calculation 
-# Constants and centering values
+# Step 1: Identify rows with missing data in any required column
+required_columns = ['Age', 'Gender', 'eGFR', 'ACR']
+missing_data_df = CKD_review[CKD_review[required_columns].isnull().any(axis=1)]
+
+# Save subjects with missing data to a separate CSV
+missing_data_df.to_csv("missing_data_subjects.csv", index=False)
+
+# Remove subjects with missing data from the main DataFrame for KFRE calculations
+CKD_review_complete = CKD_review.dropna(subset=required_columns).copy()
+
+# Step 2: Constants and Centering Values
 Age_mean = 7.036
 Sex_mean = 0.5642
 eGFR_mean = 7.222
@@ -230,72 +239,57 @@ coefficients = {
     'ACR_ln_coef': 0.4510
 }
 
-# Data Cleaning
-required_columns = ['Age', 'Gender', 'eGFR', 'ACR']
-missing_columns = [col for col in required_columns if col not in CKD_review.columns]
-if missing_columns:
-    raise ValueError(f"Missing required columns: {missing_columns}")
-
-CKD_review_clean = CKD_review.dropna(subset=required_columns)
-CKD_review_clean = CKD_review_clean[
-    (CKD_review_clean['Age'] > 0) &
-    (CKD_review_clean['eGFR'] > 0)
-].copy()
-
+# Step 3: Process Complete Data for KFRE Calculations
 # Map 'Gender' to binary 'sex' column and convert to float
 gender_mapping = {'Male': 1, 'Female': 0}
+CKD_review_complete['sex'] = CKD_review_complete['Gender'].map(gender_mapping)
 
-# Handle unexpected or missing 'Gender' values by mapping them to NaN
-CKD_review_clean['sex'] = CKD_review_clean['Gender'].map(gender_mapping)
+# Drop rows with unexpected or missing 'Gender' values
+CKD_review_complete = CKD_review_complete.dropna(subset=['sex'])
 
-# Drop rows with missing or invalid 'sex' values
-CKD_review_clean = CKD_review_clean.dropna(subset=['sex'])
-
-# Convert 'sex' column to float
-CKD_review_clean['sex'] = CKD_review_clean['sex'].astype(float)
+# Ensure 'sex' is a float
+CKD_review_complete['sex'] = CKD_review_complete['sex'].astype(float)
 
 # Adjust ACR to avoid math domain error (log of zero or negative)
-CKD_review_clean['ACR'] = CKD_review_clean['ACR'].replace(0, 0.01)
-CKD_review_clean['ACR'] = CKD_review_clean['ACR'].fillna(0.01)
+CKD_review_complete['ACR'] = CKD_review_complete['ACR'].replace(0, 0.01)
 
 # Centering variables
-CKD_review_clean['Age_centered'] = (CKD_review_clean['Age'] / 10) - Age_mean
-CKD_review_clean['Sex_centered'] = CKD_review_clean['sex'] - Sex_mean
-CKD_review_clean['eGFR_centered'] = (CKD_review_clean['eGFR'] / 5) - eGFR_mean
-CKD_review_clean['ACR_ln_centered'] = np.log(CKD_review_clean['ACR'] / 0.113) - ACR_ln_mean
+CKD_review_complete['Age_centered'] = (CKD_review_complete['Age'] / 10) - Age_mean
+CKD_review_complete['Sex_centered'] = CKD_review_complete['sex'] - Sex_mean
+CKD_review_complete['eGFR_centered'] = (CKD_review_complete['eGFR'] / 5) - eGFR_mean
+CKD_review_complete['ACR_ln_centered'] = np.log(CKD_review_complete['ACR'] / 0.113) - ACR_ln_mean
 
-# Linear predictor L for 5-year risk
-CKD_review_clean['L_5yr'] = (
-    coefficients['Age_coef'] * CKD_review_clean['Age_centered'] +
-    coefficients['Sex_coef'] * CKD_review_clean['Sex_centered'] -
-    coefficients['eGFR_coef'] * CKD_review_clean['eGFR_centered'] +
-    coefficients['ACR_ln_coef'] * CKD_review_clean['ACR_ln_centered']
+# Linear predictor L for 5-year and 2-year risks
+CKD_review_complete['L_5yr'] = (
+    coefficients['Age_coef'] * CKD_review_complete['Age_centered'] +
+    coefficients['Sex_coef'] * CKD_review_complete['Sex_centered'] -
+    coefficients['eGFR_coef'] * CKD_review_complete['eGFR_centered'] +
+    coefficients['ACR_ln_coef'] * CKD_review_complete['ACR_ln_centered']
 )
+CKD_review_complete['risk_5yr'] = 1 - (Baseline_survival_5yr) ** np.exp(CKD_review_complete['L_5yr'])
 
-# Calculating the 5-year risk
-CKD_review_clean['risk_5yr'] = 1 - (Baseline_survival_5yr) ** np.exp(CKD_review_clean['L_5yr'])
-
-# Linear predictor L for 2-year risk
-CKD_review_clean['L_2yr'] = (
-    coefficients['Age_coef'] * CKD_review_clean['Age_centered'] +
-    coefficients['Sex_coef'] * CKD_review_clean['Sex_centered'] -
-    coefficients['eGFR_coef'] * CKD_review_clean['eGFR_centered'] +
-    coefficients['ACR_ln_coef'] * CKD_review_clean['ACR_ln_centered']
+CKD_review_complete['L_2yr'] = (
+    coefficients['Age_coef'] * CKD_review_complete['Age_centered'] +
+    coefficients['Sex_coef'] * CKD_review_complete['Sex_centered'] -
+    coefficients['eGFR_coef'] * CKD_review_complete['eGFR_centered'] +
+    coefficients['ACR_ln_coef'] * CKD_review_complete['ACR_ln_centered']
 )
+CKD_review_complete['risk_2yr'] = 1 - (Baseline_survival_2yr) ** np.exp(CKD_review_complete['L_2yr'])
 
-# Calculating the 2-year risk
-CKD_review_clean['risk_2yr'] = 1 - (Baseline_survival_2yr) ** np.exp(CKD_review_clean['L_2yr'])
+# Convert to percentages and round
+CKD_review_complete['risk_2yr'] = (CKD_review_complete['risk_2yr'] * 100).round(2)
+CKD_review_complete['risk_5yr'] = (CKD_review_complete['risk_5yr'] * 100).round(2)
 
-# Round eGFR and risk scores
-CKD_review_clean['eGFR'] = CKD_review_clean['eGFR'].round(0)
-if 'eGFR_3m_prior' in CKD_review_clean.columns:
-    CKD_review_clean['eGFR_3m_prior'] = CKD_review_clean['eGFR_3m_prior'].round(0)
-CKD_review_clean['risk_2yr'] = CKD_review_clean['risk_2yr']*100
-CKD_review_clean['risk_5yr'] = CKD_review_clean['risk_5yr']*100
-CKD_review_clean['risk_2yr'] = CKD_review_clean['risk_2yr'].round(2)
-CKD_review_clean['risk_5yr'] = CKD_review_clean['risk_5yr'].round(2)
-# Assign the cleaned DataFrame back to CKD_review for further processing
-CKD_review = CKD_review_clean
+# Step 4: Add Error Messages for Missing KFRE Calculations in missing_data_df
+missing_data_df['risk_5yr'] = "Error: Missing required values"
+missing_data_df['risk_2yr'] = "Error: Missing required values"
+missing_data_df['CKD_Stage'] = "Error: Insufficient data"
+
+# Step 5: Combine Complete and Missing DataFrames
+final_CKD_review = pd.concat([CKD_review_complete, missing_data_df], ignore_index=True)
+
+# Assign the final DataFrame back to CKD_review for further processing
+CKD_review = final_CKD_review
 
 # BP classification
 def classify_BP(systolic, diastolic):
@@ -795,6 +789,7 @@ def move_ckd_files(date_folder):
     # Construct file names based on today's date
     egfr_file = f"eGFR_check_{pd.Timestamp.today().date()}.csv"
     ckd_review_file = "CKD_review.csv"  # Static filename for CKD_review
+    missing_KFRE_file = "missing_data_subjects.csv"
 
     # Construct source and destination paths for both files
     egfr_source = os.path.join(current_dir, egfr_file)
@@ -802,6 +797,9 @@ def move_ckd_files(date_folder):
     
     ckd_source = os.path.join(current_dir, ckd_review_file)
     ckd_destination = os.path.join(date_folder, ckd_review_file)
+
+    missing_source = os.path.join(current_dir, missing_KFRE_file)
+    missing_destination = os.path.join(date_folder, missing_KFRE_file)
 
     # Move the eGFR file
     try:
@@ -816,6 +814,13 @@ def move_ckd_files(date_folder):
         print(f"Moved {ckd_review_file} to {date_folder}")
     except Exception as e:
         print(f"Failed to move {ckd_review_file}: {e}")
+
+            # Move the missing_KFRE file
+    try:
+        shutil.move(missing_source, missing_destination)
+        print(f"Moved {missing_KFRE_file} to {date_folder}")
+    except Exception as e:
+        print(f"Failed to move {missing_KFRE_file}: {e}")
 
 # Run the functions in sequence
 date_folder = generate_patient_pdf(data)  # Generate PDFs and capture the returned date folder path
