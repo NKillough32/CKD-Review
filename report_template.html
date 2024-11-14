@@ -37,7 +37,7 @@
   <li><strong>Albumin-Creatinine Ratio (ACR):</strong> 
     <span class="{{ 'critical' if patient.ACR > 70 else 'caution' if 30 <= patient.ACR <= 70 else '' }}">
       {{ patient.ACR }} mg/mmol
-      {% if patient.ACR > 70 %} ⚠️ {% elif 30 <= patient.ACR <= 70 %} ⚠️ {% endif %}
+      {% if patient.ACR > 70 %} {% elif 30 <= patient.ACR <= 70 %} {% endif %}
     </span>
   </li>
     <li><strong>Creatinine:</strong>
@@ -45,7 +45,7 @@
       <li><strong>Current:</strong> 
         <span class="{{ 'critical' if patient.Creatinine > 150 else 'caution' if 100 <= patient.Creatinine <= 150 else '' }}">
           {{ patient.Creatinine | default(0, true) | int }} µmol/L
-          {% if patient.Creatinine > 150 %} ⚠️ {% elif 100 <= patient.Creatinine <= 150 %} ⚠️ {% endif %}
+          {% if patient.Creatinine > 150 %} {% elif 100 <= patient.Creatinine <= 150 %} {% endif %}
         </span>
         | <strong>Date:</strong> {{ patient.Sample_Date | default("N/A", true) }}
       </li>
@@ -60,7 +60,7 @@
       <li><strong>Current:</strong>
         <span class="{{ 'critical' if patient.eGFR < 30 else 'caution' if 30 <= patient.eGFR <= 60 else '' }}">
           {{ patient.eGFR | default(0, true) | int }} ml/min/1.73m<sup>2</sup>
-          {% if patient.eGFR < 30 %} ⚠️ {% elif 30 <= patient.eGFR <= 60 %} ⚠️ {% endif %}
+          {% if patient.eGFR < 30 %} {% elif 30 <= patient.eGFR <= 60 %} {% endif %}
         </span>
         | <strong>Date:</strong> {{ patient.Sample_Date }}
       </li>
