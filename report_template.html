@@ -10,6 +10,9 @@
     table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
     th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
     .center { text-align: center; }
+    /* Alert color styles */
+    .critical { color: red; font-weight: bold; }
+    .caution { color: orange; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -28,24 +31,45 @@
   <li><strong>NHS Number:</strong> {{ patient.HC_Number | default(0, true) | int  }}</li>
   <li><strong>Age:</strong> {{ patient.Age | default(0, true) | int }} | <strong>Gender:</strong> {{ patient.Gender | default("N/A", true) }}</li>
   
-</ul>
-
 <h3>CKD Overview</h3>
 <ul>
   <li><strong>Stage:</strong> {{ patient.CKD_Stage }} | <strong>ACR criteria:</strong> {{ patient.CKD_ACR }}</li>
-  <li><strong>Albumin-Creatinine Ratio (ACR):</strong> {{ patient.ACR }} mg/mmol</li>
-  <li><strong>Creatinine:</strong>
+  <li><strong>Albumin-Creatinine Ratio (ACR):</strong> 
+    <span class="{{ 'critical' if patient.ACR > 70 else 'caution' if 30 <= patient.ACR <= 70 else '' }}">
+      {{ patient.ACR }} mg/mmol
+      {% if patient.ACR > 70 %} ⚠️ {% elif 30 <= patient.ACR <= 70 %} ⚠️ {% endif %}
+    </span>
+  </li>
+    <li><strong>Creatinine:</strong>
     <ul>
-      <li><strong>Current:</strong> {{ patient.Creatinine | default(0, true) | int }} µmol/L | <strong>Date:</strong> {{ patient.Sample_Date | default("N/A", true) }}</li>
-      <li><strong>3 Months Prior:</strong> {{ patient.Creatinine_3m_prior | default(0, true) | int }} µmol/L | Date: {{ patient.Sample_Date2 | default("N/A", true) }}</li>
-    </ul>
-  </li> 
-  <li><strong>eGFR:</strong>
-    <ul>
-      <li><strong>Current:</strong> {{ patient.eGFR | default(0, true) | int  }} ml/min/1.73m2 | <strong>Date:</strong> {{ patient.Sample_Date }}</li>
-      <li><strong>3 Months Prior:</strong> {{ patient.eGFR_3m_prior | default(0, true) | int }} ml/min/1.73m2 | Date: {{ patient.Sample_Date2 }}</li>
+      <li><strong>Current:</strong> 
+        <span class="{{ 'critical' if patient.Creatinine > 150 else 'caution' if 100 <= patient.Creatinine <= 150 else '' }}">
+          {{ patient.Creatinine | default(0, true) | int }} µmol/L
+          {% if patient.Creatinine > 150 %} ⚠️ {% elif 100 <= patient.Creatinine <= 150 %} ⚠️ {% endif %}
+        </span>
+        | <strong>Date:</strong> {{ patient.Sample_Date | default("N/A", true) }}
+      </li>
+      <li><strong>3 Months Prior:</strong> 
+        {{ patient.Creatinine_3m_prior | default(0, true) | int }} µmol/L | Date: {{ patient.Sample_Date2 | default("N/A", true) }}
+      </li>
     </ul>
   </li>
+  
+  <li><strong>eGFR:</strong>
+    <ul>
+      <li><strong>Current:</strong>
+        <span class="{{ 'critical' if patient.eGFR < 30 else 'caution' if 30 <= patient.eGFR <= 60 else '' }}">
+          {{ patient.eGFR | default(0, true) | int }} ml/min/1.73m<sup>2</sup>
+          {% if patient.eGFR < 30 %} ⚠️ {% elif 30 <= patient.eGFR <= 60 %} ⚠️ {% endif %}
+        </span>
+        | <strong>Date:</strong> {{ patient.Sample_Date }}
+      </li>
+      <li><strong>3 Months Prior:</strong> 
+        {{ patient.eGFR_3m_prior | default(0, true) | int }} ml/min/1.73m<sup>2</sup> | Date: {{ patient.Sample_Date2 }}
+      </li>
+    </ul>
+  </li>
+</ul>
   <li><strong>Anaemia Overview:</strong>
     <ul>
       <li><strong>Haemoglobin:</strong> {{ patient.haemoglobin | default(0, true) | int }} g/L | <strong>Date:</strong> {{ patient.Sample_Date5 }}</li>
