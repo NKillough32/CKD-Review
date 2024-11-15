@@ -183,12 +183,13 @@
 <ul>
   <li><strong>Current Medication:</strong> {{ patient.Medications }}</li>
   <li><strong>Review Medications:</strong> 
-    <span class="{{ 'critical' if patient.dose_adjustment_prescribed and patient.dose_adjustment_prescribed != 'No adjustments needed'' }}">
+    <span class="{{ 'critical' if patient.dose_adjustment_prescribed and patient.dose_adjustment_prescribed != 'No adjustments needed' }}">
       {{ patient.dose_adjustment_prescribed or "None" }}
     </span>
   </li>
   <li><strong>Contraindicated Medications:</strong> 
-    <span class="{{ 'critical' if patient.contraindicated_prescribed and patient.contraindicated_prescribed != 'No contraindications'' }}">
+    <span class="{{ 'critical' if patient.contraindicated_prescribed and patient.contraindicated_prescribed != 'No contraindications' }}">
+
       {{ patient.contraindicated_prescribed or "None" }}
     </span>
   </li>
