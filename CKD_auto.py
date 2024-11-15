@@ -178,7 +178,7 @@ def calculate_eGFR(Age, Gender, Creatinine):
     if pd.isna(Age) or pd.isna(Gender) or pd.isna(Creatinine):
         return np.nan  # Return NaN if any input is missing
 
-    Creatinine_mg_dL = Creatinine / 88.4
+    Creatinine_mg_dL = Creatinine / 88.42
     is_female = Gender == 'Female'
     K = 0.7 if is_female else 0.9
     alpha = -0.241 if is_female else -0.302
