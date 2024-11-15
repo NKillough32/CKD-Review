@@ -61,7 +61,7 @@
   <li><strong>eGFR:</strong>
     <ul>
       <li><strong>Current:</strong>
-        <span class="{{ 'low' if patient.eGFR < 60 else 'caution' if 30 <= patient.eGFR <= 60 else 'critical' if patient.eGFR < 30 else '' }}">
+        <span class="{{ 'critical' if patient.eGFR < 30 else 'caution' if 30 <= patient.eGFR <= 59 else 'low' if 60 <= patient.eGFR <= 89 else '' }}">
           {{ patient.eGFR | default(0, true) | int }} ml/min/1.73m<sup>2</sup>
           {% if patient.eGFR < 30 %} {% elif 30 <= patient.eGFR <= 60 %} {% endif %}
         </span>
