@@ -38,9 +38,8 @@
 <ul>
   <li><strong>Stage:</strong> {{ patient.CKD_Stage }} | <strong>ACR criteria:</strong> {{ patient.CKD_ACR }}</li>
   <li><strong>Albumin-Creatinine Ratio (ACR):</strong> 
-    <span class="{{ 'critical' if patient.ACR > 70 else 'caution' if 30 <= patient.ACR <= 70 else '' }}">
+    <span class="{{ 'critical' if patient.ACR >= 30 else 'caution' if patient.ACR > 3 else '' }}">
       {{ patient.ACR }} mg/mmol
-      {% if patient.ACR > 70 %} {% elif 30 <= patient.ACR <= 70 %} {% endif %}
     </span>
   </li>
     <li><strong>Creatinine:</strong>
@@ -207,7 +206,7 @@
 <h3>Diabetes and HbA1c Management</h3>
 <ul>
   <li><strong>HbA1c Level:</strong> 
-    <span class="{{ 'critical' if patient.HbA1c > 75 else 'caution' if 53 <= patient.HbA1c <= 75 else 'low' if patient.HbA1c < 48 else '' }}">
+    <span class="{{ 'critical' if patient.HbA1c > 75 else 'caution' if 53 <= patient.HbA1c <= 75 else 'low' if 48 <= patient.HbA1c < 53 else 'safe' if patient.HbA1c < 48 else '' }}">
       {{ patient.HbA1c | default(0, true) | int }} mmol/mol
     </span> 
     | <strong>Date:</strong> {{ patient.Sample_Date6 }}
