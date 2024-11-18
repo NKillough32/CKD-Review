@@ -27,7 +27,7 @@ Save the CKD coded data as CKD_check.csv in the project directory.
 
 Setting Up:  
 1) Download the repository to your Desktop from https://github.com/NKillough32/CKD-Review/archive/refs/heads/main.zip
-2) Move the Move EMIS downloads Creatinine.csv, CKD_check.csv into the same directory e.g. /CKD-Review.  
+2) Move the EMIS downloads Creatinine.csv, CKD_check.csv into the same directory e.g. /CKD-Review.  
 
 Or clone the repository:  
 1) bash  "C:\Windows\System32\bash.exe"
