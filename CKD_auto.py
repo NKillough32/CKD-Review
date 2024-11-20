@@ -742,8 +742,16 @@ def generate_patient_pdf(data, template_dir=current_dir, output_dir="Patient_Sum
         html_content = template.render(patient=patient)
         file_name = os.path.join(review_folder, f"Patient_Summary_{patient['HC_Number']}.pdf")
         
+        options = {
+        "footer-center": "Page [page] of [toPage]",  # Enables dynamic page numbering
+        "margin-bottom": "20mm",  # Ensures space for the footer
+        "footer-font-size": "10",  # Adjusts font size for readability
+        "enable-smart-shrinking": "",  # Ensures the layout adjusts dynamically
+         "no-outline": None  # Prevents generation of outlines in the PDF
+        }
+        
         # Generate and save the PDF
-        pdfkit.from_string(html_content, file_name, configuration=config)
+        pdfkit.from_string(html_content, file_name, configuration=config,options=options)
         
         # Print success message after saving report
         print(f"Report saved as Patient_Summary_{patient['HC_Number']}.pdf in {review_folder}")
