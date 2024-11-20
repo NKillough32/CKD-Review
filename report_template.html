@@ -4,18 +4,45 @@
   <meta charset="UTF-8">
   <title> Surgery Name | Chronic Kidney Disease Review</title>
   <style>
-    body { font-family: Arial, sans-serif; }
-    h1, h2 { text-align: center; }
-    h3 { text-align: left; }
+    body { font-family: Arial, sans-serif; 
+      counter-reset: page;}
+    h1, h2 { text-align: center; 
+      page-break-after: avoid;}
+    h3 { text-align: left;
+      page-break-after: avoid;}
     table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
     th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
     .center { text-align: center; }
+    .boxed {
+      border: 2px solid #ccc; /* Light grey border */
+      padding: 15px;          /* Add padding inside the box */
+      margin-bottom: 20px;    /* Add space below the box */
+      border-radius: 8px;     /* Rounded corners */
+      background-color: #f9f9f9; /* Light background color for contrast */
+      /* Prevent page breaks inside the box */
+      page-break-inside: avoid; /* For older browsers */
+      break-inside: avoid;      /* For modern browsers */}
     /* Alert color styles */
-    .critical { color: red; font-weight: bold; }
-    .caution { color: orange; font-weight: bold; }
-    .safe {color: green; font-weight: bold; }
-    .low { color: blue; font-weight: bold; }
-  </style>
+    .critical { color: red; font-weight: bold; background-color: #f8d7da; }
+    .caution { color: orange; font-weight: bold; background-color: #fff3cd; }
+    .safe { color: green; font-weight: bold; background-color: #d4edda; }
+    .low { color: blue; font-weight: bold; background-color: #d1ecf1; }
+    /* Prevent page breaks inside the container */
+    .no-page-break {
+    page-break-inside: avoid; /* For older browsers */
+     break-inside: avoid;      /* For modern browsers */
+    }
+    /* Page number styling */
+    .footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 12px;
+      color: #555;
+    }
+</style>
 </head>
 <body>
 <!--EDIT THE NAME HERE -->
@@ -27,205 +54,218 @@
 </div>
 
 <h2>Results Overview</h2>
-
-<h3>Patient Information</h3>
-<ul>
-  <li><strong>NHS Number:</strong> {{ patient.HC_Number | default(0, true) | int  }}</li>
-  <li><strong>Age:</strong> {{ patient.Age | default(0, true) | int }} | <strong>Gender:</strong> {{ patient.Gender | default("N/A", true) }}</li>
-</ul>
-  
-<h3>CKD Overview</h3>
-<ul>
-  <li><strong>Stage:</strong> {{ patient.CKD_Stage }} | <strong>ACR criteria:</strong> {{ patient.CKD_ACR }}</li>
-  <li><strong>Albumin-Creatinine Ratio (ACR):</strong> 
-    <span class="{{ 'critical' if patient.ACR >= 30 else 'caution' if patient.ACR > 3 else '' }}">
-      {{ patient.ACR }} mg/mmol
-    </span>
-  </li>
-    <li><strong>Creatinine:</strong>
-    <ul>
-      <li><strong>Current:</strong> 
-        <span class="{{ 'critical' if patient.Creatinine > 150 else 'caution' if 100 <= patient.Creatinine <= 150 else '' }}">
-          {{ patient.Creatinine | default(0, true) | int }} µmol/L
-          {% if patient.Creatinine > 150 %} {% elif 100 <= patient.Creatinine <= 150 %} {% endif %}
-        </span>
-        | <strong>Date:</strong> {{ patient.Sample_Date | default("N/A", true) }}
-      </li>
-      <li><strong>3 Months Prior:</strong> 
-        {{ patient.Creatinine_3m_prior | default(0, true) | int }} µmol/L | Date: {{ patient.Sample_Date2 | default("N/A", true) }}
-      </li>
-    </ul>
-  </li>
-  
-  <li><strong>eGFR:</strong>
-    <ul>
-      <li><strong>Current:</strong>
-        <span class="{{ 'critical' if patient.eGFR < 30 else 'caution' if 30 <= patient.eGFR <= 59 else 'low' if 60 <= patient.eGFR <= 89 else '' }}">
-          {{ patient.eGFR | default(0, true) | int }} ml/min/1.73m<sup>2</sup>
-          {% if patient.eGFR < 30 %} {% elif 30 <= patient.eGFR <= 60 %} {% endif %}
-        </span>
-        | <strong>Date:</strong> {{ patient.Sample_Date }}
-      </li>
-      <li><strong>3 Months Prior:</strong> 
-        {{ patient.eGFR_3m_prior | default(0, true) | int }} ml/min/1.73m<sup>2</sup> | Date: {{ patient.Sample_Date2 }}
-      </li>
-    </ul>
-  </li>
-            
-  <li><strong>Anaemia Overview:</strong>
-    <ul>
-      <li><strong>Haemoglobin:</strong> 
-        <span class="{{ 'critical' if patient.haemoglobin < 80 else 'caution' if 80 <= patient.haemoglobin <= 110 else '' }}">
-          {{ patient.haemoglobin | default(0, true) | int }} g/L
-        </span> 
-        | <strong>Date:</strong> {{ patient.Sample_Date5 }}
-      </li>
-      <li><strong>Current Status:</strong> {{ patient.Anaemia_Classification }}</li>
-    </ul>
-  </li>
-  <li><strong>Anaemia Management:</strong> {{ patient.Anaemia_Flag }}</li>
-</ul>
-
-<h3>Electrolyte and Mineral Bone Disorder (MBD) Management</h3>
-<ul>
-  <li><strong>Potassium:</strong> 
-    <span class="{{ 'critical' if patient.Potassium > 5.5 else 'low' if patient.Potassium < 3.5 else '' }}">
-      {{ patient.Potassium }} mmol/L
-    </span> 
-    | <strong>Status:</strong> {{ patient.Potassium_Flag }} | <strong>Date:</strong> {{ patient.Sample_Date7 }}
-  </li>
-  <li><strong>Phosphate:</strong> 
-    <span class="{{ 'critical' if patient.Phosphate > 1.5 else 'low' if patient.Phosphate < 0.8 else '' }}">
-      {{ patient.Phosphate }} mmol/L
-    </span> 
-    | <strong>Status:</strong> {{ patient.Phosphate_Flag }} | <strong>Date:</strong> {{ patient.Sample_Date8 }}
-  </li>
-  <li><strong>Calcium:</strong> 
-    <span class="{{ 'critical' if patient.Calcium > 2.6 else 'low' if patient.Calcium < 2.2 else '' }}">
-      {{ patient.Calcium }} mmol/L
-    </span> 
-    | <strong>Status:</strong> {{ patient.Calcium_Flag }} | <strong>Date:</strong> {{ patient.Sample_Date9 }}
-  </li>
+<div class="boxed">
+  <h3>Patient Information</h3>
   <ul>
-    <li><strong>MBD Status:</strong> {{ patient.CKD_MBD_Flag }}</li>
-  </ul>  
-  <li><strong>Vitamin D Level:</strong> 
-    <span class="{{ 'low' if patient.Vitamin_D < 30 else '' }}">
-      {{ patient.Vitamin_D | default(0, true) | int }} ng/mL
-    </span> 
-    | <strong>Date:</strong> {{ patient.Sample_Date10 }}
-  </li>
-  <li><strong>Vitamin D Status:</strong> {{ patient.Vitamin_D_Flag }}</li>
-</ul>
+    <li><strong>NHS Number:</strong> {{ patient.HC_Number | default(0, true) | int  }}</li>
+    <li><strong>Age:</strong> {{ patient.Age | default(0, true) | int }} | <strong>Gender:</strong> {{ patient.Gender | default("N/A", true) }}</li>
+  </ul>
+</div>
+
+<div class="boxed">
+  <h3>CKD Overview</h3>
+  <ul>
+    <li><strong>Stage:</strong> {{ patient.CKD_Stage }} | <strong>ACR criteria:</strong> {{ patient.CKD_ACR }}</li>
+    <li><strong>Albumin-Creatinine Ratio (ACR):</strong> 
+     <span class="{{ 'critical' if patient.ACR >= 30 else 'caution' if patient.ACR > 3 else '' }}">
+        {{ patient.ACR }} mg/mmol
+     </span>
+    </li>
+     <li><strong>Creatinine:</strong>
+      <ul>
+        <li><strong>Current:</strong> 
+          <span class="{{ 'critical' if patient.Creatinine > 150 else 'caution' if 100 <= patient.Creatinine <= 150 else '' }}">
+           {{ patient.Creatinine | default(0, true) | int }} µmol/L
+           {% if patient.Creatinine > 150 %} {% elif 100 <= patient.Creatinine <= 150 %} {% endif %}
+          </span>
+          | <strong>Date:</strong> {{ patient.Sample_Date | default("N/A", true) }}
+        </li>
+       <li><strong>3 Months Prior:</strong> 
+          {{ patient.Creatinine_3m_prior | default(0, true) | int }} µmol/L | Date: {{ patient.Sample_Date2 | default("N/A", true) }}
+       </li>
+      </ul>
+    </li>
+  
+    <li><strong>eGFR:</strong>
+     <ul>
+       <li><strong>Current:</strong>
+         <span class="{{ 'critical' if patient.eGFR < 30 else 'caution' if 30 <= patient.eGFR <= 59 else 'low' if 60 <= patient.eGFR <= 89 else '' }}">
+           {{ patient.eGFR | default(0, true) | int }} ml/min/1.73m<sup>2</sup>
+           {% if patient.eGFR < 30 %} {% elif 30 <= patient.eGFR <= 60 %} {% endif %}
+          </span>
+         | <strong>Date:</strong> {{ patient.Sample_Date }}
+       </li>
+       <li><strong>3 Months Prior:</strong> 
+         {{ patient.eGFR_3m_prior | default(0, true) | int }} ml/min/1.73m<sup>2</sup> | Date: {{ patient.Sample_Date2 }}
+       </li>
+      </ul>
+    </li>
+            
+    <li><strong>Anaemia Overview:</strong>
+     <ul>
+       <li><strong>Haemoglobin:</strong> 
+         <span class="{{ 'critical' if patient.haemoglobin < 80 else 'caution' if 80 <= patient.haemoglobin <= 110 else '' }}">
+           {{ patient.haemoglobin | default(0, true) | int }} g/L
+         </span> 
+         | <strong>Date:</strong> {{ patient.Sample_Date5 }}
+       </li>
+       <li><strong>Current Status:</strong> {{ patient.Anaemia_Classification }}</li>
+     </ul>
+    </li>
+    <li><strong>Anaemia Management:</strong> {{ patient.Anaemia_Flag }}</li>
+  </ul>
+</div>
+
+<div class="boxed">
+  <h3>Electrolyte and Mineral Bone Disorder (MBD) Management</h3>
+  <ul>
+    <li><strong>Potassium:</strong> 
+      <span class="{{ 'critical' if patient.Potassium > 5.5 else 'low' if patient.Potassium < 3.5 else '' }}">
+        {{ patient.Potassium }} mmol/L
+      </span> 
+      | <strong>Status:</strong> {{ patient.Potassium_Flag }} | <strong>Date:</strong> {{ patient.Sample_Date7 }}
+    </li>
+    <li><strong>Phosphate:</strong> 
+      <span class="{{ 'critical' if patient.Phosphate > 1.5 else 'low' if patient.Phosphate < 0.8 else '' }}">
+        {{ patient.Phosphate }} mmol/L
+      </span> 
+      | <strong>Status:</strong> {{ patient.Phosphate_Flag }} | <strong>Date:</strong> {{ patient.Sample_Date8 }}
+    </li>
+    <li><strong>Calcium:</strong> 
+      <span class="{{ 'critical' if patient.Calcium > 2.6 else 'low' if patient.Calcium < 2.2 else '' }}">
+        {{ patient.Calcium }} mmol/L
+      </span> 
+      | <strong>Status:</strong> {{ patient.Calcium_Flag }} | <strong>Date:</strong> {{ patient.Sample_Date9 }}
+    </li>
+    <ul>
+      <li><strong>MBD Status:</strong> {{ patient.CKD_MBD_Flag }}</li>
+    </ul>  
+    <li><strong>Vitamin D Level:</strong> 
+      <span class="{{ 'low' if patient.Vitamin_D < 30 else '' }}">
+        {{ patient.Vitamin_D | default(0, true) | int }} ng/mL
+      </span> 
+      | <strong>Date:</strong> {{ patient.Sample_Date10 }}
+    </li>
+    <li><strong>Vitamin D Status:</strong> {{ patient.Vitamin_D_Flag }}</li>
+  </ul>
+</div>
+
+<div class="boxed">
+  <h3>Blood Pressure</h3>
+  <ul>
+    <li><strong>Classification:</strong> {{ patient.BP_Classification }} | <strong>Date:</strong> {{ patient.Sample_Date3 }}</li>
+    <li><strong>Systolic / Diastolic:</strong> 
+      <span class="{{ 'critical' if patient.Systolic_BP >= 180 else 'caution' if 140 <= patient.Systolic_BP < 180 else 'low' if patient.Systolic_BP < 90 else '' }}">
+        {{ patient.Systolic_BP | default(0, true) | int }}
+      </span> 
+      /
+      <span class="{{ 'critical' if patient.Diastolic_BP >= 120 else 'caution' if 90 <= patient.Diastolic_BP < 120 else 'low' if patient.Diastolic_BP < 60 else '' }}">
+        {{ patient.Diastolic_BP | default(0, true) | int }}
+      </span> mmHg
+    </li>
+    <li><strong>Target BP:</strong> {{ patient.BP_Target }} | <strong>BP Status:</strong> {{ patient.BP_Flag }}</li>
+  </ul>
+</div>
+
+<div class="boxed">
+  <h3>Kidney Failure Risk</h3>
+  <ul>
+    <li><strong>2-Year Risk:</strong> 
+      <span class="{{ 'critical' if patient.risk_2yr >= 20 else 'caution' if 10 <= patient.risk_2yr < 20 else 'low' if 1 <= patient.risk_2yr < 10 else '' }}">
+        {{ patient.risk_2yr if patient.CKD_Stage in ["Stage 3a", "Stage 3b", "Stage 4", "Stage 5"] else "N/A" }}%
+      </span>
+    </li>
+    <li><strong>5-Year Risk:</strong> 
+      <span class="{{ 'critical' if patient.risk_5yr >= 10 else 'caution' if 5 <= patient.risk_5yr < 10 else 'low' if 1 <= patient.risk_5yr < 5 else '' }}">
+        {{ patient.risk_5yr if patient.CKD_Stage in ["Stage 3a", "Stage 3b", "Stage 4", "Stage 5"] else "N/A" }}%
+      </span>
+    </li>
+  </ul>
 
 
-<h3>Blood Pressure</h3>
-<ul>
-  <li><strong>Classification:</strong> {{ patient.BP_Classification }} | <strong>Date:</strong> {{ patient.Sample_Date3 }}</li>
-  <li><strong>Systolic / Diastolic:</strong> 
-    <span class="{{ 'critical' if patient.Systolic_BP >= 180 else 'caution' if 140 <= patient.Systolic_BP < 180 else 'low' if patient.Systolic_BP < 90 else '' }}">
-      {{ patient.Systolic_BP | default(0, true) | int }}
-    </span> 
-    /
-    <span class="{{ 'critical' if patient.Diastolic_BP >= 120 else 'caution' if 90 <= patient.Diastolic_BP < 120 else 'low' if patient.Diastolic_BP < 60 else '' }}">
-      {{ patient.Diastolic_BP | default(0, true) | int }}
-    </span> mmHg
-  </li>
-  <li><strong>Target BP:</strong> {{ patient.BP_Target }} | <strong>BP Status:</strong> {{ patient.BP_Flag }}</li>
-</ul>
+  <ul>
+    <i>The patient's 2- and 5-year kidney failure risk scores estimate the likelihood that their kidney disease will progress to kidney failure within the next 2 or 5 years. These scores are calculated based on the patient's current kidney function and other risk factors such as age, blood pressure, and existing health conditions. Understanding these risk scores helps in predicting disease progression and planning appropriate treatment strategies.</i>
+  </ul>
+</div>
 
-<h3>Kidney Failure Risk</h3>
-<ul>
-  <li><strong>2-Year Risk:</strong> 
-    <span class="{{ 'critical' if patient.risk_2yr >= 20 else 'caution' if 10 <= patient.risk_2yr < 20 else 'low' if 1 <= patient.risk_2yr < 10 else '' }}">
-      {{ patient.risk_2yr if patient.CKD_Stage in ["Stage 3a", "Stage 3b", "Stage 4", "Stage 5"] else "N/A" }}%
-    </span>
-  </li>
-  <li><strong>5-Year Risk:</strong> 
-    <span class="{{ 'critical' if patient.risk_5yr >= 10 else 'caution' if 5 <= patient.risk_5yr < 10 else 'low' if 1 <= patient.risk_5yr < 5 else '' }}">
-      {{ patient.risk_5yr if patient.CKD_Stage in ["Stage 3a", "Stage 3b", "Stage 4", "Stage 5"] else "N/A" }}%
-    </span>
-  </li>
-</ul>
+<div class="boxed">
+  <h3>Care & Referrals</h3>
+  <ul>
+    <li><strong>Multidisciplinary Care:</strong> 
+      <span class="{{ 'critical' if patient.Multidisciplinary_Care == 'Indicated' else '' }}">
+        {{ patient.Multidisciplinary_Care }}
+      </span>
+    </li>
+    <li><strong>Modality Education:</strong> 
+      <span class="{{ 'critical' if patient.Modality_Education == 'Indicated' else '' }}">
+        {{ patient.Modality_Education }}
+      </span>
+    </li>
+    <li><strong>Nephrology Referral:</strong> 
+      <span class="{{ 'critical' if patient.Nephrology_Referral == 'Required' else '' }}">
+        {{ patient.Nephrology_Referral }}
+      </span>
+    </li>
+    <li><strong>Persistent Proteinuria:</strong> 
+      <span class="{{ 'critical' if patient.Proteinuria_Flag == 'Consider Referral' else 'caution' if patient.Proteinuria_Flag == 'Monitor' else '' }}">
+        {{ patient.Proteinuria_Flag }}
+      </span>
+    </li>
+  </ul>
+</div>
 
+<div class="boxed">
+  <h3>Medication Review</h3>
+  <ul>
+    <li><strong>Current Medication:</strong> {{ patient.Medications }}</li>
+    <li><strong>Review Medications:</strong> 
+      <span class="{{ 'critical' if patient.dose_adjustment_prescribed and patient.dose_adjustment_prescribed != 'No adjustments needed' }}">
+        {{ patient.dose_adjustment_prescribed or "None" }}
+      </span>
+    </li>
+    <li><strong>Contraindicated Medications:</strong> 
+      <span class="{{ 'critical' if patient.contraindicated_prescribed and patient.contraindicated_prescribed != 'No contraindications' }}">
 
-<ul>
-  <i>The patient’s 2- and 5-year kidney failure risk scores reflect progression likelihood based on current function and risk factors.</i>
-</ul>
+        {{ patient.contraindicated_prescribed or "None" }}
+      </span>
+    </li>
+    <li><strong>Suggested Medications:</strong> 
+            {{ patient.Recommended_Medications or "None" }}
+    </li>
+    <li><strong>Statin Recommendation:</strong> 
+      <span class="{{ 'critical' if patient.Statin_Recommendation == 'Consider Statin' else '' }}">
+        {{ patient.Statin_Recommendation }}
+      </span>
+    </li>
+  </ul>
+</div>
 
+<div class="boxed">
+  <h3>Diabetes and HbA1c Management</h3>
+  <ul>
+    <li><strong>HbA1c Level:</strong> 
+      <span class="{{ 'critical' if patient.HbA1c > 75 else 'caution' if 53 <= patient.HbA1c <= 75 else 'low' if 48 <= patient.HbA1c < 53 else 'safe' if patient.HbA1c < 48 else '' }}">
+        {{ patient.HbA1c | default(0, true) | int }} mmol/mol
+      </span> 
+      | <strong>Date:</strong> {{ patient.Sample_Date6 }}
+    </li>
+    <li><strong>HbA1c Management:</strong> 
+      <span class="{{ 'critical' if patient.HbA1c_Target == 'Adjust Diabetes Management' else '' }}">
+        {{ patient.HbA1c_Target }}
+      </span>
+    </li>
+  </ul>
+</div>
 
-<h3>Care & Referrals</h3>
-<ul>
-  <li><strong>Multidisciplinary Care:</strong> 
-    <span class="{{ 'critical' if patient.Multidisciplinary_Care == 'Indicated' else '' }}">
-      {{ patient.Multidisciplinary_Care }}
-    </span>
-  </li>
-  <li><strong>Modality Education:</strong> 
-    <span class="{{ 'critical' if patient.Modality_Education == 'Indicated' else '' }}">
-      {{ patient.Modality_Education }}
-    </span>
-  </li>
-  <li><strong>Nephrology Referral:</strong> 
-    <span class="{{ 'critical' if patient.Nephrology_Referral == 'Required' else '' }}">
-      {{ patient.Nephrology_Referral }}
-    </span>
-  </li>
-  <li><strong>Persistent Proteinuria:</strong> 
-    <span class="{{ 'critical' if patient.Proteinuria_Flag == 'Consider Referral' else 'caution' if patient.Proteinuria_Flag == 'Monitor' else '' }}">
-      {{ patient.Proteinuria_Flag }}
-    </span>
-  </li>
-</ul>
+<div class="boxed">
+  <h3>Lifestyle and Preventative Advice</h3>
+  <ul>
+    <li><strong>Lifestyle Recommendations:</strong> {{ patient.Lifestyle_Advice }}</li>
+  </ul>
+</div>
 
-<h3>Medication Review</h3>
-<ul>
-  <li><strong>Current Medication:</strong> {{ patient.Medications }}</li>
-  <li><strong>Review Medications:</strong> 
-    <span class="{{ 'critical' if patient.dose_adjustment_prescribed and patient.dose_adjustment_prescribed != 'No adjustments needed' }}">
-      {{ patient.dose_adjustment_prescribed or "None" }}
-    </span>
-  </li>
-  <li><strong>Contraindicated Medications:</strong> 
-    <span class="{{ 'critical' if patient.contraindicated_prescribed and patient.contraindicated_prescribed != 'No contraindications' }}">
-
-      {{ patient.contraindicated_prescribed or "None" }}
-    </span>
-  </li>
-  <li><strong>Suggested Medications:</strong> 
-          {{ patient.Recommended_Medications or "None" }}
-  </li>
-  <li><strong>Statin Recommendation:</strong> 
-    <span class="{{ 'critical' if patient.Statin_Recommendation == 'Consider Statin' else '' }}">
-      {{ patient.Statin_Recommendation }}
-    </span>
-  </li>
-</ul>
-
-
-<h3>Diabetes and HbA1c Management</h3>
-<ul>
-  <li><strong>HbA1c Level:</strong> 
-    <span class="{{ 'critical' if patient.HbA1c > 75 else 'caution' if 53 <= patient.HbA1c <= 75 else 'low' if 48 <= patient.HbA1c < 53 else 'safe' if patient.HbA1c < 48 else '' }}">
-      {{ patient.HbA1c | default(0, true) | int }} mmol/mol
-    </span> 
-    | <strong>Date:</strong> {{ patient.Sample_Date6 }}
-  </li>
-  <li><strong>HbA1c Management:</strong> 
-    <span class="{{ 'critical' if patient.HbA1c_Target == 'Adjust Diabetes Management' else '' }}">
-      {{ patient.HbA1c_Target }}
-    </span>
-  </li>
-</ul>
-
-
-<h3>Lifestyle and Preventative Advice</h3>
-<ul>
-  <li><strong>Lifestyle Recommendations:</strong> {{ patient.Lifestyle_Advice }}</li>
-</ul>
-
+<div class="no-page-break">
 <hr>
-
 <h2>NICE Guideline Recommendations</h2>
 
 {% if patient.CKD_Stage == "Acute Kidney Injury" %}
@@ -257,53 +297,58 @@
 </ul>
 
 {% elif patient.CKD_Stage == "Stage 1" %}
-<h3>CKD Stage G1 Recommendations:</h3>
-<ul>
-  <li><strong>Initial Assessment:</strong> Urine Albumin-to-Creatinine Ratio (ACR), haematuria screening, and blood pressure monitoring. Confirm stable renal function by reviewing prior results or re-evaluate within 14 days if initial assessment is unavailable.</li>
-  <li><strong>Management and Monitoring:</strong> Primary care management with annual monitoring if ACR >3 mg/mmol; if ACR <3 mg/mmol, monitoring frequency may be reduced.</li>
-  <li><strong>Preventive Measures:</strong> Promote regular physical activity, smoking cessation, and weight control. BP targets: &lt;140/90 mmHg generally; &lt;130/80 mmHg if ACR >70 mg/mmol or patient has diabetes.</li>
-  <li><strong>Medication:</strong> Consider statin therapy for cardiovascular risk as appropriate.</li>
+<h3>CKD Stage G1 Recommendations:</h3> 
+<ul> 
+  <li><strong>Initial Assessment:</strong> Perform Urine Albumin-to-Creatinine Ratio (ACR) testing to detect proteinuria, conduct haematuria screening, and monitor blood pressure (BP). Confirm stable renal function by reviewing prior estimated glomerular filtration rate (eGFR) results; if unavailable, re-evaluate renal function within 14 days.</li> 
+  <li><strong>Management and Monitoring:</strong> Manage in primary care with annual monitoring if ACR is greater than 3 mg/mmol (indicative of microalbuminuria). If ACR is less than 3 mg/mmol, consider reducing the frequency of monitoring based on individual risk factors.</li> 
+  <li><strong>Lifestyle and Preventive Measures:</strong> Encourage regular physical activity, smoking cessation, and maintaining a healthy weight. Aim for BP targets of less than 140/90 mmHg generally, or less than 130/80 mmHg if the patient has diabetes or an ACR greater than 70 mg/mmol (significant proteinuria).</li> 
+  <li><strong>Medication:</strong> Assess cardiovascular risk and consider initiating statin therapy if appropriate, following current guidelines.</li> 
 </ul>
 
 {% elif patient.CKD_Stage == "Stage 2" %}
-<h3>CKD Stage G2 Recommendations:</h3>
-<ul>
-  <li><strong>Initial Assessment:</strong> Repeat ACR, haematuria screening, and BP monitoring as in Stage G1. Confirm stable renal function by reviewing previous test results or retest within 14 days if necessary.</li>
-  <li><strong>Management and Monitoring:</strong> Primarily managed in primary care with annual monitoring if ACR >3 mg/mmol; lower frequency if ACR <3 mg/mmol.</li>
-  <li><strong>Preventive Measures:</strong> Encourage regular exercise, smoking cessation, and healthy weight. BP targets: &lt;140/90 mmHg; &lt;130/80 mmHg for patients with diabetes or ACR >70 mg/mmol.</li>
-  <li><strong>Medication:</strong> Statin therapy may be considered for cardiovascular risk reduction.</li>
+<h3>CKD Stage G2 Recommendations:</h3> 
+<ul> 
+  <li><strong>Initial Assessment:</strong> Repeat Urine ACR testing, haematuria screening, and BP monitoring as per Stage G1. Confirm stable renal function by reviewing previous eGFR results or retest within 14 days if necessary.</li> 
+  <li><strong>Management and Monitoring:</strong> Continue primary care management with annual monitoring if ACR is greater than 3 mg/mmol. Reduce monitoring frequency if ACR is less than 3 mg/mmol and no additional risk factors are present.</li> 
+  <li><strong>Lifestyle and Preventive Measures:</strong> Promote lifestyle interventions such as regular exercise, smoking cessation, and weight management. Maintain BP targets of less than 140/90 mmHg, or less than 130/80 mmHg for patients with diabetes or significant proteinuria (ACR >70 mg/mmol).</li> 
+  <li><strong>Medication:</strong> Evaluate cardiovascular risk and consider statin therapy as per guidelines. If proteinuria is present, consider initiating an ACE inhibitor or angiotensin receptor blocker (ARB) to reduce proteinuria and slow CKD progression.</li> 
 </ul>
 
 {% elif patient.CKD_Stage == "Stage 3a" %}
-<h3>CKD Stage G3a Recommendations:</h3>
-<ul>
-  <li><strong>Monitoring and Risk Assessment:</strong> Primary care management with annual renal function checks; twice-yearly if significant proteinuria (A3 category). Calculate Kidney Failure Risk Equation (KFRE) at each assessment; nephrology referral if 5-year risk >5%.</li>
-  <li><strong>Referral Criteria:</strong> Consider nephrology referral if ACR >70 mg/mmol or significant proteinuria.</li>
-  <li><strong>Lifestyle and Preventative Measures:</strong> Emphasize cardiovascular risk management; consider Atorvastatin 20 mg. BP targets: &lt;140/90 mmHg; &lt;130/80 mmHg for those with diabetes or ACR >70 mg/mmol.</li>
-  <li><strong>Patient Education:</strong> Educate on importance of regular renal function and protein level monitoring.</li>
+<h3>CKD Stage G3a Recommendations:</h3> 
+<ul> 
+  <li><strong>Monitoring and Risk Assessment:</strong> Manage in primary care with at least annual renal function tests; increase monitoring to every 6 months if ACR is greater than 3 mg/mmol. Use the Kidney Failure Risk Equation (KFRE) at each assessment to estimate progression risk; refer to nephrology if the 5-year risk is greater than 5%.</li> 
+  <li><strong>Referral Criteria:</strong> Refer to nephrology if ACR is greater than 70 mg/mmol, there's a sustained decrease in eGFR of 25% or more over 12 months, or if significant proteinuria or haematuria is present.</li> 
+  <li><strong>Lifestyle and Preventive Measures:</strong> Intensify cardiovascular risk management, including prescribing Atorvastatin 20 mg unless contraindicated. Maintain BP targets as per guidelines: less than 140/90 mmHg generally, or less than 130/80 mmHg if the patient has diabetes or significant proteinuria.</li> 
+  <li><strong>Medication:</strong> Initiate or optimize ACE inhibitor or ARB therapy if proteinuria is present, unless contraindicated.</li> 
+  <li><strong>Patient Education:</strong> Educate on CKD progression, importance of medication adherence, and regular monitoring.</li> 
 </ul>
 
 {% elif patient.CKD_Stage == "Stage 3b" %}
-<h3>CKD Stage G3b Recommendations:</h3>
-<ul>
-  <li><strong>Monitoring and Risk Management:</strong> Primary care management with annual renal function checks; twice-yearly if significant proteinuria (A3 category). Calculate Kidney Failure Risk Equation (KFRE) at each assessment; nephrology referral if 5-year risk >5%. BP and cardiovascular risk factors should be managed aggressively.</li>
-  <li><strong>Referral Considerations:</strong> Regular assessments may indicate need for nephrology consultation if clinical deterioration is evident.</li>
+<h3>CKD Stage G3b Recommendations:</h3> 
+<ul> 
+  <li><strong>Monitoring and Risk Management:</strong> Continue primary care management with renal function tests every 6 months, or more frequently if ACR is greater than 3 mg/mmol. Use the KFRE to assess progression risk; refer to nephrology if the 5-year risk exceeds 5% or if there's a rapid decline in eGFR.</li> 
+  <li><strong>Referral Considerations:</strong> Consider nephrology referral for further evaluation and management, especially if complications like anaemia, electrolyte imbalances, or bone mineral disorders arise.</li> 
+  <li><strong>Lifestyle and Preventive Measures:</strong> Aggressively manage BP and cardiovascular risk factors. Optimize dosing of ACE inhibitors or ARBs. Continue statin therapy as indicated.</li> 
+  <li><strong>Patient Education:</strong> Reinforce the importance of lifestyle modifications and adherence to treatment plans to slow CKD progression.</li> 
 </ul>
 
 {% elif patient.CKD_Stage == "Stage 4" %}
-<h3>CKD Stage G4 Recommendations:</h3>
-<ul>
-  <li><strong>Specialist Management and Referral:</strong> Routine nephrology referral unless end-stage condition or all investigations are complete. Monitor potassium, calcium, phosphate, and haemoglobin levels; perform ultrasound if structural abnormalities are suspected.</li>
-  <li><strong>Management of Complications:</strong> Monitor fluid balance, electrolyte levels, and BP to manage disease progression. BP targets: &lt;140/90 mmHg; &lt;130/80 mmHg if diabetes or ACR >70 mg/mmol.</li>
-  <li><strong>Preventative Measures and Lifestyle:</strong> Atorvastatin 20 mg for cardiovascular risk reduction. Vaccinations: influenza, pneumococcal, COVID booster (if indicated). Regular medication reviews, avoidance of nephrotoxic drugs, and metformin avoidance.</li>
+<h3>CKD Stage G4 Recommendations:</h3> 
+<ul> 
+  <li><strong>Specialist Management and Referral:</strong> Routine referral to nephrology for co-management and preparation for potential renal replacement therapy. Regularly monitor eGFR, ACR, potassium, calcium, phosphate, and haemoglobin levels. Perform renal ultrasound if structural abnormalities or obstruction are suspected.</li> 
+  <li><strong>Management of Complications:</strong> Monitor and manage anaemia, electrolyte imbalances, acidosis, and bone mineral disorders. Adjust medications that are renally excreted. Maintain BP targets as per guidelines.</li> 
+  <li><strong>Lifestyle and Preventive Measures:</strong> Continue statin therapy (Atorvastatin 20 mg) for cardiovascular risk reduction. Provide vaccinations including influenza, pneumococcal, and COVID-19 as indicated. Regularly review medications to avoid nephrotoxic drugs and adjust dosages. Discontinue metformin if eGFR is less than 30 mL/min/1.73 m².</li> 
+  <li><strong>Patient Education:</strong> Discuss potential need for renal replacement therapy and available options. Provide guidance on diet, fluid intake, and symptom management.</li> 
 </ul>
 
 {% elif patient.CKD_Stage == "Stage 5" %}
-<h3>CKD Stage G5 Recommendations:</h3>
-<ul>
-  <li><strong>Specialist Management and Comprehensive Care Plan:</strong> Specialist nephrology care with preparation for renal replacement therapy as required. Regularly monitor potassium, bicarbonate, calcium, phosphate, haemoglobin, and fluid status.</li>
-  <li><strong>Management of Complications:</strong> Address hyperkalaemia, manage metabolic acidosis, and monitor for renal anaemia, using iron or erythropoiesis-stimulating agents as needed. BP control: &lt;140/90 mmHg; &lt;130/80 mmHg if diabetes or ACR >70 mg/mmol.</li>
-  <li><strong>Preventative Measures:</strong> Prescribe Atorvastatin 20 mg for cardiovascular risk reduction. Provide lifestyle guidance and offer all indicated immunizations.</li>
+<h3>CKD Stage G5 Recommendations:</h3> 
+<ul> 
+  <li><strong>Specialist Management and Comprehensive Care Plan:</strong> Under specialist nephrology care with preparation for renal replacement therapy (dialysis or transplantation) as needed. Regularly monitor renal function and labs including electrolytes, bicarbonate, calcium, phosphate, haemoglobin, and fluid status.</li> 
+  <li><strong>Management of Complications:</strong> Actively manage hyperkalaemia, metabolic acidosis, and anaemia (with iron supplementation and erythropoiesis-stimulating agents). Adjust or discontinue medications contraindicated in advanced CKD.</li> 
+  <li><strong>Lifestyle and Preventive Measures:</strong> Continue statin therapy unless contraindicated. Provide comprehensive lifestyle guidance, including dietary advice (e.g., potassium and phosphate restrictions) and fluid management. Ensure all appropriate immunizations are up to date.</li> 
+  <li><strong>Patient Support and Education:</strong> Offer psychological support and counseling. Educate the patient and family about end-stage renal disease management options and advance care planning.</li> 
 </ul>
 
 {% else %}
@@ -311,6 +356,7 @@
 {% endif %}
 
 <hr>
+</div>
 <!-- EDIT THESE DETAILS-->
 <div class="center">
   Surgery Name, <br>
@@ -320,6 +366,8 @@
   BT123456 <br><br>
   Telephone: 028 90***********
 </div>
-
+<br>
+<div class="footer">
+</div>
 </body>
 </html>
