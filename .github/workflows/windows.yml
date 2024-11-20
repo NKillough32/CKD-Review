@@ -31,11 +31,11 @@ jobs:
 
       - name: Commit and push the executable
         env:
-          GIT_AUTH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: |
           git config --global user.name "NKillough32"
           git config --global user.email "nicholas.killough@outlook.com"
-          git remote set-url origin https://$GIT_AUTH_TOKEN@github.com/NKillough32/CKD-Review.git
+          git remote set-url origin https://$PERSONAL_ACCESS_TOKEN@github.com/NKillough32/CKD-Review.git
           git checkout -b automation-branch
           git add release/NephroPath.exe
           git commit -m "Add built NephroPath.exe"
