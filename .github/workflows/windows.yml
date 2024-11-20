@@ -24,28 +24,27 @@ jobs:
         run: |
           python -m PyInstaller --onefile --name=NephroPath --icon=NephroPath_installer_icon.ico CKD_auto.py
 
-      - name: Move executable to repository
+      - name: Prepare release folder
         run: |
           mkdir -p release
-          move dist\NephroPath.exe release\NephroPath.exe
+          move dist\NephroPath.exe .\release\NephroPath.exe
 
-      - name: Authenticate with GitHub CLI
+      - name: Set up Git
         run: |
-          echo "${{ secrets.PERSONAL_ACCESS_TOKEN }}" | gh auth login --with-token
+          git config --global user.email "nicholas.killough@outlook.com"
+          git config --global user.name "NKillough32"
+          git remote set-url origin https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/NKillough32/CKD-Review.git
+          git fetch origin
 
-      - name: Push changes to repository
+      - name: Commit and push changes
         run: |
-          gh repo set-default NKillough32/CKD-Review
-          gh repo clone NKillough32/CKD-Review
-          cd CKD-Review
           git checkout -b automation-branch || git checkout automation-branch
           git add release/NephroPath.exe
           git commit -m "Add built NephroPath.exe"
           git push origin automation-branch
 
-
       - name: Upload Windows executable
         uses: actions/upload-artifact@v4
         with:
           name: NephroPath-Windows
-          path: dist/NephroPath.exe
+          path: release/NephroPath.exe
