@@ -29,17 +29,20 @@ jobs:
           mkdir -p release
           move dist\NephroPath.exe release\NephroPath.exe
 
-      - name: Commit and push the executable
-        env:
-          PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+      - name: Authenticate with GitHub CLI
         run: |
-          git config --global user.name "NKillough32"
-          git config --global user.email "nicholas.killough@outlook.com"
-          git remote set-url origin https://$PERSONAL_ACCESS_TOKEN@github.com/NKillough32/CKD-Review.git
-          git checkout -b automation-branch
+          echo "${{ secrets.PERSONAL_ACCESS_TOKEN }}" | gh auth login --with-token
+
+      - name: Push changes to repository
+        run: |
+          gh repo set-default NKillough32/CKD-Review
+          gh repo clone NKillough32/CKD-Review
+          cd CKD-Review
+          git checkout -b automation-branch || git checkout automation-branch
           git add release/NephroPath.exe
           git commit -m "Add built NephroPath.exe"
           git push origin automation-branch
+
 
       - name: Upload Windows executable
         uses: actions/upload-artifact@v4
