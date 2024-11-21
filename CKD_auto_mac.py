@@ -641,7 +641,7 @@ def is_homebrew_installed():
         subprocess.run(["brew", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         print("Homebrew is already installed.")
         return True
-    except (FileNotFoundError, subprocess.CalledProcessError):
+    except Exception as e:
         print("Homebrew is not installed.")
         return False
 
@@ -657,7 +657,7 @@ def install_homebrew():
         print("Homebrew installation completed.")
     except subprocess.CalledProcessError as e:
         print("Failed to install Homebrew.")
-        raise e
+        sys.exit(1)
 
 def is_wkhtmltopdf_installed():
     """Check if wkhtmltopdf is installed on the system."""
@@ -677,7 +677,7 @@ def install_wkhtmltopdf():
         print("wkhtmltopdf installation completed.")
     except subprocess.CalledProcessError as e:
         print("Failed to install wkhtmltopdf.")
-        raise e
+        sys.exit(1)
 
 # Check if the script is running on macOS
 if platform.system() != 'Darwin':
