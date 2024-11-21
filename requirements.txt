@@ -3,4 +3,3 @@ numpy
 requests
 pdfkit
 jinja2
-subprocess
