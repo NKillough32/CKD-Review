@@ -24,7 +24,7 @@ jobs:
 
       - name: Move release
         run: |
-          Move-Item dist\NephroPath_mac .\NephroPath_mac -Force
+          mv dist\NephroPath_mac .\NephroPath_mac -Force
 
       - name: Set up Git
         run: |
