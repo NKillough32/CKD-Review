@@ -157,7 +157,7 @@ CKD_review.rename(columns={
     'Value': 'Creatinine', 'Value.1': 'ACR',
     'Value.3': 'Systolic_BP', 'Value.4': 'Diastolic_BP', 'Value.5': 'haemoglobin',
     'Value.6': 'HbA1c', 'Value.7': 'Potassium', 'Value.8': 'Phosphate',
-    'Value.9': 'Calcium', 'Value.10': 'Vitamin_D', 'Code Term': 'EMIS_CKD_Code'
+    'Value.9': 'Calcium', 'Value.10': 'Vitamin_D', 'Code Term': 'EMIS_CKD_Code', 'Value.11': 'Height'
 }, inplace=True)
 
 # Replace missing ACR values with 0
@@ -173,22 +173,35 @@ CKD_review['Age'] = pd.to_numeric(CKD_review['Age'], errors='coerce')
 CKD_review['Gender'] = CKD_review['Gender'].astype('category')
 
 # eGFR Calculation function
-def calculate_eGFR(Age, Gender, Creatinine):
+def calculate_eGFR(Age, Gender, Creatinine, Height=None):
     if pd.isna(Age) or pd.isna(Gender) or pd.isna(Creatinine):
         return np.nan  # Return NaN if any input is missing
 
-    Creatinine_mg_dL = Creatinine / 88.4
-    is_female = Gender == 'Female'
-    K = 0.7 if is_female else 0.9
-    alpha = -0.241 if is_female else -0.302
-    female_multiplier = 1.012 if is_female else 1
-    standardised_Scr = Creatinine_mg_dL / K
-    eGFR = (142 * (min(standardised_Scr, 1)**alpha) * (max(standardised_Scr, 1)**(-1.200)) * (0.9938**Age) * female_multiplier)
+    Creatinine_mg_dL = Creatinine / 88.42  # Convert creatinine to mg/dL if in µmol/L
+    
+    if Age < 18:  # Use Bedside Schwartz for children
+        if pd.isna(Height):  # Height is required for children
+            return np.nan
+        eGFR = (0.413 * Height) / Creatinine_mg_dL
+    else:  # Use adult equation for 18+ (CKD-EPI)
+        is_female = Gender == 'Female'
+        K = 0.7 if is_female else 0.9
+        alpha = -0.241 if is_female else -0.302
+        female_multiplier = 1.012 if is_female else 1
+        standardised_Scr = Creatinine_mg_dL / K
+        eGFR = (142 * (min(standardised_Scr, 1)**alpha) * 
+                (max(standardised_Scr, 1)**(-1.200)) * 
+                (0.9938**Age) * female_multiplier)
+    
     return eGFR
 
 # Apply eGFR calculation
-CKD_review['eGFR'] = CKD_review.apply(lambda row: calculate_eGFR(row['Age'], row['Gender'], row['Creatinine']), axis=1)
-CKD_review['eGFR_3m_prior'] = CKD_review.apply(lambda row: calculate_eGFR(row['Age'], row['Gender'], row['Creatinine_3m_prior']), axis=1)
+CKD_review['eGFR'] = CKD_review.apply(
+    lambda row: calculate_eGFR(row['Age'], row['Gender'], row['Creatinine'], row.get('Height', None)), axis=1
+)
+CKD_review['eGFR_3m_prior'] = CKD_review.apply(
+    lambda row: calculate_eGFR(row['Age'], row['Gender'], row['Creatinine_3m_prior'], row.get('Height', None)), axis=1
+)
 
 # CKD Stage classification
 def classify_CKD_stage(eGFR):
@@ -759,8 +772,16 @@ def generate_patient_pdf(data, template_dir=current_dir, output_dir="Patient_Sum
         html_content = template.render(patient=patient)
         file_name = os.path.join(review_folder, f"Patient_Summary_{patient['HC_Number']}.pdf")
         
+        options = {
+        "footer-center": "Page [page] of [toPage]",  # Enables dynamic page numbering
+        "margin-bottom": "20mm",  # Ensures space for the footer
+        "footer-font-size": "10",  # Adjusts font size for readability
+        "enable-smart-shrinking": "",  # Ensures the layout adjusts dynamically
+         "no-outline": None  # Prevents generation of outlines in the PDF
+        }
+        
         # Generate and save the PDF
-        pdfkit.from_string(html_content, file_name, configuration=config)
+        pdfkit.from_string(html_content, file_name, configuration=config,options=options)
         
         # Print success message after saving report
         print(f"Report saved as Patient_Summary_{patient['HC_Number']}.pdf in {review_folder}")
