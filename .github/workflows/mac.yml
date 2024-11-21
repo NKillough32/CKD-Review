@@ -20,7 +20,7 @@ jobs:
 
       - name: Build with PyInstaller
         run: |
-          python -m PyInstaller --onefile --name=NephroPath_mac --icon=NephroPath_installer_icon.ico CKD_auto_mac.py
+          python -m PyInstaller --onefile --name=NephroPath_mac --icon=NephroPath_installer_icon.icns CKD_auto_mac.py
 
       - name: Move release
         run: |
