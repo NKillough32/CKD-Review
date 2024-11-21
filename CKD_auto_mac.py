@@ -675,9 +675,40 @@ def install_wkhtmltopdf():
         print("Installing wkhtmltopdf...")
         subprocess.run(["brew", "install", "wkhtmltopdf"], check=True)
         print("wkhtmltopdf installation completed.")
+        # Update PATH environment variable if needed
+        new_paths = ['/usr/local/bin', '/opt/homebrew/bin']
+        for new_path in new_paths:
+            if new_path not in os.environ['PATH']:
+                os.environ['PATH'] += os.pathsep + new_path
     except subprocess.CalledProcessError as e:
         print("Failed to install wkhtmltopdf.")
         sys.exit(1)
+
+# Ensure wkhtmltopdf is installed
+if not is_wkhtmltopdf_installed():
+    print("wkhtmltopdf is required to generate PDFs.")
+    print("Attempting to install wkhtmltopdf automatically...")
+    install_wkhtmltopdf()
+else:
+    print("wkhtmltopdf is already installed.")
+
+# Dynamically find the path to wkhtmltopdf
+path_to_wkhtmltopdf = shutil.which("wkhtmltopdf")
+if path_to_wkhtmltopdf is None:
+    # Try common installation paths
+    possible_paths = [
+        '/usr/local/bin/wkhtmltopdf',
+        '/usr/bin/wkhtmltopdf',
+        '/opt/homebrew/bin/wkhtmltopdf'  # For Apple Silicon Macs
+    ]
+    for path in possible_paths:
+        if os.path.isfile(path) and os.access(path, os.X_OK):
+            path_to_wkhtmltopdf = path
+            break
+
+if path_to_wkhtmltopdf is None:
+    print("wkhtmltopdf not found in PATH or common directories.")
+    sys.exit(1)
 
 # Check if the script is running on macOS
 if platform.system() != 'Darwin':
