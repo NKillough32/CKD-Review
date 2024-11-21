@@ -24,10 +24,9 @@ jobs:
         run: |
           python -m PyInstaller --onefile --name=NephroPath --icon=NephroPath_installer_icon.ico CKD_auto.py
 
-      - name: Prepare release folder
+      - name: Move release
         run: |
-          mkdir -p release
-          move dist\NephroPath.exe .\release\NephroPath.exe
+          move dist\NephroPath.exe .\NephroPath.exe
 
       - name: Set up Git
         run: |
@@ -40,7 +39,7 @@ jobs:
         run: |
           git checkout main
           git pull origin main
-          git add release/NephroPath.exe
+          git add NephroPath.exe
           git commit -m "Add built NephroPath.exe"
           git push origin main
 
@@ -48,4 +47,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: NephroPath-Windows
-          path: release/NephroPath.exe
+          path: NephroPath.exe
