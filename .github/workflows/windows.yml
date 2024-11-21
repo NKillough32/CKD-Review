@@ -26,7 +26,7 @@ jobs:
 
       - name: Move release
         run: |
-          move dist\NephroPath.exe .\NephroPath.exe
+          Move-Item dist\NephroPath.exe .\NephroPath.exe -Force
 
       - name: Set up Git
         run: |
