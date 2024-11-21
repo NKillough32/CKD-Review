@@ -658,15 +658,29 @@ def install_homebrew():
         print("Failed to install Homebrew.")
         raise e
 
-def is_wkhtmltopdf_installed():
-    """Check if wkhtmltopdf is installed on the system."""
+def is_homebrew_installed():
+    """Check if Homebrew is installed on the system."""
     try:
-        subprocess.run(["wkhtmltopdf", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        print("wkhtmltopdf is already installed.")
+        subprocess.run(["brew", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        print("Homebrew is already installed.")
         return True
-    except subprocess.CalledProcessError:
-        print("wkhtmltopdf is not installed.")
+    except FileNotFoundError:
+        print("Homebrew is not installed.")
         return False
+
+def install_homebrew():
+    """Install Homebrew on macOS."""
+    try:
+        print("Installing Homebrew...")
+        subprocess.run(
+            '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
+            shell=True,
+            check=True
+        )
+        print("Homebrew installation completed.")
+    except subprocess.CalledProcessError as e:
+        print("Failed to install Homebrew.")
+        raise e
 
 def install_wkhtmltopdf():
     """Install wkhtmltopdf via Homebrew."""
@@ -677,14 +691,25 @@ def install_wkhtmltopdf():
     except subprocess.CalledProcessError as e:
         print("Failed to install wkhtmltopdf.")
         raise e
-
-# Check for and install Homebrew if needed
+# Ensure Homebrew is installed
 if not is_homebrew_installed():
-    install_homebrew()
+    print("Homebrew is required to install wkhtmltopdf.")
+    user_choice = input("Would you like to install Homebrew now? (yes/no): ").strip().lower()
+    if user_choice in ['yes', 'y']:
+        install_homebrew()
+    else:
+        print("Homebrew is required. Exiting script.")
+        exit(1)
 
-# Check for and install wkhtmltopdf if needed
+# Ensure wkhtmltopdf is installed
 if not is_wkhtmltopdf_installed():
-    install_wkhtmltopdf()
+    print("wkhtmltopdf is required to generate PDFs.")
+    user_choice = input("Would you like to install wkhtmltopdf now? (yes/no): ").strip().lower()
+    if user_choice in ['yes', 'y']:
+        install_wkhtmltopdf()
+    else:
+        print("wkhtmltopdf is required. Exiting script.")
+        exit(1)
 
 # Set up pdfkit configuration with the path to wkhtmltopdf
 path_to_wkhtmltopdf = "/usr/local/bin/wkhtmltopdf"
