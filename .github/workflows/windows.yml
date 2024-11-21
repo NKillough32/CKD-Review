@@ -38,10 +38,11 @@ jobs:
 
       - name: Commit and push changes
         run: |
-          git checkout -b automation-branch || git checkout automation-branch
+          git checkout main
+          git pull origin main
           git add release/NephroPath.exe
           git commit -m "Add built NephroPath.exe"
-          git push origin automation-branch
+          git push origin main
 
       - name: Upload Windows executable
         uses: actions/upload-artifact@v4
