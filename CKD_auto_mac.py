@@ -682,15 +682,16 @@ def install_homebrew():
         print("Failed to install Homebrew.")
         raise e
 
-def install_wkhtmltopdf():
-    """Install wkhtmltopdf via Homebrew."""
+def is_wkhtmltopdf_installed():
+    """Check if wkhtmltopdf is installed on the system."""
     try:
-        print("Installing wkhtmltopdf using Homebrew...")
-        subprocess.run(["brew", "install", "wkhtmltopdf"], check=True)
-        print("wkhtmltopdf installation completed.")
-    except subprocess.CalledProcessError as e:
-        print("Failed to install wkhtmltopdf.")
-        raise e
+        subprocess.run(["wkhtmltopdf", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        print("wkhtmltopdf is already installed.")
+        return True
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        print("wkhtmltopdf is not installed.")
+        return False
+        
 # Ensure Homebrew is installed
 if not is_homebrew_installed():
     print("Homebrew is required to install wkhtmltopdf.")
