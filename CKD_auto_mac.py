@@ -320,7 +320,7 @@ def classify_BP(systolic, diastolic):
         return None
 
 # Classify BP
-CKD_review['BP_Classification'] = CKD_review.apply(lambda row: classify_BP(row['Systolic_BP'], row['Diastolic_BP']), axis=1)
+CKD_review.loc[:, 'BP_Classification'] = CKD_review.apply(lambda row: classify_BP(row['Systolic_BP'], row['Diastolic_BP']), axis=1)
 
 # CKD-ACR Grade Classification
 def classify_CKD_ACR_grade(ACR):
@@ -331,7 +331,7 @@ def classify_CKD_ACR_grade(ACR):
     else:
         return "A3"
 
-CKD_review['CKD_ACR'] = CKD_review['ACR'].apply(classify_CKD_ACR_grade)
+CKD_review.loc[:, 'CKD_ACR']= CKD_review['ACR'].apply(classify_CKD_ACR_grade)
 
 # Adjust CKD Stage based on conditions
 CKD_review['CKD_Stage'] = CKD_review.apply(
@@ -633,13 +633,19 @@ print("Writing Output Data ...")
 output_file_name = f"eGFR_check_{pd.Timestamp.today().date()}.csv"
 CKD_review.to_csv(output_file_name, index=False)
 
+import subprocess
+import sys
+import pdfkit
+import shutil
+import platform
+
 def is_homebrew_installed():
     """Check if Homebrew is installed on the system."""
     try:
         subprocess.run(["brew", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         print("Homebrew is already installed.")
         return True
-    except subprocess.CalledProcessError:
+    except (FileNotFoundError, subprocess.CalledProcessError):
         print("Homebrew is not installed.")
         return False
 
@@ -649,32 +655,7 @@ def install_homebrew():
         print("Installing Homebrew...")
         # Run the Homebrew installation script
         subprocess.run(
-            '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
-            shell=True,
-            check=True
-        )
-        print("Homebrew installation completed.")
-    except subprocess.CalledProcessError as e:
-        print("Failed to install Homebrew.")
-        raise e
-
-def is_homebrew_installed():
-    """Check if Homebrew is installed on the system."""
-    try:
-        subprocess.run(["brew", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        print("Homebrew is already installed.")
-        return True
-    except FileNotFoundError:
-        print("Homebrew is not installed.")
-        return False
-
-def install_homebrew():
-    """Install Homebrew on macOS."""
-    try:
-        print("Installing Homebrew...")
-        subprocess.run(
-            '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
-            shell=True,
+            ['/bin/bash', '-c', "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"],
             check=True
         )
         print("Homebrew installation completed.")
@@ -691,7 +672,22 @@ def is_wkhtmltopdf_installed():
     except (FileNotFoundError, subprocess.CalledProcessError):
         print("wkhtmltopdf is not installed.")
         return False
-        
+
+def install_wkhtmltopdf():
+    """Install wkhtmltopdf using Homebrew."""
+    try:
+        print("Installing wkhtmltopdf...")
+        subprocess.run(["brew", "install", "wkhtmltopdf"], check=True)
+        print("wkhtmltopdf installation completed.")
+    except subprocess.CalledProcessError as e:
+        print("Failed to install wkhtmltopdf.")
+        raise e
+
+# Check if the script is running on macOS
+if platform.system() != 'Darwin':
+    print("This script is intended for macOS systems.")
+    sys.exit(1)
+
 # Ensure Homebrew is installed
 if not is_homebrew_installed():
     print("Homebrew is required to install wkhtmltopdf.")
@@ -700,7 +696,7 @@ if not is_homebrew_installed():
         install_homebrew()
     else:
         print("Homebrew is required. Exiting script.")
-        exit(1)
+        sys.exit(1)
 
 # Ensure wkhtmltopdf is installed
 if not is_wkhtmltopdf_installed():
@@ -710,10 +706,15 @@ if not is_wkhtmltopdf_installed():
         install_wkhtmltopdf()
     else:
         print("wkhtmltopdf is required. Exiting script.")
-        exit(1)
+        sys.exit(1)
+
+# Dynamically find the path to wkhtmltopdf
+path_to_wkhtmltopdf = shutil.which("wkhtmltopdf")
+if path_to_wkhtmltopdf is None:
+    print("wkhtmltopdf not found in PATH.")
+    sys.exit(1)
 
 # Set up pdfkit configuration with the path to wkhtmltopdf
-path_to_wkhtmltopdf = "/usr/local/bin/wkhtmltopdf"
 config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
 print("pdfkit configured successfully.")
 
