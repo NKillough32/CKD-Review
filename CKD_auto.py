@@ -158,7 +158,7 @@ CKD_review.rename(columns={
     'Value': 'Creatinine', 'Value.1': 'ACR',
     'Value.3': 'Systolic_BP', 'Value.4': 'Diastolic_BP', 'Value.5': 'haemoglobin',
     'Value.6': 'HbA1c', 'Value.7': 'Potassium', 'Value.8': 'Phosphate',
-    'Value.9': 'Calcium', 'Value.10': 'Vitamin_D', 'Code Term': 'EMIS_CKD_Code'
+    'Value.9': 'Calcium', 'Value.10': 'Vitamin_D', 'Code Term': 'EMIS_CKD_Code', 'Value.11': 'Height'
 }, inplace=True)
 
 # Replace missing ACR values with 0
@@ -174,22 +174,35 @@ CKD_review['Age'] = pd.to_numeric(CKD_review['Age'], errors='coerce')
 CKD_review['Gender'] = CKD_review['Gender'].astype('category')
 
 # eGFR Calculation function
-def calculate_eGFR(Age, Gender, Creatinine):
+def calculate_eGFR(Age, Gender, Creatinine, Height=None):
     if pd.isna(Age) or pd.isna(Gender) or pd.isna(Creatinine):
         return np.nan  # Return NaN if any input is missing
 
-    Creatinine_mg_dL = Creatinine / 88.42
-    is_female = Gender == 'Female'
-    K = 0.7 if is_female else 0.9
-    alpha = -0.241 if is_female else -0.302
-    female_multiplier = 1.012 if is_female else 1
-    standardised_Scr = Creatinine_mg_dL / K
-    eGFR = (142 * (min(standardised_Scr, 1)**alpha) * (max(standardised_Scr, 1)**(-1.200)) * (0.9938**Age) * female_multiplier)
+    Creatinine_mg_dL = Creatinine / 88.42  # Convert creatinine to mg/dL if in µmol/L
+    
+    if Age < 18:  # Use Bedside Schwartz for children
+        if pd.isna(Height):  # Height is required for children
+            return np.nan
+        eGFR = (0.413 * Height) / Creatinine_mg_dL
+    else:  # Use adult equation for 18+ (CKD-EPI)
+        is_female = Gender == 'Female'
+        K = 0.7 if is_female else 0.9
+        alpha = -0.241 if is_female else -0.302
+        female_multiplier = 1.012 if is_female else 1
+        standardised_Scr = Creatinine_mg_dL / K
+        eGFR = (142 * (min(standardised_Scr, 1)**alpha) * 
+                (max(standardised_Scr, 1)**(-1.200)) * 
+                (0.9938**Age) * female_multiplier)
+    
     return eGFR
 
 # Apply eGFR calculation
-CKD_review['eGFR'] = CKD_review.apply(lambda row: calculate_eGFR(row['Age'], row['Gender'], row['Creatinine']), axis=1)
-CKD_review['eGFR_3m_prior'] = CKD_review.apply(lambda row: calculate_eGFR(row['Age'], row['Gender'], row['Creatinine_3m_prior']), axis=1)
+CKD_review['eGFR'] = CKD_review.apply(
+    lambda row: calculate_eGFR(row['Age'], row['Gender'], row['Creatinine'], row.get('Height', None)), axis=1
+)
+CKD_review['eGFR_3m_prior'] = CKD_review.apply(
+    lambda row: calculate_eGFR(row['Age'], row['Gender'], row['Creatinine_3m_prior'], row.get('Height', None)), axis=1
+)
 
 # CKD Stage classification
 def classify_CKD_stage(eGFR):
