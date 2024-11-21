@@ -688,19 +688,6 @@ if platform.system() != 'Darwin':
 if not is_homebrew_installed():
     print("Attempting to install wkhtmltopdf automatically...")
     install_wkhtmltopdf()
-    else:
-        print("Homebrew is required. Exiting script.")
-        sys.exit(1)
-
-# Ensure wkhtmltopdf is installed
-if not is_wkhtmltopdf_installed():
-    print("wkhtmltopdf is required to generate PDFs.")
-    user_choice = input("Would you like to install wkhtmltopdf now? (yes/no): ").strip().lower()
-    if user_choice in ['yes', 'y']:
-        install_wkhtmltopdf()
-    else:
-        print("wkhtmltopdf is required. Exiting script.")
-        sys.exit(1)
 
 # Dynamically find the path to wkhtmltopdf
 path_to_wkhtmltopdf = shutil.which("wkhtmltopdf")
