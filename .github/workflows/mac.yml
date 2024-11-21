@@ -25,7 +25,12 @@ jobs:
       - name: Move release
         run: |
           mv dist/NephroPath_mac ./NephroPath_mac
-
+      
+      - name: Test NephroPath_mac
+        run: |
+          chmod +x ./NephroPath_mac
+          ./NephroPath_mac  # Simply execute the file
+          
       - name: Set up Git
         run: |
           git config --global user.email "nicholas.killough@outlook.com"
