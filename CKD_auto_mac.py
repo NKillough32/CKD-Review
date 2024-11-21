@@ -5,6 +5,8 @@ import re
 import csv
 import shutil
 import subprocess
+import sys
+import platform
 from datetime import datetime, timedelta
 import pdfkit  # type: ignore
 from jinja2 import Environment, FileSystemLoader  # type: ignore
@@ -633,12 +635,6 @@ print("Writing Output Data ...")
 output_file_name = f"eGFR_check_{pd.Timestamp.today().date()}.csv"
 CKD_review.to_csv(output_file_name, index=False)
 
-import subprocess
-import sys
-import pdfkit
-import shutil
-import platform
-
 def is_homebrew_installed():
     """Check if Homebrew is installed on the system."""
     try:
@@ -669,7 +665,7 @@ def is_wkhtmltopdf_installed():
         subprocess.run(["wkhtmltopdf", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         print("wkhtmltopdf is already installed.")
         return True
-    except (FileNotFoundError, subprocess.CalledProcessError):
+    except Exception as e:
         print("wkhtmltopdf is not installed.")
         return False
 
