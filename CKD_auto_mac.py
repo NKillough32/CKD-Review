@@ -4,6 +4,7 @@ import os
 import re
 import csv
 import shutil
+import subprocess
 from datetime import datetime, timedelta
 import pdfkit  # type: ignore
 from jinja2 import Environment, FileSystemLoader  # type: ignore
@@ -161,7 +162,7 @@ CKD_review.rename(columns={
 }, inplace=True)
 
 # Replace missing ACR values with 0
-CKD_review['ACR'] = CKD_review['ACR'].fillna(0)
+CKD_review.loc[:, 'ACR'] = CKD_review['ACR'].fillna(0)
 
 # Handle empty date fields by replacing with "Missing value"
 for col in ['Date', 'Date.1', 'Date.2', 'Date.3', 'Date.4', 'Date.5', 'Date.6', 'Date.7', 'Date.8', 'Date.9', 'Date.10']:
