@@ -686,10 +686,8 @@ if platform.system() != 'Darwin':
 
 # Ensure Homebrew is installed
 if not is_homebrew_installed():
-    print("Homebrew is required to install wkhtmltopdf.")
-    user_choice = input("Would you like to install Homebrew now? (yes/no): ").strip().lower()
-    if user_choice in ['yes', 'y']:
-        install_homebrew()
+    print("Attempting to install wkhtmltopdf automatically...")
+    install_wkhtmltopdf()
     else:
         print("Homebrew is required. Exiting script.")
         sys.exit(1)
