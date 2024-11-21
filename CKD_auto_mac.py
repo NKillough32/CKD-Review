@@ -255,7 +255,7 @@ coefficients = {
 # Step 3: Process Complete Data for KFRE Calculations
 # Map 'Gender' to binary 'sex' column and convert to float
 gender_mapping = {'Male': 1, 'Female': 0}
-CKD_review_complete['sex'] = CKD_review_complete['Gender'].map(gender_mapping)
+CKD_review_complete.loc[:, 'sex'] = CKD_review_complete['Gender'].map(gender_mapping)
 
 # Drop rows with unexpected or missing 'Gender' values
 CKD_review_complete = CKD_review_complete.dropna(subset=['sex'])
