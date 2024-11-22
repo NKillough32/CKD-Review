@@ -43,25 +43,33 @@ print("Starting CKD Data Analysis Pipeline....")
 creatinine = pd.read_csv(creatinine_file) if os.path.exists(creatinine_file) else pd.DataFrame()
 CKD_check = pd.read_csv(CKD_check_file) if os.path.exists(CKD_check_file) else pd.DataFrame()
 
-# Function to preprocess data with a specified date format
 def preprocess_data(df):
-    # Define the date format
-    date_format = "%d-%b-%y"
-    
     # Identify columns with 'Date' in the name
     date_columns = [col for col in df.columns if 'Date' in col]
     
-    # Convert identified date columns using the specified format
-    for date_col in date_columns:
-        df[date_col] = pd.to_datetime(df[date_col], format=date_format, errors='coerce')
+    # Define a function to parse dates with multiple formats
+    def parse_dates(date_str):
+        if pd.isna(date_str):
+            return pd.NaT
+        for fmt in ("%d-%b-%y", "%Y-%m-%d", "%d/%m/%Y"):
+            try:
+                return pd.to_datetime(date_str, format=fmt)
+            except ValueError:
+                continue
+        return pd.NaT  # Return NaT if all formats fail
     
-    # Convert Name, Dosage, and Quantity to string
+    # Apply date parsing to all date columns
+    for date_col in date_columns:
+        df[date_col] = df[date_col].apply(parse_dates)
+    
+    # Handle other preprocessing steps
     if 'Name, Dosage and Quantity' in df.columns:
         df['Name, Dosage and Quantity'] = df['Name, Dosage and Quantity'].astype(str)
     
     # Fill missing HC Number values forward
-    df['HC Number'] = df['HC Number'].replace("", np.nan).ffill()
-        
+    if 'HC Number' in df.columns:
+        df['HC Number'] = df['HC Number'].replace("", np.nan).ffill()
+    
     return df
 
 # Apply preprocessing to both datasets
