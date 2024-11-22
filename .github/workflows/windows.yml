@@ -29,11 +29,11 @@ jobs:
           Move-Item dist\NephroPath.exe .\NephroPath.exe -Force
 
       - name: Test NephroPath.exe
+        shell: pwsh  # Use PowerShell for scripting
         run: |
           .\NephroPath.exe  # Execute the file
           if (!$?) { exit 1 }  # Exit with error if the executable fails
-          shell: pwsh  # Use PowerShell for scripting
-
+          
       - name: Set up Git
         run: |
           git config --global user.email "nicholas.killough@outlook.com"
