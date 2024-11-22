@@ -666,17 +666,6 @@ except subprocess.CalledProcessError as e:
 def download_wkhtmltopdf():
     print("Downloading wkhtmltopdf installer...")
     url = "https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox-0.12.6-1.msvc2015-win64.exe"
-    
-    # Download the installer file
-#    with requests.get(url, stream=True) as response:
-#        response.raise_for_status()
-#        with open(installer_path, "wb") as f:
-#            for chunk in response.iter_content(chunk_size=8192):
-#                f.write(chunk)
-    
-#    print("Download completed. The installer is saved as 'wkhtmltox-installer.exe'.")
-#    print("Please install wkhtmltopdf manually by running 'wkhtmltox-installer.exe'.")
-#    print("After installation, press Enter to continue.")
 
 # Check if wkhtmltopdf is installed; download installer if not
 while not os.path.exists(path_to_wkhtmltopdf):
@@ -685,10 +674,7 @@ while not os.path.exists(path_to_wkhtmltopdf):
     # Download installer if it doesn't exist yet
     if not os.path.exists(installer_path):
         download_wkhtmltopdf()
-    
-    # Wait for user to install manually
-  #  input("Once wkhtmltopdf is installed, press Enter to continue...")
-    
+
 # Remove the installer after successful installation
 if os.path.exists(installer_path):
     os.remove(installer_path)
