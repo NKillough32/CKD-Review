@@ -4,6 +4,7 @@ import os
 import re
 import csv
 import shutil
+import subprocess
 import requests  # type: ignore
 from datetime import datetime, timedelta
 import pdfkit  # type: ignore
@@ -644,6 +645,22 @@ CKD_review.to_csv(output_file_name, index=False)
 # Define path to wkhtmltopdf executable and installer
 path_to_wkhtmltopdf = "C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe"  # Adjust for your system
 installer_path = "wkhtmltox-installer.exe"
+url = "https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox-0.12.6-1.msvc2015-win64.exe"
+
+# Download installer if not present
+if not os.path.exists(installer_path):
+    print("Downloading wkhtmltopdf installer...")
+    response = requests.get(url)
+    with open(installer_path, "wb") as file:
+        file.write(response.content)
+    print("Download completed.")
+
+# Silent install the downloaded installer
+try:
+    subprocess.run([installer_path, "/S"], check=True)
+    print("wkhtmltopdf installed successfully.")
+except subprocess.CalledProcessError as e:
+    print(f"Error during installation: {e}")
 
 # Function to download wkhtmltopdf installer
 def download_wkhtmltopdf():
@@ -651,15 +668,15 @@ def download_wkhtmltopdf():
     url = "https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox-0.12.6-1.msvc2015-win64.exe"
     
     # Download the installer file
-    with requests.get(url, stream=True) as response:
-        response.raise_for_status()
-        with open(installer_path, "wb") as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
+#    with requests.get(url, stream=True) as response:
+#        response.raise_for_status()
+#        with open(installer_path, "wb") as f:
+#            for chunk in response.iter_content(chunk_size=8192):
+#                f.write(chunk)
     
-    print("Download completed. The installer is saved as 'wkhtmltox-installer.exe'.")
-    print("Please install wkhtmltopdf manually by running 'wkhtmltox-installer.exe'.")
-    print("After installation, press Enter to continue.")
+#    print("Download completed. The installer is saved as 'wkhtmltox-installer.exe'.")
+#    print("Please install wkhtmltopdf manually by running 'wkhtmltox-installer.exe'.")
+#    print("After installation, press Enter to continue.")
 
 # Check if wkhtmltopdf is installed; download installer if not
 while not os.path.exists(path_to_wkhtmltopdf):
@@ -670,7 +687,7 @@ while not os.path.exists(path_to_wkhtmltopdf):
         download_wkhtmltopdf()
     
     # Wait for user to install manually
-    input("Once wkhtmltopdf is installed, press Enter to continue...")
+  #  input("Once wkhtmltopdf is installed, press Enter to continue...")
     
 # Remove the installer after successful installation
 if os.path.exists(installer_path):
