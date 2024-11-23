@@ -1,6 +1,13 @@
 name: Build NephroPath for Windows
 
-on: [push]
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'NephroPath.exe'
+
+permissions:
+  contents: write  # Allow write access for the GITHUB_TOKEN
 
 jobs:
   build-windows:
@@ -8,11 +15,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.10'  # Specify a stable version for consistency
+          python-version: '3.10'
 
       - name: Install dependencies
         run: |
@@ -29,25 +38,24 @@ jobs:
           Move-Item dist\NephroPath.exe .\NephroPath.exe -Force
 
       - name: Test NephroPath.exe
-        shell: pwsh  # Use PowerShell for scripting
+        shell: pwsh
         run: |
-          .\NephroPath.exe  # Execute the file
-          if (!$?) { exit 1 }  # Exit with error if the executable fails
-          
+          .\NephroPath.exe
+          if (!$?) { exit 1 }
+
       - name: Set up Git
         run: |
-          git config --global user.email "nicholas.killough@outlook.com"
-          git config --global user.name "NKillough32"
-          git remote set-url origin https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/NKillough32/CKD-Review.git
-          git fetch origin
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
 
       - name: Commit and push changes
         run: |
+          git fetch origin
           git checkout main
-          git pull origin main
+          git reset --hard origin/main
           git add NephroPath.exe
           git commit -m "Add built NephroPath.exe"
-          git push origin main
+          git push origin HEAD:main
 
       - name: Upload Windows executable
         uses: actions/upload-artifact@v4
