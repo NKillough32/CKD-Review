@@ -43,19 +43,15 @@ jobs:
           .\NephroPath.exe
           if (!$?) { exit 1 }
 
-      - name: Set up Git
-        run: |
-          git config --global user.email "actions@github.com"
-          git config --global user.name "GitHub Actions"
-
       - name: Commit and push changes
         run: |
-          git fetch origin
-          git checkout main
-          git reset --hard origin/main
-          git add NephroPath.exe NephroPath.spec Patient_Summaries/ build/
-          git commit -m "Add built NephroPath.exe and related files"
-          git push origin HEAD:main
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git config pull.rebase false
+          git pull origin main
+          git add -f NephroPath.exe
+          git commit -m "Add built NephroPath.exe" || echo "No changes to commit"
+          git push origin main
 
       - name: Upload Windows executable
         uses: actions/upload-artifact@v4
