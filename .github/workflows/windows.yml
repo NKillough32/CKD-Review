@@ -53,8 +53,8 @@ jobs:
           git fetch origin
           git checkout main
           git reset --hard origin/main
-          git add NephroPath.exe
-          git commit -m "Add built NephroPath.exe"
+          git add NephroPath.exe NephroPath.spec Patient_Summaries/ build/
+          git commit -m "Add built NephroPath.exe and related files"
           git push origin HEAD:main
 
       - name: Upload Windows executable
