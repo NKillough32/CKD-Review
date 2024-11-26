@@ -1,4 +1,4 @@
-name: Build NephroPath for Windows
+name: Build NephroPath for Windows without pdf
 
 on:
   push:
