@@ -343,11 +343,11 @@ CKD_review['CKD_ACR'] = CKD_review['ACR'].apply(classify_CKD_ACR_grade)
 
 # Adjust CKD Stage based on conditions
 CKD_review['CKD_Stage'] = CKD_review.apply(
-    lambda row: "Normal Function" if row['ACR'] <= 3 and row['eGFR'] > 60 and row['Date'] != "Missing value" else row['CKD_Stage'], 
+    lambda row: "Normal Function" if row['ACR'] <= 3 and row['eGFR'] > 90 and row['Date'] != "" else row['CKD_Stage'], 
     axis=1
 )
 CKD_review['CKD_Stage'] = CKD_review.apply(
-    lambda row: "Normal/Stage1" if row['CKD_Stage'] == "Stage 1" and row['Date'] == "Missing value" else row['CKD_Stage'], 
+    lambda row: "Normal/Stage1" if row['CKD_Stage'] == "Stage 1" and row['Date'] == "" else row['CKD_Stage'], 
     axis=1
 )
 
