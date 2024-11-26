@@ -47,10 +47,14 @@ jobs:
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          git config pull.rebase false
-          git pull origin main
+          # Ensure the local branch is up-to-date
+          git fetch origin main
+          git checkout main
+          git pull origin main --rebase
+          # Stage and commit the updated file
           git add -f NephroPath_nopdf.exe
-          git commit -m "Add built NephroPath_nopdf.exe" || echo "No changes to commit"
+          git commit -m "Update built NephroPath_nopdf.exe" || echo "No changes to commit"
+          # Push the changes to the remote repository
           git push origin main
 
       - name: Upload Windows executable
