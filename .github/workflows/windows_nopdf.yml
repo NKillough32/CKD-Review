@@ -45,17 +45,16 @@ jobs:
 
       - name: Commit and push changes
         run: |
-          git config user.email "actions@github.com"
-          git config user.name "GitHub Actions"
-          # Ensure the local branch is up-to-date
-          git fetch origin main
-          git checkout main
-          git pull origin main --rebase
-          # Stage and commit the updated file
-          git add -f NephroPath_nopdf.exe
-          git commit -m "Update built NephroPath_nopdf.exe" || echo "No changes to commit"
-          # Push the changes to the remote repository
-          git push origin main
+         git config user.email "actions@github.com"
+         git config user.name "GitHub Actions"
+         # Stage and commit unstaged changes
+         git add -f NephroPath_nopdf.exe
+         git commit -m "Update built NephroPath_nopdf.exe" || echo "No changes to commit"
+         # Fetch the latest changes and rebase
+         git fetch origin main
+         git rebase origin/main
+         # Push changes to the remote repository
+         git push origin main --force-with-lease
 
       - name: Upload Windows executable
         uses: actions/upload-artifact@v4
