@@ -30,8 +30,8 @@ Getting Started
 EMIS Data Export:
 Log into EMIS and access the report/import functionality.  
 Configure and import the provided EMIS XML files. (Please click here from step by step instructions https://www.emisnow.com/csm?id=kb_article&sys_id=a45d7aefc36cca10794e322d0501316a)
-Export the EMIS data.
-Save the Creatainine data as Creatinine.csv in the project directory.
+Export the EMIS data.  
+Save the Creatainine data as Creatinine.csv in the project directory.  
 Save the CKD coded data as CKD_check.csv in the project directory.
 
 This program enables the review of patients with potential or confirmed Chronic Kidney Disease (CKD) within the EMIS system. It offers three analysis options:  
