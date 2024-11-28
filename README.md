@@ -17,22 +17,22 @@ drug_adjustment.csv: Guidelines for dosage adjustments based on CKD stage.
 Creatinine.csv: Grenerated using the XML file imported into the EMIS system.  
 CKD_check.csv: Grenerated using the XML file imported into the EMIS system. 
 
-Getting Started  
-EMIS Data Export:
-Log into EMIS and access the report/import functionality. Configure and import the provided EMIS XML files. (Please click here from step by step instructions https://www.emisnow.com/csm?id=kb_article&sys_id=a45d7aefc36cca10794e322d0501316a)
-Export the EMIS data.
-Save the Creatainine data as Creatinine.csv in the project directory.
-Save the CKD coded data as CKD_check.csv in the project directory.
-
 Setting Up:  
 1) Download the repository to your Desktop from https://github.com/NKillough32/CKD-Review/archive/refs/heads/main.zip
-2) Move the EMIS downloads Creatinine.csv, CKD_check.csv into the same directory e.g. /CKD-Review.  
+2) Move the EMIS downloads Creatinine.csv, CKD_check.csv into the same directory e.g. /CKD-Review. see below for details. 
 
 Or clone the repository:  
 1) bash  "C:\Windows\System32\bash.exe"
 2) cd cd /mnt/c/Users/"Name"/Desktop/ Change "Name" to your profile or computer name
 3) Copy code: git clone https://github.com/NKillough32/CKD-Review.git  
-4) Move EMIS downloads Creatinine.csv, CKD_check.csv into the same directory e.g. /CKD-Review.
+ 
+Getting Started  
+EMIS Data Export:
+Log into EMIS and access the report/import functionality.  
+Configure and import the provided EMIS XML files. (Please click here from step by step instructions https://www.emisnow.com/csm?id=kb_article&sys_id=a45d7aefc36cca10794e322d0501316a)
+Export the EMIS data.
+Save the Creatainine data as Creatinine.csv in the project directory.
+Save the CKD coded data as CKD_check.csv in the project directory.
 
 This program enables the review of patients with potential or confirmed Chronic Kidney Disease (CKD) within the EMIS system. It offers three analysis options:  
 1) Patients with Two eGFR Results Below 90: Identifies individuals with at least two eGFR measurements under 90 mL/min/1.73m² alongside signs of kidney dysfunction, even if not formally coded as CKD.
