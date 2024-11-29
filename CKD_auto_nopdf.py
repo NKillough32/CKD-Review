@@ -732,10 +732,10 @@ print("Generating reports...")
 def rename_folders(date_folder):
     # Define mapping with simpler names
     folder_mapping = {
-        "Review_Required__CKD_Stage_1_2_with__1_year_since_last_eGFR_or_ACR__3_": "Stage_1_2_Year_eGFR_or_ACR3",
+        "Review_Required__CKD_Stage_1_2_with__1_year_since_last_eGFR_or_ACR__3_": "Stages_1-2_(12_Months_Review)",
         "No_immediate_review_required": "No_Immediate_Review",
-        "Review_Required__CKD_Stage_3_5_with__6_months_since_last_eGFR__ACR__30__or_high_risk_": "Stage_3_5_6Months_eGFR_ACR30_HighRisk",
-        "Review_Required__CKD_Stage_3_5_with__3_months_since_last_eGFR": "Stage_3_5_3Months_eGFR",
+        "Review_Required__CKD_Stage_3_5_with__6_months_since_last_eGFR__ACR__30__or_high_risk_": "Stages_3-5_(6_Months_Review)",
+        "Review_Required__CKD_Stage_3_5_with__3_months_since_last_eGFR": "Stages_3-5_(3_Months_Review)",
         "No_CKD_stage_specified": "No_CKD_Stage_Specified",
         "Review_Required__eGFR_date_unavailable_": "Review_eGFR_Date_Unavailable"
     }
