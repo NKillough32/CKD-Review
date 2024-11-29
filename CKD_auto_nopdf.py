@@ -51,7 +51,7 @@ def preprocess_data(df):
     def parse_dates(date_str):
         if pd.isna(date_str):
             return pd.NaT
-        for fmt in ("%d-%b-%y", "%Y-%m-%d", "%d/%m/%Y"):
+        for fmt in ("%d-%b-%y", "%Y-%m-%d", "%d/%m/%Y", "%d-%b-%Y"):
             try:
                 return pd.to_datetime(date_str, format=fmt)
             except ValueError:
