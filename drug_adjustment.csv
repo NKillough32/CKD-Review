@@ -1,7 +1,11 @@
 drug_adjustment,eGFR
+Apremilast,30
 Atorvastatin,15
+Canagliflozin,60
+Candesartan,20
 Codeine,30
 Digoxin,15
+Empagliflozin,60
 Enoxaparin,30
 Gabapentin,45
 Gentamicin,15
@@ -11,11 +15,8 @@ Losartan,60
 Metformin,60
 Morphine,30
 Omeprazole,15
-Pregabalin,45
-Simvastatin,15
-Vancomycin,15
-Empagliflozin,60
 Oxaliplatin,30
-Apremilast,30
-Canagliflozin,60
-Candesartan,20
+Pregabalin,45
+Simvastatin,10
+Vancomycin,15
+Solifenacin succinate,10
