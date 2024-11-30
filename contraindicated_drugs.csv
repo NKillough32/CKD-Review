@@ -1,52 +1,90 @@
 contraindicated_drugs,eGFR
 Abciximab,10
 Acarbose,25
+Aceclofenac,30
 Afatinib,15
 Aliskiren,30
 Aluminum hydroxide,15
 Amantadine,15
 Ambrisentan,15
 Amiloride Hydrochloride,10
+Amisulpride,30
+Amphotericin,30
+Anagrelide,30
 Anakinra,30
+Apixaban,15
 Aspirin,30
 Atazanavir,15
+Baclofen,30
 Baricitinib,30
+Bendroflumethiazide,30
 Cabozantinib,30
 Canagliflozin,45
 Capecitabine,30
 Carboplatin,20
+Cefuroxime,30
 Celecoxib,10
+Celecoxib,30
 Cetirizine,10
 Ciclosporin,30
 Clodronate,10
+Co-amoxiclav,30
 Colchicine,10
+Co-trimoxazole,15
 Dabigatran,30
+Dabigatran etexilate,30
 Dapagliflozin,60
 Dasatinib,60
+Deferasirox,30
+Desmopressin ,30
+Dexibuprofen,30
+Dexketoprofen,30
 Diclofenac,45
+Diclofenac sodium,30
+Didanosine,30
+Dronedarone,30
+Duloxetine,30
 Empagliflozin,20
 Eplerenone,30
+Ertapenem,30
 Exemestane,30
 Exenatide,30
 Ezetimibe,10
+Febuxostat,30
 Fenofibrate,15
 Fenoprofen,10
+Fluconazole,30
+Ganciclovir,30
 Gefitinib,10
+Glibenclamide,30
 Gliclazide,10
+Hydrochlorothiazide,30
 Ibuprofen,45
 Ifosfamide,15
+Indapamide,30
 Indometacin,20
+Indomethacin,30
 Interferon Alfa,30
-Lithium Carbonate,20
+Ivabradine,15
+Ketoprofen,30
+Ketorolac,30
+Leflunomide,30
+Levofloxacin,30
+Lithium Carbonate,50
 Magnesium hydroxide,15
 Magnesium trisilicate,15
-Mesalazine,45
+Mefenamic acid,30
+Meloxicam,30
+Mesalazine,50
 Metformin,30
-Methotrexate,10
+Methotrexate,30
 Minocycline,10
+Mitomycin,30
+Morphine sulfate,30
 Nalmefene Hydrochloride,30
 Naproxen,45
 Nefopam hydrochloride,10
+Neomycin,30
 Nitrofurantoin,45
 Osimertinib,15
 Oxaliplatin,30
@@ -54,14 +92,21 @@ Oxytetracycline,10
 Pentamidine,30
 Piperazine,10
 Piracetam,20
-Primaxin,5
+Piroxicam,30
+Primaxin,10
 Primidone,10
 Quinagolide,30
 Quinapril,30
 Ranolazine,30
+Rivaroxaban,15
 Simvastatin,30
 Solifenacin,30
 Solifenacin succinate,10
-Spironolactone,15
+Spironolactone,30
 Tetracycline,10
+Thiazide diuretics,30
+Ticagrelor,15
+Trimethoprim,30
+Vancomycin,30
 Vandetanib,30
+Zonisamide,30
