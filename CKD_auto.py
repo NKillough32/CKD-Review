@@ -720,7 +720,7 @@ def review_message(row):
             else:
                 return "No immediate review required"
         else:
-            return "No CKD stage specified"
+            return "Normal Renal Function"
     else:
         # Handle case where 'Sample_Date' is missing or invalid
         return "Review Required (eGFR date unavailable)"
@@ -791,7 +791,7 @@ def rename_folders(date_folder):
         "No_immediate_review_required": "No_Immediate_Review",
         "Review_Required__CKD_Stage_3_5_with__6_months_since_last_eGFR__ACR__30__or_high_risk_": "Stages_3-5_(6_Months_Review)",
         "Review_Required__CKD_Stage_3_5_with__3_months_since_last_eGFR": "Stages_3-5_(3_Months_Review)",
-        "No_CKD_stage_specified": "No_CKD_Stage_Specified",
+        "Normal_Renal_Function": "Normal_Renal_Function",
         "Review_Required__eGFR_date_unavailable_": "Review_eGFR_Date_Unavailable"
     }
     
