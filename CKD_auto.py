@@ -10,9 +10,6 @@ from datetime import datetime, timedelta
 import pdfkit  # type: ignore
 from jinja2 import Environment, FileSystemLoader  # type: ignore
 
-#import elevate
-#elevate.elevate()  # Request elevated permissions at the start
-
 # Get the current working directory
 current_dir = os.getcwd()
 
