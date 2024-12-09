@@ -69,7 +69,7 @@
     <li><strong>Albumin-Creatinine Ratio (ACR):</strong> 
      <span class="{{ 'critical' if patient.ACR >= 30 else 'caution' if patient.ACR > 3 else '' }}">
         {{ patient.ACR }} mg/mmol
-     </span>
+     </span> | <strong>Date:</strong> {{ patient.Sample_Date1 | default("N/A", true) }}
     </li>
      <li><strong>Creatinine:</strong>
       <ul>
