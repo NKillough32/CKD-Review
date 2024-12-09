@@ -10,6 +10,9 @@ from datetime import datetime, timedelta
 import pdfkit  # type: ignore
 from jinja2 import Environment, FileSystemLoader  # type: ignore
 
+#import elevate
+#elevate.elevate()  # Request elevated permissions at the start
+
 # Get the current working directory
 current_dir = os.getcwd()
 
@@ -222,9 +225,9 @@ def classify_CKD_stage(eGFR):
     elif eGFR >= 60:
         return "Stage 2"
     elif eGFR >= 45:
-        return "Stage 3a"
+        return "Stage 3A"
     elif eGFR >= 30:
-        return "Stage 3b"
+        return "Stage 3B"
     elif eGFR >= 15:
         return "Stage 4"
     else:
@@ -355,19 +358,19 @@ CKD_review['CKD_Stage'] = CKD_review.apply(
 # Nephrology Referral
 CKD_review['Nephrology_Referral'] = CKD_review.apply(
     lambda row: "Indicated on the basis of risk calculation" 
-                if row['CKD_Stage'] in ["Stage 3a", "Stage 3b", "Stage 4", "Stage 5"] and row['risk_5yr'] >= 5 
+                if row['CKD_Stage'] in ["Stage 3A", "Stage 3B", "Stage 4", "Stage 5"] and row['risk_5yr'] >= 5 
                 else "Not Indicated", 
     axis=1
 )
 CKD_review['Multidisciplinary_Care'] = CKD_review.apply(
     lambda row: "Indicated on the basis of risk calculation" 
-                if row['CKD_Stage'] in ["Stage 3a", "Stage 3b", "Stage 4", "Stage 5"] and row['risk_2yr'] > 10 
+                if row['CKD_Stage'] in ["Stage 3A", "Stage 3B", "Stage 4", "Stage 5"] and row['risk_2yr'] > 10 
                 else "Not Indicated", 
     axis=1
 )
 CKD_review['Modality_Education'] = CKD_review.apply(
     lambda row: "Indicated on the basis of risk calculation" 
-                if row['CKD_Stage'] in ["Stage 3a", "Stage 3b", "Stage 4", "Stage 5"] and row['risk_2yr'] > 40 
+                if row['CKD_Stage'] in ["Stage 3A", "Stage 3B", "Stage 4", "Stage 5"] and row['risk_2yr'] > 40 
                 else "Not Indicated", 
     axis=1
 )
@@ -564,7 +567,7 @@ def lifestyle_advice(ckd_stage):
             "Promote regular physical activity (150 minutes per week) as per general health guidance. "
             "Emphasize smoking cessation and maintaining a healthy weight."
         )
-    elif ckd_stage in ["Stage 3a", "Stage 3b"]:
+    elif ckd_stage in ["Stage 3A", "Stage 3B"]:
         return (
             "Encourage a balanced, low-sodium diet. Advise moderate, regular physical activity while monitoring for fatigue. "
             "Reinforce the importance of smoking cessation, weight management, and avoiding over-the-counter NSAIDs."
@@ -647,33 +650,44 @@ path_to_wkhtmltopdf = "C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe"  # 
 installer_path = "wkhtmltox-installer.exe"
 url = "https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox-0.12.6-1.msvc2015-win64.exe"
 
-# Download installer if not present
-if not os.path.exists(installer_path):
+def download_wkhtmltopdf(installer_path, url):
+    """Download the wkhtmltopdf installer."""
     print("Downloading wkhtmltopdf installer...")
-    response = requests.get(url)
-    with open(installer_path, "wb") as file:
-        file.write(response.content)
-    print("Download completed.")
+    try:
+        response = requests.get(url, stream=True)
+        response.raise_for_status()
+        with open(installer_path, "wb") as file:
+            for chunk in response.iter_content(chunk_size=1024):
+                file.write(chunk)
+        print("Download completed successfully.")
+    except requests.RequestException as e:
+        print(f"Error downloading the installer: {e}")
+        exit(1)
 
-# Silent install the downloaded installer
-try:
-    subprocess.run([installer_path, "/S"], check=True)
-    print("wkhtmltopdf installed successfully.")
-except subprocess.CalledProcessError as e:
-    print(f"Error during installation: {e}")
-
-# Function to download wkhtmltopdf installer
-def download_wkhtmltopdf():
-    print("Downloading wkhtmltopdf installer...")
-    url = "https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox-0.12.6-1.msvc2015-win64.exe"
-
-# Check if wkhtmltopdf is installed; download installer if not
-while not os.path.exists(path_to_wkhtmltopdf):
+# Check if wkhtmltopdf is installed; if not, download and install
+if not os.path.exists(path_to_wkhtmltopdf):
     print("wkhtmltopdf executable not found.")
     
-    # Download installer if it doesn't exist yet
+    # Download the installer if it doesn't exist
     if not os.path.exists(installer_path):
-        download_wkhtmltopdf()
+        download_wkhtmltopdf(installer_path, url)
+
+    # Attempt a silent installation
+    try:
+        print("Attempting silent installation...")
+        subprocess.run([installer_path, "/S"], check=True)
+        print("Silent installation completed successfully.")
+    except subprocess.CalledProcessError as e:
+        print(f"Silent installation failed: {e}")
+        print("\nThe wkhtmltopdf installer has been downloaded.")
+        print(f"Please run the installer manually: {os.path.abspath(installer_path)}")
+        print("Make sure to run the installer as Administrator.")
+        input("After completing the installation, press Enter to continue...")
+    
+    # Re-check if wkhtmltopdf is installed
+    if not os.path.exists(path_to_wkhtmltopdf):
+        print("Installation not detected. Please ensure wkhtmltopdf is installed correctly.")
+        exit(1)
 
 # Remove the installer after successful installation
 if os.path.exists(installer_path):
@@ -681,8 +695,12 @@ if os.path.exists(installer_path):
     print("Installer removed successfully.")
 
 # Configure pdfkit to use wkhtmltopdf
-config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
-print("pdfkit configured successfully.")
+try:
+    config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
+    print("pdfkit configured successfully.")
+except Exception as e:
+    print(f"Error configuring pdfkit: {e}")
+    exit(1)
 
 # Load data from CSV file
 file_path = f"eGFR_check_{datetime.now().date()}.csv"
@@ -712,7 +730,7 @@ def review_message(row):
                 return "Review Required (CKD Stage 1-2 with >1 year since last eGFR or ACR >3)"
             else:
                 return "No immediate review required"
-        elif row['CKD_Stage'] in ["Stage 3", "Stage 3a", "Stage 3b", "Stage 4", "Stage 5"]:
+        elif row['CKD_Stage'] in ["Stage 3", "Stage 3A", "Stage 3B", "Stage 4", "Stage 5"]:
             if CKD_ACR > 30 or risk_5yr > 5 or days_since_eGFR > 180:
                 return "Review Required (CKD Stage 3-5 with >6 months since last eGFR, ACR >30, or high-risk)"
             elif days_since_eGFR > 90:
@@ -816,6 +834,31 @@ def rename_folders(date_folder):
                 except Exception as e:
                     print(f"Failed to rename folder '{folder}' to '{new_name}': {e}")
 
+# Add a new folder for storing the batch files
+emis_clinical_code_dir = os.path.join(current_dir, "EMIS_Clinical_Code_Batch_Files")
+os.makedirs(emis_clinical_code_dir, exist_ok=True)
+
+# CKD stages (as a list or set)
+ckd_stage_codes = [
+    "Stage 1",
+    "Stage 2",
+    "Stage 3A",
+    "Stage 3B",
+    "Stage 4",
+    "Stage 5"
+]
+
+# Map CKD Stages to clinical codes and generate CSV files
+for stage in ckd_stage_codes:
+    # Filter patients with the specified CKD stage
+    filtered_patients = CKD_review[CKD_review["CKD_Stage"] == stage][["HC_Number"]].copy()
+
+    # Save to a CSV file in the EMIS Clinical Code Batch Files directory
+    file_path = os.path.join(emis_clinical_code_dir, f"CKD_{stage}_Patients.csv")
+    filtered_patients.to_csv(file_path, index=False)
+
+    print(f"Saved {stage} patients to: {file_path}")
+
 # Function to move both the eGFR file and CKD_review file to the date-stamped folder
 def move_ckd_files(date_folder):
     # Construct file names based on today's date
@@ -833,7 +876,7 @@ def move_ckd_files(date_folder):
     missing_source = os.path.join(current_dir, missing_KFRE_file)
     missing_destination = os.path.join(date_folder, missing_KFRE_file)
 
-    # Move the eGFR file
+   # Move the eGFR file
     try:
         shutil.move(egfr_source, egfr_destination)
         print(f"Moved {egfr_file} to {date_folder}")
@@ -853,6 +896,14 @@ def move_ckd_files(date_folder):
         print(f"Moved {missing_KFRE_file} to {date_folder}")
     except Exception as e:
         print(f"Failed to move {missing_KFRE_file}: {e}")
+
+    # Move the EMIS Clinical Code Batch Files folder into the date-stamped folder
+    try:
+        emis_batch_destination = os.path.join(date_folder, "EMIS_Clinical_Code_Batch_Files")
+        shutil.move(emis_clinical_code_dir, emis_batch_destination)
+        print(f"Moved EMIS Clinical Code Batch Files to: {emis_batch_destination}")
+    except Exception as e:
+        print(f"Failed to move EMIS Clinical Code Batch Files: {e}")
 
 # Run the functions in sequence
 date_folder = generate_patient_pdf(data)  # Generate PDFs and capture the returned date folder path

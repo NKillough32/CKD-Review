@@ -172,12 +172,12 @@
   <ul>
     <li><strong>2-Year Risk:</strong> 
       <span class="{{ 'critical' if patient.risk_2yr >= 20 else 'caution' if 10 <= patient.risk_2yr < 20 else 'low' if 1 <= patient.risk_2yr < 10 else '' }}">
-        {{ patient.risk_2yr if patient.CKD_Stage in ["Stage 3a", "Stage 3b", "Stage 4", "Stage 5"] else "N/A" }}%
+        {{ patient.risk_2yr if patient.CKD_Stage in ["Stage 3A", "Stage 3B", "Stage 4", "Stage 5"] else "N/A" }}%
       </span>
     </li>
     <li><strong>5-Year Risk:</strong> 
       <span class="{{ 'critical' if patient.risk_5yr >= 10 else 'caution' if 5 <= patient.risk_5yr < 10 else 'low' if 1 <= patient.risk_5yr < 5 else '' }}">
-        {{ patient.risk_5yr if patient.CKD_Stage in ["Stage 3a", "Stage 3b", "Stage 4", "Stage 5"] else "N/A" }}%
+        {{ patient.risk_5yr if patient.CKD_Stage in ["Stage 3A", "Stage 3B", "Stage 4", "Stage 5"] else "N/A" }}%
       </span>
     </li>
   </ul>
@@ -314,7 +314,7 @@
   <li><strong>Medication:</strong> Evaluate cardiovascular risk and consider statin therapy as per guidelines. If proteinuria is present, consider initiating an ACE inhibitor or angiotensin receptor blocker (ARB) to reduce proteinuria and slow CKD progression.</li> 
 </ul>
 
-{% elif patient.CKD_Stage == "Stage 3a" %}
+{% elif patient.CKD_Stage == "Stage 3A" %}
 <h3>CKD Stage G3a Recommendations:</h3> 
 <ul> 
   <li><strong>Monitoring and Risk Assessment:</strong> Manage in primary care with at least annual renal function tests; increase monitoring to every 6 months if ACR is greater than 3 mg/mmol. Use the Kidney Failure Risk Equation (KFRE) at each assessment to estimate progression risk; refer to nephrology if the 5-year risk is greater than 5%.</li> 
@@ -324,7 +324,7 @@
   <li><strong>Patient Education:</strong> Educate on CKD progression, importance of medication adherence, and regular monitoring.</li> 
 </ul>
 
-{% elif patient.CKD_Stage == "Stage 3b" %}
+{% elif patient.CKD_Stage == "Stage 3B" %}
 <h3>CKD Stage G3b Recommendations:</h3> 
 <ul> 
   <li><strong>Monitoring and Risk Management:</strong> Continue primary care management with renal function tests every 6 months, or more frequently if ACR is greater than 3 mg/mmol. Use the KFRE to assess progression risk; refer to nephrology if the 5-year risk exceeds 5% or if there's a rapid decline in eGFR.</li> 
