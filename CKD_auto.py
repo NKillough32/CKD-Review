@@ -831,30 +831,76 @@ def rename_folders(date_folder):
                 except Exception as e:
                     print(f"Failed to rename folder '{folder}' to '{new_name}': {e}")
 
-# Add a new folder for storing the batch files
+# CKD stage and ACR grade codes for EMIS grouping
+def get_ckd_stage_acr_group(row):
+    eGFR = row['eGFR']
+    ACR = row['ACR']
+
+    # Check eGFR to determine the CKD stage
+    if eGFR >= 90:
+        if ACR <= 3:
+            return "Normal Function"
+        elif ACR <= 30:
+            return "Stage 1 A2"
+        else:
+            return "Stage 1 A3"
+    elif eGFR >= 60:
+        if ACR <= 3:
+            return "Normal Function"
+        elif ACR <= 30:
+            return "Stage 2 A2"
+        else:
+            return "Stage 2 A3"
+    elif eGFR >= 45:
+        if ACR <= 3:
+            return "Stage 3A A1"
+        elif ACR <= 30:
+            return "Stage 3A A2"
+        else:
+            return "Stage 3A A3"
+    elif eGFR >= 30:
+        if ACR <= 3:
+            return "Stage 3B A1"
+        elif ACR <= 30:
+            return "Stage 3B A2"
+        else:
+            return "Stage 3B A3"
+    elif eGFR >= 15:
+        if ACR <= 3:
+            return "Stage 4 A1"
+        elif ACR <= 30:
+            return "Stage 4 A2"
+        else:
+            return "Stage 4 A3"
+    else:  # eGFR < 15
+        if ACR <= 3:
+            return "Stage 5 A1"
+        elif ACR <= 30:
+            return "Stage 5 A2"
+        else:
+            return "Stage 5 A3"
+
+# Apply the function to categorize patients
+CKD_review['CKD_Group'] = CKD_review.apply(get_ckd_stage_acr_group, axis=1)
+
+# Save each CKD group to a separate CSV for EMIS batch uploads
 emis_clinical_code_dir = os.path.join(current_dir, "EMIS_Clinical_Code_Batch_Files")
 os.makedirs(emis_clinical_code_dir, exist_ok=True)
 
-# CKD stages (as a list or set)
-ckd_stage_codes = [
-    "Stage 1",
-    "Stage 2",
-    "Stage 3A",
-    "Stage 3B",
-    "Stage 4",
-    "Stage 5"
-]
+# Generate batch files for each group
+ckd_groups = CKD_review['CKD_Group'].unique()
 
-# Map CKD Stages to clinical codes and generate CSV files
-for stage in ckd_stage_codes:
-    # Filter patients with the specified CKD stage
-    filtered_patients = CKD_review[CKD_review["CKD_Stage"] == stage][["HC_Number"]].copy()
-
-    # Save to a CSV file in the EMIS Clinical Code Batch Files directory
-    file_path = os.path.join(emis_clinical_code_dir, f"CKD_{stage}_Patients.csv")
-    filtered_patients.to_csv(file_path, index=False)
-
-    print(f"Saved {stage} patients to: {file_path}")
+for group in ckd_groups:
+    # Filter patients in the current group
+    filtered_patients = CKD_review[CKD_review['CKD_Group'] == group][["HC_Number"]].copy()
+    
+    # Generate the file path
+    group_file_name = f"CKD_{group.replace(' ', '_').replace('-', '_')}_Patients.csv"
+    group_file_path = os.path.join(emis_clinical_code_dir, group_file_name)
+    
+    # Save the batch file
+    filtered_patients.to_csv(group_file_path, index=False)
+    print(f"Saved {group} patients to: {group_file_path}")
 
 # Function to move both the eGFR file and CKD_review file to the date-stamped folder
 def move_ckd_files(date_folder):
