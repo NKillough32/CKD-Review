@@ -879,7 +879,7 @@ def move_ckd_files(date_folder):
         print(f"Failed to move EMIS Clinical Code Batch Files: {e}")
 
 # Run the functions in sequence
-date_folder = generate_patient_pdf(data)  # Generate PDFs and capture the returned date folder path
+date_folder = generate_patient_html(data)  # Generate PDFs and capture the returned date folder path
 rename_folders(date_folder)               # Rename folders within the date-stamped directory
 move_ckd_files(date_folder)  # Moves both eGFR and CKD_review files to the date-stamped folder
 print("\nCKD Analysis and Reporting Completed ")
