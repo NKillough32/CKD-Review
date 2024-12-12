@@ -221,9 +221,9 @@ def classify_CKD_stage(eGFR):
     elif eGFR >= 60:
         return "Stage 2"
     elif eGFR >= 45:
-        return "Stage 3a"
+        return "Stage 3A"
     elif eGFR >= 30:
-        return "Stage 3b"
+        return "Stage 3B"
     elif eGFR >= 15:
         return "Stage 4"
     else:
@@ -354,19 +354,19 @@ CKD_review['CKD_Stage'] = CKD_review.apply(
 # Nephrology Referral
 CKD_review['Nephrology_Referral'] = CKD_review.apply(
     lambda row: "Indicated on the basis of risk calculation" 
-                if row['CKD_Stage'] in ["Stage 3a", "Stage 3b", "Stage 4", "Stage 5"] and row['risk_5yr'] >= 5 
+                if row['CKD_Stage'] in ["Stage 3A", "Stage 3B", "Stage 4", "Stage 5"] and row['risk_5yr'] >= 5 
                 else "Not Indicated", 
     axis=1
 )
 CKD_review['Multidisciplinary_Care'] = CKD_review.apply(
     lambda row: "Indicated on the basis of risk calculation" 
-                if row['CKD_Stage'] in ["Stage 3a", "Stage 3b", "Stage 4", "Stage 5"] and row['risk_2yr'] > 10 
+                if row['CKD_Stage'] in ["Stage 3A", "Stage 3B", "Stage 4", "Stage 5"] and row['risk_2yr'] > 10 
                 else "Not Indicated", 
     axis=1
 )
 CKD_review['Modality_Education'] = CKD_review.apply(
     lambda row: "Indicated on the basis of risk calculation" 
-                if row['CKD_Stage'] in ["Stage 3a", "Stage 3b", "Stage 4", "Stage 5"] and row['risk_2yr'] > 40 
+                if row['CKD_Stage'] in ["Stage 3A", "Stage 3B", "Stage 4", "Stage 5"] and row['risk_2yr'] > 40 
                 else "Not Indicated", 
     axis=1
 )
@@ -563,7 +563,7 @@ def lifestyle_advice(ckd_stage):
             "Promote regular physical activity (150 minutes per week) as per general health guidance. "
             "Emphasize smoking cessation and maintaining a healthy weight."
         )
-    elif ckd_stage in ["Stage 3a", "Stage 3b"]:
+    elif ckd_stage in ["Stage 3A", "Stage 3B"]:
         return (
             "Encourage a balanced, low-sodium diet. Advise moderate, regular physical activity while monitoring for fatigue. "
             "Reinforce the importance of smoking cessation, weight management, and avoiding over-the-counter NSAIDs."
@@ -710,7 +710,7 @@ def review_message(row):
                 return "Review Required (CKD Stage 1-2 with >1 year since last eGFR or ACR >3)"
             else:
                 return "No immediate review required"
-        elif row['CKD_Stage'] in ["Stage 3", "Stage 3a", "Stage 3b", "Stage 4", "Stage 5"]:
+        elif row['CKD_Stage'] in ["Stage 3", "Stage 3A", "Stage 3B", "Stage 4", "Stage 5"]:
             if CKD_ACR > 30 or risk_5yr > 5 or days_since_eGFR > 180:
                 return "Review Required (CKD Stage 3-5 with >6 months since last eGFR, ACR >30, or high-risk)"
             elif days_since_eGFR > 90:
@@ -761,6 +761,77 @@ def rename_folders(date_folder):
                 except Exception as e:
                     print(f"Failed to rename folder '{folder}' to '{new_name}': {e}")
 
+# CKD stage and ACR grade codes for EMIS grouping
+def get_ckd_stage_acr_group(row):
+    eGFR = row['eGFR']
+    ACR = row['ACR']
+
+    # Check eGFR to determine the CKD stage
+    if eGFR >= 90:
+        if ACR <= 3:
+            return "Normal Function"
+        elif ACR <= 30:
+            return "Stage 1 A2"
+        else:
+            return "Stage 1 A3"
+    elif eGFR >= 60:
+        if ACR <= 3:
+            return "Normal Function"
+        elif ACR <= 30:
+            return "Stage 2 A2"
+        else:
+            return "Stage 2 A3"
+    elif eGFR >= 45:
+        if ACR <= 3:
+            return "Stage 3A A1"
+        elif ACR <= 30:
+            return "Stage 3A A2"
+        else:
+            return "Stage 3A A3"
+    elif eGFR >= 30:
+        if ACR <= 3:
+            return "Stage 3B A1"
+        elif ACR <= 30:
+            return "Stage 3B A2"
+        else:
+            return "Stage 3B A3"
+    elif eGFR >= 15:
+        if ACR <= 3:
+            return "Stage 4 A1"
+        elif ACR <= 30:
+            return "Stage 4 A2"
+        else:
+            return "Stage 4 A3"
+    else:  # eGFR < 15
+        if ACR <= 3:
+            return "Stage 5 A1"
+        elif ACR <= 30:
+            return "Stage 5 A2"
+        else:
+            return "Stage 5 A3"
+
+# Apply the function to categorize patients
+CKD_review['CKD_Group'] = CKD_review.apply(get_ckd_stage_acr_group, axis=1)
+
+# Save each CKD group to a separate CSV for EMIS batch uploads
+emis_clinical_code_dir = os.path.join(current_dir, "EMIS_Clinical_Code_Batch_Files")
+os.makedirs(emis_clinical_code_dir, exist_ok=True)
+
+# Generate batch files for each group
+ckd_groups = CKD_review['CKD_Group'].unique()
+
+for group in ckd_groups:
+    # Filter patients in the current group
+    filtered_patients = CKD_review[CKD_review['CKD_Group'] == group][["HC_Number"]].copy()
+    
+    # Generate the file path
+    group_file_name = f"CKD_{group.replace(' ', '_').replace('-', '_')}_Patients.csv"
+    group_file_path = os.path.join(emis_clinical_code_dir, group_file_name)
+    
+    # Save the batch file
+    filtered_patients.to_csv(group_file_path, index=False)
+    print(f"Saved {group} patients to: {group_file_path}")
+
 # Function to move both the eGFR file and CKD_review file to the date-stamped folder
 def move_ckd_files(date_folder):
     # Construct file names based on today's date
@@ -778,7 +849,7 @@ def move_ckd_files(date_folder):
     missing_source = os.path.join(current_dir, missing_KFRE_file)
     missing_destination = os.path.join(date_folder, missing_KFRE_file)
 
-    # Move the eGFR file
+   # Move the eGFR file
     try:
         shutil.move(egfr_source, egfr_destination)
         print(f"Moved {egfr_file} to {date_folder}")
@@ -799,8 +870,16 @@ def move_ckd_files(date_folder):
     except Exception as e:
         print(f"Failed to move {missing_KFRE_file}: {e}")
 
+    # Move the EMIS Clinical Code Batch Files folder into the date-stamped folder
+    try:
+        emis_batch_destination = os.path.join(date_folder, "EMIS_Clinical_Code_Batch_Files")
+        shutil.move(emis_clinical_code_dir, emis_batch_destination)
+        print(f"Moved EMIS Clinical Code Batch Files to: {emis_batch_destination}")
+    except Exception as e:
+        print(f"Failed to move EMIS Clinical Code Batch Files: {e}")
+
 # Run the functions in sequence
-date_folder = generate_patient_html(data)  # Generate PDFs and capture the returned date folder path
+date_folder = generate_patient_pdf(data)  # Generate PDFs and capture the returned date folder path
 rename_folders(date_folder)               # Rename folders within the date-stamped directory
 move_ckd_files(date_folder)  # Moves both eGFR and CKD_review files to the date-stamped folder
 print("\nCKD Analysis and Reporting Completed ")
