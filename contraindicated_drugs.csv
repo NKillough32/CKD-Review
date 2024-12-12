@@ -21,7 +21,7 @@ Bendroflumethiazide,30
 Cabozantinib,30
 Canagliflozin,45
 Capecitabine,30
-Carboplatin,20
+Carboplatin,40
 Cefuroxime,30
 Celecoxib,10
 Celecoxib,30
@@ -54,6 +54,7 @@ Febuxostat,30
 Fenofibrate,15
 Fenoprofen,10
 Fluconazole,30
+Fingolimod,10
 Ganciclovir,30
 Gefitinib,10
 Glibenclamide,30
@@ -66,6 +67,7 @@ Indometacin,20
 Indomethacin,30
 Interferon Alfa,30
 Ivabradine,15
+Ivacaftor,10
 Ketoprofen,30
 Ketorolac,30
 Leflunomide,30
@@ -104,6 +106,7 @@ Tetracycline,10
 Thiazide diuretics,30
 Ticagrelor,15
 Trimethoprim,30
+Tedizolid phosphate,10
 Vancomycin,30
 Vandetanib,30
 Zonisamide,30
