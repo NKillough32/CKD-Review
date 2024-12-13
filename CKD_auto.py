@@ -898,7 +898,8 @@ ckd_groups = CKD_review['CKD_Group'].unique()
 for group in ckd_groups:
     # Filter patients in the current group
     filtered_patients = CKD_review[CKD_review['CKD_Group'] == group][["HC_Number"]].copy()
-    
+    filtered_patients.rename(columns={'HC_Number': 'HCN'}, inplace= True)
+
     # Generate the file path
     group_file_name = f"CKD_{group.replace(' ', '_').replace('-', '_')}_Patients.csv"
     group_file_path = os.path.join(emis_clinical_code_dir, group_file_name)
