@@ -901,11 +901,11 @@ for group in ckd_groups:
     filtered_patients.rename(columns={'HC_Number': 'HCN'}, inplace= True)
 
     # Generate the file path
-    group_file_name = f"CKD_{group.replace(' ', '_').replace('-', '_')}_Patients.csv"
+    group_file_name = f"CKD_{group.replace(' ', '_').replace('-', '_')}_Patients.txt"
     group_file_path = os.path.join(emis_clinical_code_dir, group_file_name)
     
     # Save the batch file
-    filtered_patients.to_csv(group_file_path, index=False)
+    filtered_patients.to_csv(group_file_path, index=False, sep='\t')
     print(f"Saved {group} patients to: {group_file_path}")
 
 # Function to move both the eGFR file and CKD_review file to the date-stamped folder
