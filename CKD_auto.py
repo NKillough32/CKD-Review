@@ -227,8 +227,10 @@ def classify_CKD_stage(eGFR):
         return "Stage 3B"
     elif eGFR >= 15:
         return "Stage 4"
-    else:
+    elif 0 < eGFR < 15:
         return "Stage 5"
+    else:
+        return "No Data"
 
 CKD_review['CKD_Stage'] = CKD_review['eGFR'].apply(classify_CKD_stage)
 CKD_review['CKD_Stage_3m'] = CKD_review['eGFR_3m_prior'].apply(classify_CKD_stage)
@@ -872,13 +874,16 @@ def get_ckd_stage_acr_group(row):
             return "Stage 4 A2"
         else:
             return "Stage 4 A3"
-    else:  # eGFR < 15
+    elif 0< eGFR < 15:
         if ACR <= 3:
             return "Stage 5 A1"
         elif ACR <= 30:
             return "Stage 5 A2"
         else:
             return "Stage 5 A3"
+    else:
+        return "No Data"
+            
 
 # Apply the function to categorize patients
 CKD_review['CKD_Group'] = CKD_review.apply(get_ckd_stage_acr_group, axis=1)
