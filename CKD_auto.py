@@ -905,7 +905,7 @@ for group in ckd_groups:
     group_file_path = os.path.join(emis_clinical_code_dir, group_file_name)
     
     # Save the batch file
-    filtered_patients.to_csv(group_file_path, index=False, sep='\t')
+    filtered_patients.to_csv(group_file_path, index=False, sep='\t', header=False)
     print(f"Saved {group} patients to: {group_file_path}")
 
 # Function to move both the eGFR file and CKD_review file to the date-stamped folder
