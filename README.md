@@ -23,7 +23,7 @@ The NephroPath program is a tool designed to streamline the creation of Chronic 
 - `report_template.html`: Formatting template for reports.
 - `contraindicated_drugs.csv`: List of medications contraindicated in CKD.
 - `drug_adjustment.csv`: Guidance for dosage adjustments based on CKD stage.
-- `Creatinine.csv`: Generated from EMIS XML data.
+- `Creatinine.csv`: Generated from EMIS XML data present in a password protected zip file. 
 - `CKD_check.csv`: Generated from EMIS XML data.
 
 ---
