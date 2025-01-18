@@ -166,7 +166,8 @@ CKD_review.rename(columns={
     'Value': 'Creatinine', 'Value.1': 'ACR',
     'Value.3': 'Systolic_BP', 'Value.4': 'Diastolic_BP', 'Value.5': 'haemoglobin',
     'Value.6': 'HbA1c', 'Value.7': 'Potassium', 'Value.8': 'Phosphate',
-    'Value.9': 'Calcium', 'Value.10': 'Vitamin_D', 'Code Term': 'EMIS_CKD_Code', 'Value.11': 'Height'
+    'Value.9': 'Calcium', 'Value.10': 'Vitamin_D', 'Code Term': 'EMIS_CKD_Code', 'Value.11': 'Height',
+    'Value.12': 'Parathyroid', 'Value.13': 'Bicarbonate', 'Code Term.1': 'Transplant_Kidney', 'Code Term.2': 'Dialysis',
 }, inplace=True)
 
 # Replace missing ACR values with 0
@@ -628,7 +629,8 @@ CKD_review.rename(columns={
     'Date': 'Sample_Date', 'Date.1': 'Sample_Date1', 'Date.2': 'Sample_Date2', 'Date.3': 'Sample_Date3', 
     'Date.4': 'Sample_Date4', 'Date.5': 'Sample_Date5', 'Date.6': 'Sample_Date6', 
     'Date.7': 'Sample_Date7', 'Date.8': 'Sample_Date8', 'Date.9': 'Sample_Date9', 
-    'Date.10': 'Sample_Date10', 'Date.11': 'Sample_Date11', 'HC Number': 'HC_Number'
+    'Date.10': 'Sample_Date10', 'Date.11': 'Sample_Date11', 'HC Number': 'HC_Number', 
+    'Date.12': 'Sample_Date12', 'Date.13': 'Sample_Date13', 'Date.14': 'Sample_Date14', 'Date.15': 'Sample_Date15'
 }, inplace=True)
 
 # Convert HC_Number to integer safely

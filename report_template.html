@@ -104,15 +104,16 @@
     <li><strong>Anaemia Overview:</strong>
      <ul>
        <li><strong>Haemoglobin:</strong> 
-         <span class="{{ 'critical' if patient.haemoglobin < 80 else 'caution' if 80 <= patient.haemoglobin <= 110 else '' }}">
-           {{ patient.haemoglobin | default(0, true) | int }} g/L
-         </span> 
-         | <strong>Date:</strong> {{ patient.Sample_Date5 }}
+       <span class="{{ 'critical' if patient.haemoglobin < 80 else 'caution' if 80 <= patient.haemoglobin <= 110 else '' }}">
+         {{ patient.haemoglobin | default(0, true) | int }} g/L
+       </span> 
+       | <strong>Date:</strong> {{ patient.Sample_Date5 }}
        </li>
        <li><strong>Current Status:</strong> {{ patient.Anaemia_Classification }}</li>
      </ul>
     </li>
     <li><strong>Anaemia Management:</strong> {{ patient.Anaemia_Flag }}</li>
+    <li><strong>Bicarbonate:</strong> {{ patient.Bicarbonate }} mmol/L</li>
   </ul>
 </div>
 
@@ -136,6 +137,9 @@
         {{ patient.Calcium }} mmol/L
       </span> 
       | <strong>Status:</strong> {{ patient.Calcium_Flag }} | <strong>Date:</strong> {{ patient.Sample_Date9 }}
+    </li>
+    <li><strong>Parathyroid Hormone (PTH):</strong> 
+      {{ patient.Parathyroid }} pg/mL
     </li>
     <ul>
       <li><strong>MBD Status:</strong> {{ patient.CKD_MBD_Flag }}</li>
@@ -163,7 +167,11 @@
         {{ patient.Diastolic_BP | default(0, true) | int }}
       </span> mmHg
     </li>
-    <li><strong>Target BP:</strong> {{ patient.BP_Target }} | <strong>BP Status:</strong> {{ patient.BP_Flag }}</li>
+    <li><strong>Target BP:</strong> {{ patient.BP_Target }} | <strong>BP Status:</strong> 
+      <span class="{{ 'critical' if patient.BP_Flag == 'Above Target' else '' }}">
+      {{ patient.BP_Flag }}
+      </span>
+    </li>
   </ul>
 </div>
 
