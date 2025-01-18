@@ -680,19 +680,57 @@ def is_wkhtmltopdf_installed():
         return False
 
 def install_wkhtmltopdf():
-    """Install wkhtmltopdf using Homebrew."""
+    """Install wkhtmltopdf using multiple methods."""
     try:
-        print("Installing wkhtmltopdf...")
+        print("Attempting to install wkhtmltopdf via Homebrew...")
+        # First try the main formula
         subprocess.run(["brew", "install", "wkhtmltopdf"], check=True)
-        print("wkhtmltopdf installation completed.")
-        # Update PATH environment variable if needed
-        new_paths = ['/usr/local/bin', '/opt/homebrew/bin']
-        for new_path in new_paths:
-            if new_path not in os.environ['PATH']:
-                os.environ['PATH'] += os.pathsep + new_path
-    except subprocess.CalledProcessError as e:
-        print("Failed to install wkhtmltopdf.")
-        sys.exit(1)
+    except subprocess.CalledProcessError:
+        try:
+            print("Main formula failed, trying alternative cask...")
+            # Try installing from an alternative source
+            subprocess.run(["brew", "install", "--cask", "wkhtmltopdf"], check=True)
+        except subprocess.CalledProcessError:
+            try:
+                print("Cask failed, trying direct download...")
+                # Direct download as last resort
+                download_url = "https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtmltox-0.12.6-1.macos-cocoa.pkg"
+                download_path = "/tmp/wkhtmltopdf.pkg"
+                
+                # Download the package
+                subprocess.run(["curl", "-L", download_url, "-o", download_path], check=True)
+                
+                # Install the package
+                subprocess.run(["sudo", "installer", "-pkg", download_path, "-target", "/"], check=True)
+                
+                # Clean up
+                os.remove(download_path)
+                
+            except subprocess.CalledProcessError as e:
+                print(f"All installation methods failed: {str(e)}")
+                print("Please install wkhtmltopdf manually from: https://wkhtmltopdf.org/downloads.html")
+                sys.exit(1)
+
+def verify_wkhtmltopdf():
+    """Verify wkhtmltopdf installation and return path."""
+    possible_paths = [
+        '/usr/local/bin/wkhtmltopdf',
+        '/usr/bin/wkhtmltopdf',
+        '/opt/homebrew/bin/wkhtmltopdf',
+        '/Applications/wkhtmltopdf.app/Contents/MacOS/wkhtmltopdf'
+    ]
+    
+    # First check PATH
+    path_to_wkhtmltopdf = shutil.which("wkhtmltopdf")
+    if path_to_wkhtmltopdf:
+        return path_to_wkhtmltopdf
+    
+    # Then check common installation locations
+    for path in possible_paths:
+        if os.path.isfile(path) and os.access(path, os.X_OK):
+            return path
+            
+    return None
 
 # Ensure wkhtmltopdf is installed
 if not is_wkhtmltopdf_installed():
