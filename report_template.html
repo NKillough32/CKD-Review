@@ -113,7 +113,7 @@
      </ul>
     </li>
     <li><strong>Anaemia Management:</strong> {{ patient.Anaemia_Flag }}</li>
-    <li><strong>Bicarbonate:</strong> {{ patient.Bicarbonate }} mmol/L</li>
+    <li><strong>Bicarbonate:</strong> {{ patient.Bicarbonate }} mmol/L</li> | <strong>Date:</strong> {{ patient.Sample_Date13 }}
   </ul>
 </div>
 
@@ -139,7 +139,7 @@
       | <strong>Status:</strong> {{ patient.Calcium_Flag }} | <strong>Date:</strong> {{ patient.Sample_Date9 }}
     </li>
     <li><strong>Parathyroid Hormone (PTH):</strong> 
-      {{ patient.Parathyroid }} pg/mL
+      {{ patient.Parathyroid }} pg/mL | <strong>Date:</strong> {{ patient.Sample_Date12 }}
     </li>
     <ul>
       <li><strong>MBD Status:</strong> {{ patient.CKD_MBD_Flag }}</li>
