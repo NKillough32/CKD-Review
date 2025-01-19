@@ -13,6 +13,7 @@ Alimemazine tartrate,20
 Allopurinol,50
 Almotriptan,30
 Alogliptin,50
+Aluminium sucrose sulphate,50
 Amantadine hydrochloride,50
 Amikacin,50
 Amiloride hydrochloride,50
@@ -22,11 +23,11 @@ Ampicillin,20
 Apixaban,30
 Apomorphine hydrochloride,50
 Apremilast,30
+Atorvastatin,15
 Avanafil,30
 Azathioprine,20
 Azilsartan medoxomil,20
 Aztreonam,30
-Atorvastatin,15
 Baclofen,50
 Balsalazide sodium,20
 Baricitinib,60
@@ -52,7 +53,6 @@ Cefadroxil,50
 Cefalexin,40
 Cefixime,10
 Cefotaxime,5
-Codeine,30
 Cefradine,10
 Ceftaroline fosamil,50
 Ceftazidime,50
@@ -63,8 +63,8 @@ Celiprolol hydrochloride,10
 Cetirizine hydrochloride,10
 Chloral hydrate,20
 Chlordiazepoxide hydrochloride,10
-Chlorpromazine hydrochloride,10
 Chloroquine,10
+Chlorpromazine hydrochloride,10
 Cimetidine,50
 Ciprofibrate,20
 Ciprofloxacin,30
@@ -75,19 +75,19 @@ Clomipramine hydrochloride,20
 Clonazepam,50
 Clozapine,10
 Co-amoxiclav,30
-Co-dydramol,20
-Co-trimoxazole,30
+Codeine,30
 Codeine phosphate,20
+Co-dydramol,20
 Colchicine,50
 Colistimethate sodium,50
+Co-trimoxazole,30
 Crizotinib,30
 Cyclophosphamide,20
 Cycloserine,50
 Cytarabine,50
-Dabigatran etexilate,50
 Dabigatran,50
+Dabigatran etexilate,50
 Dacarbazine,60
-Digoxin,50
 Dapsone,10
 Daptomycin,30
 Deferasirox,60
@@ -98,6 +98,7 @@ Diamorphine hydrochloride,20
 Diazepam,20
 Diazoxide,10
 Didanosine,59
+Digoxin,50
 Dihydrocodeine tartrate,20
 Disodium pamidronate,10
 Disopyramide,60
@@ -111,6 +112,7 @@ Eletriptan,50
 Empagliflozin,60
 Emtricitabine,50
 Enalapril maleate,20
+Enoxaparin,30
 Enoxaparin sodium,30
 Entecavir,50
 Eprosartan,10
@@ -120,7 +122,6 @@ Eslicarbazepine acetate,60
 Ethambutol hydrochloride,20
 Etoposide,50
 Exenatide,50
-Enoxaparin,30
 Famciclovir,59
 Famotidine,50
 Febuxostat,30
@@ -150,6 +151,7 @@ Glipizide,50
 Guanethidine monosulphate,50
 Haloperidol,10
 Hydralazine hydrochloride,50
+Hydrochlorothiazide,60
 Hydromorphone hydrochloride,20
 Hydroxycarbamide,60
 Hydroxychloroquine sulphate,50
@@ -163,17 +165,16 @@ Isoniazid,10
 Isotretinoin,10
 Ixazomib citrate,30
 Ketorolac trometamol,50
-Hydrochlorothiazide,60
-Lisinopril,60
-Losartan,60
 Lacosamide,30
 Lamivudine,50
 Lamotrigine,50
+Lisinopril,60
 Lithium carbonate,50
 Lixisenatide,30
 Lofepramine,10
 Lomitapide,10
 Lomustine,60
+Losartan,60
 Losartan potassium,20
 Loxapine,50
 Lurasidone hydrochloride,50
@@ -184,8 +185,8 @@ Memantine,50
 Mercaptopurine,50
 Meropenem,50
 Mesalazine,50
-Metformin hydrochloride,59
 Metformin,59
+Metformin hydrochloride,59
 Methadone hydrochloride,10
 Methotrexate,50
 Methyldopa,50
@@ -226,6 +227,7 @@ Oseltamivir,30
 Oxaliplatin,30
 Oxazepam,10
 Oxcarbazepine,30
+Oxpentifylline,30
 Oxycodone hydrochloride,50
 Oxytetracycline,10
 Palbociclib,30
@@ -237,11 +239,9 @@ Parathyroid hormone,30
 Paroxetine,30
 Peginterferon alfa,50
 Pemetrexed,45
-Pregabalin,60
 Pentamidine isetionate,10
 Pentostatin,60
 Pentoxifylline,30
-Oxpentifylline,30
 Perampanel,50
 Perindopril,50
 Pethidine hydrochloride,20
@@ -252,14 +252,15 @@ Piperazine,10
 Piracetam,80
 Plerixafor,50
 Pramipexole,50
+Pregabalin,60
 Primaxin,90
 Primidone,20
 Procarbazine,50
 Proguanil hydrochloride,60
 Promazine hydrochloride,10
 Propiverine hydrochloride,30
-Propranolol hydrochloride,20
 Propranolol,20
+Propranolol hydrochloride,20
 Propylthiouracil,20
 Pyrazinamide,10
 Pyridostigmine bromide,50
@@ -273,7 +274,6 @@ Ranolazine,30
 Reboxetine,20
 Repaglinide,20
 Ribavirin,50
-Tribavirin,50
 Rifabutin,30
 Rifampicin,10
 Riociguat,15
@@ -299,12 +299,11 @@ Stavudine,50
 Streptomycin,50
 Strontium ranelate,30
 Sucralfate,50
-Aluminium sucrose sulphate,50
 Sulfadiazine,20
 Sulfasalazine,10
-Sulphasalazine,10
 Sulfinpyrazone,50
 Sulindac,50
+Sulphasalazine,10
 Sulpiride,50
 Tadalafil,50
 Tapentadol hydrochloride,10
@@ -336,6 +335,7 @@ Trandolapril,10
 Tranexamic acid,50
 Trazodone hydrochloride,20
 Tretinoin,50
+Tribavirin,50
 Trifluoperazine,50
 Trimethoprim,15
 Trospium chloride,30
