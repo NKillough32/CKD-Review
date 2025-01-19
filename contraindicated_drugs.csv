@@ -1,7 +1,7 @@
 contraindicated_drugs,eGFR
 Abciximab,10
 Acarbose,25
-Aceclofenac,30
+Aceclofenac,20
 Afatinib,15
 Aliskiren,30
 Aluminum hydroxide,15
@@ -15,15 +15,16 @@ Anakinra,30
 Apixaban,15
 Aspirin,30
 Atazanavir,15
-Baclofen,30
+Acetazolamide,10
+Alendronic acid,35
 Baricitinib,30
-Bendroflumethiazide,30
+Bendroflumethiazide,10
+Benzbromarone,20
 Cabozantinib,30
 Canagliflozin,45
 Capecitabine,30
 Carboplatin,40
 Cefuroxime,30
-Celecoxib,10
 Celecoxib,30
 Cetirizine,10
 Ciclosporin,30
@@ -31,11 +32,14 @@ Clodronate,10
 Co-amoxiclav,30
 Colchicine,10
 Co-trimoxazole,15
+Chloral hydrate,10
+Chlortalidone,30
+Ciprofibrate,10
 Dabigatran,30
 Dabigatran etexilate,30
 Dapagliflozin,60
 Dasatinib,60
-Deferasirox,30
+Deferasirox,40
 Desmopressin ,30
 Dexibuprofen,30
 Dexketoprofen,30
@@ -44,13 +48,13 @@ Diclofenac sodium,30
 Didanosine,30
 Dronedarone,30
 Duloxetine,30
-Empagliflozin,20
+Disulfiram,10
+Empagliflozin,45
 Eplerenone,30
 Ertapenem,30
 Exemestane,30
 Exenatide,30
-Ezetimibe,10
-Febuxostat,30
+Ezetimibe,30
 Fenofibrate,15
 Fenoprofen,10
 Fluconazole,30
@@ -60,7 +64,6 @@ Gefitinib,10
 Glibenclamide,30
 Gliclazide,10
 Hydrochlorothiazide,30
-Ibuprofen,45
 Ifosfamide,15
 Indapamide,30
 Indometacin,20
@@ -70,29 +73,34 @@ Ivabradine,15
 Ivacaftor,10
 Ketoprofen,30
 Ketorolac,30
+Ketorolac trometamol,20
 Leflunomide,30
 Levofloxacin,30
-Lithium Carbonate,50
+Lymecycline,10
 Magnesium hydroxide,15
 Magnesium trisilicate,15
 Mefenamic acid,30
 Meloxicam,30
-Mesalazine,50
-Metformin,30
-Methotrexate,30
+Metformin hydrochloride,10
+Metformin,10
+Methotrexate,10
+Methenamine hippurate,10
 Minocycline,10
 Mitomycin,30
-Morphine sulfate,30
+Mitotane,10
 Nalmefene Hydrochloride,30
-Naproxen,45
+Nalidixic acid,10
+Nalmefene hydrochloride dihydrate,30
+Naproxen,10
+Nitrofurantoin,45
 Nefopam hydrochloride,10
 Neomycin,30
-Nitrofurantoin,45
 Osimertinib,15
 Oxaliplatin,30
 Oxytetracycline,10
 Pentamidine,30
 Piperazine,10
+Penicillamine,50
 Piracetam,20
 Piroxicam,30
 Primaxin,10
@@ -100,13 +108,21 @@ Primidone,10
 Quinagolide,30
 Quinapril,30
 Ranolazine,30
+Ruxolitinib,15
 Rivaroxaban,15
-Spironolactone,30
+Sodium aurothiomalate,50
+Sodium clodronate,10
+Sodium stibogluconate,50
+Sulfinpyrazone,10
 Tetracycline,10
 Thiazide diuretics,30
 Ticagrelor,15
 Trimethoprim,30
 Tedizolid phosphate,10
-Vancomycin,30
+Tolfenamic acid,10
+Telavancin,10
+Trabectedin,30
+Triamterene,20
 Vandetanib,30
 Zonisamide,30
+Zoledronic acid,29
