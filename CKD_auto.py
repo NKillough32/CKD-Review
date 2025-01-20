@@ -79,7 +79,7 @@ if not creatinine.empty:
 if not CKD_check.empty:
     CKD_check = preprocess_data(CKD_check)
 
-# Function to select the closest 3-month prior creatinine value
+# Function to select the closest 3-month prior creatinine value and its corresponding date
 def select_closest_3m_prior_creatinine(row):
     three_month_threshold = timedelta(days=90)
     
@@ -90,18 +90,18 @@ def select_closest_3m_prior_creatinine(row):
     valid_prior_values = [prior_values[i] for i, date in enumerate(prior_dates) if pd.notna(date)]
     
     if not pd.notna(row.get('Date')) or not valid_prior_dates:
-        return np.nan
+        return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
     
     differences = [abs((row['Date'] - date) - three_month_threshold) for date in valid_prior_dates]
     min_diff_index = differences.index(min(differences))
     
-    return valid_prior_values[min_diff_index]
+    return pd.Series([valid_prior_values[min_diff_index], valid_prior_dates[min_diff_index]], index=['Creatinine_3m_prior', 'Date_3m_prior'])
 
 # Apply the function to both datasets if needed
 if not creatinine.empty:
-    creatinine['Creatinine_3m_prior'] = creatinine.apply(select_closest_3m_prior_creatinine, axis=1)
+    creatinine[['Creatinine_3m_prior', 'Date_3m_prior']] = creatinine.apply(select_closest_3m_prior_creatinine, axis=1)
 if not CKD_check.empty:
-    CKD_check['Creatinine_3m_prior'] = CKD_check.apply(select_closest_3m_prior_creatinine, axis=1)
+    CKD_check[['Creatinine_3m_prior', 'Date_3m_prior']] = CKD_check.apply(select_closest_3m_prior_creatinine, axis=1)
 
 # Summarise medications by HC Number, renaming the result to avoid conflicts
 def summarize_medications(df):
@@ -629,7 +629,7 @@ CKD_review['All_Contraindications'] = CKD_review.apply(
 
 # Rename columns for clarity
 CKD_review.rename(columns={
-    'Date': 'Sample_Date', 'Date.1': 'Sample_Date1', 'Date.2': 'Sample_Date2', 'Date.3': 'Sample_Date3', 
+    'Date': 'Sample_Date', 'Date.1': 'Sample_Date1', 'Date_3m_prior': 'Sample_Date2', 'Date.3': 'Sample_Date3', 
     'Date.4': 'Sample_Date4', 'Date.5': 'Sample_Date5', 'Date.6': 'Sample_Date6', 
     'Date.7': 'Sample_Date7', 'Date.8': 'Sample_Date8', 'Date.9': 'Sample_Date9', 
     'Date.10': 'Sample_Date10', 'Date.11': 'Sample_Date11', 'HC Number': 'HC_Number', 
