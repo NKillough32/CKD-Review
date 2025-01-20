@@ -4,9 +4,10 @@ Acarbose,25
 Acetazolamide,10
 Alendronic acid,35
 Alimemazine tartrate,10
-Amiloride Hydrochloride,10
+Amiloride,30
+Amiloride Hydrochloride,30
 Baricitinib,30
-Bendroflumethiazide,10
+Bendroflumethiazide,30
 Benzbromarone,20
 Bezafibrate,15
 Bivalirudin,30
@@ -14,6 +15,7 @@ Canagliflozin,45
 Capecitabine,30
 Carboplatin,20
 Chloral hydrate,10
+Chlorothiazide,30
 Chlortalidone,30
 Ciclosporin,30
 Cilostazol,25
@@ -43,7 +45,7 @@ Glibenclamide,10
 Glimepiride,10
 Hydrochlorothiazide,30
 Idarubicin hydrochloride,10
-Indapamide,10
+Indapamide,30
 Indomethacin,30
 Interferon alfa-2A,10
 Interferon alfa-2B,10
@@ -65,6 +67,8 @@ Metformin,30
 Metformin hydrochloride,30
 Methenamine hippurate,10
 Methotrexate,10
+Methyclothiazide,30
+Metolazone,30
 Mitotane,10
 Nalidixic acid,10
 Nalmefene Hydrochloride,30
@@ -90,16 +94,15 @@ Ruxolitinib,15
 Sodium aurothiomalate,50
 Sodium clodronate,10
 Sodium stibogluconate,50
-Spironolactone,10
+Spironolactone,30
 Sulfinpyrazone,10
-Telavancin,10
 Telavancin,30
 Teriparatide,10
 Tolbutamide,10
 Tolfenamic acid,10
-Tolfenamic acid,10
 Trabectedin,30
 Triamterene,20
 Varenicline,10
+Xipamide,30
 Zoledronic acid,29
 Zolmitriptan,15
