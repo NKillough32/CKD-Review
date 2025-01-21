@@ -137,9 +137,10 @@
         {{ patient.Potassium }} mmol/L
       </span> 
       | <strong>Status:</strong> {{ patient.Potassium_Flag }} | <strong>Date:</strong> {{ patient.Sample_Date7 }}
+    </li>
     <li><strong>Bicarbonate:</strong> 
       <span class="{{ 'critical' if patient.Bicarbonate < 22 else 'low' if patient.Bicarbonate > 29 else '' }}">
-      {{ patient.Bicarbonate }} mmol/L
+        {{ patient.Bicarbonate }} mmol/L
       </span> 
       | <strong>Status:</strong> {{ patient.Bicarbonate_Flag }} | <strong>Date:</strong> {{ patient.Sample_Date13 }}
     </li>
@@ -157,7 +158,7 @@
     </li>
     <li><strong>Parathyroid Hormone (PTH):</strong> 
       <span class="{{ 'critical' if patient.Parathyroid > 65 else 'low' if patient.Parathyroid < 15 else '' }}">
-      {{ patient.Parathyroid }} pg/mL
+        {{ patient.Parathyroid }} pg/mL
       </span> 
       | <strong>Status:</strong> {{ patient.Parathyroid_Flag }} | <strong>Date:</strong> {{ patient.Sample_Date12 }}
     </li>
@@ -165,11 +166,11 @@
       <span class="{{ 'low' if patient.Vitamin_D < 30 else '' }}">
         {{ patient.Vitamin_D | default(0, true) | int }} ng/mL
       </span> 
-      | <strong>Vitamin D Status:</strong> {{ patient.Vitamin_D_Flag }} | <strong>Date:</strong> {{ patient.Sample_Date10 }}
+      | <strong>Status:</strong> {{ patient.Vitamin_D_Flag }} | <strong>Date:</strong> {{ patient.Sample_Date10 }}
     </li>
-    <ul>
-      <li><strong>MBD Status:</strong> {{ patient.CKD_MBD_Flag }}</li>
-    </ul> 
+  </ul>
+  <ul>
+    <li><strong>MBD Status:</strong> {{ patient.CKD_MBD_Flag }}</li>
   </ul>
 </div>
 
@@ -189,6 +190,23 @@
     <li><strong>Target BP:</strong> {{ patient.BP_Target }} | <strong>BP Status:</strong> 
       <span class="{{ 'critical' if patient.BP_Flag == 'Above Target' else '' }}">
       {{ patient.BP_Flag }}
+      </span>
+    </li>
+  </ul>
+</div>
+
+<div class="boxed">
+  <h3>Diabetes and HbA1c Management</h3>
+  <ul>
+    <li><strong>HbA1c Level:</strong> 
+      <span class="{{ 'critical' if patient.HbA1c > 75 else 'caution' if 53 <= patient.HbA1c <= 75 else 'low' if 48 <= patient.HbA1c < 53 else 'safe' if patient.HbA1c < 48 else '' }}">
+        {{ patient.HbA1c | default(0, true) | int }} mmol/mol
+      </span> 
+      | <strong>Date:</strong> {{ patient.Sample_Date6 }}
+    </li>
+    <li><strong>HbA1c Management:</strong> 
+      <span class="{{ 'critical' if patient.HbA1c_Target == 'Adjust Diabetes Management' else '' }}">
+        {{ patient.HbA1c_Target }}
       </span>
     </li>
   </ul>
@@ -261,23 +279,6 @@
     <li><strong>Statin Recommendation:</strong> 
       <span class="{{ 'critical' if patient.Statin_Recommendation == 'Consider Statin' else '' }}">
         {{ patient.Statin_Recommendation }}
-      </span>
-    </li>
-  </ul>
-</div>
-
-<div class="boxed">
-  <h3>Diabetes and HbA1c Management</h3>
-  <ul>
-    <li><strong>HbA1c Level:</strong> 
-      <span class="{{ 'critical' if patient.HbA1c > 75 else 'caution' if 53 <= patient.HbA1c <= 75 else 'low' if 48 <= patient.HbA1c < 53 else 'safe' if patient.HbA1c < 48 else '' }}">
-        {{ patient.HbA1c | default(0, true) | int }} mmol/mol
-      </span> 
-      | <strong>Date:</strong> {{ patient.Sample_Date6 }}
-    </li>
-    <li><strong>HbA1c Management:</strong> 
-      <span class="{{ 'critical' if patient.HbA1c_Target == 'Adjust Diabetes Management' else '' }}">
-        {{ patient.HbA1c_Target }}
       </span>
     </li>
   </ul>
