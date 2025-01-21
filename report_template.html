@@ -51,11 +51,13 @@
 <div class="center">
   <strong>Review Status:</strong> {{ patient.review_message }}<br>
   <strong>Current EMIS Status:</strong> {{ patient.EMIS_CKD_Code }}
-  {% if patient.Transplant_Kidney and patient.Transplant_Kidney != 'nan' %}
-    <strong>Transplant:</strong> {{ patient.Transplant_Kidney }}
-  {% endif %}
-  {% if patient.Dialysis and patient.Dialysis != 'nan' %}
-    <strong>Dialysis:</strong> {{ patient.Dialysis }}
+  {% if patient.Transplant_Kidney !='' and patient.Transplant_Kidney != 'nan' or patient.Dialysis !='' and patient.Dialysis != 'nan' %}
+    {% if patient.Transplant_Kidney !='' and patient.Transplant_Kidney != 'nan' %}
+      <strong>Transplant:</strong> {{ patient.Transplant_Kidney }}
+    {% endif %}
+    {% if patient.Dialysis !='' and patient.Dialysis != 'nan' %}
+      <strong>Dialysis:</strong> {{ patient.Dialysis }}
+    {% endif %}
   {% endif %}
 </div>
 
