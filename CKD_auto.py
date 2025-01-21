@@ -432,6 +432,26 @@ def classify_potassium(potassium):
     else:
         return "Normal"
 
+def classify_parathyroid(parathyroid):
+    if pd.isna(parathyroid):
+        return "Missing"
+    elif parathyroid > 65:
+        return "Elevated"
+    elif parathyroid < 10:
+        return "Low"
+    else:
+        return "Normal"
+    
+def classify_bicarbonate(bicarbonate):
+    if pd.isna(bicarbonate):
+        return "Missing"
+    elif bicarbonate < 22:
+        return "Low"
+    elif bicarbonate > 29:
+        return "High"
+    else:
+        return "Normal"
+
 def classify_calcium(calcium):
     if pd.isna(calcium):
         return "Missing"
@@ -451,10 +471,23 @@ def classify_phosphate(phosphate):
         return "Hyperphosphatemia"
     else:
         return "Normal"
+        
+def classify_vitamin_d(vitamin_d):
+    if pd.isna(vitamin_d):
+        return "Missing"
+    elif vitamin_d < 30:
+        return "Deficient"
+    elif vitamin_d < 50:
+        return "Insufficient"
+    else:
+        return "Sufficient"
 
 CKD_review['Potassium_Flag'] = CKD_review['Potassium'].apply(classify_potassium)
 CKD_review['Calcium_Flag'] = CKD_review['Calcium'].apply(classify_calcium)
 CKD_review['Phosphate_Flag'] = CKD_review['Phosphate'].apply(classify_phosphate)
+CKD_review['Bicarbonate_Flag'] = CKD_review['Bicarbonate'].apply(classify_bicarbonate)
+CKD_review['Parathyroid_Flag'] = CKD_review['Parathyroid'].apply(classify_parathyroid)
+CKD_review['Vitamin_D_Flag'] = CKD_review['Vitamin_D'].apply(classify_vitamin_d)
 
 def classify_ckd_mbd(calcium_flag, phosphate_flag):
     return "Check CKD-MBD" if calcium_flag != "Normal" or phosphate_flag != "Normal" else "Normal"
@@ -609,11 +642,6 @@ CKD_review['dose_adjustment_prescribed'] = CKD_review.apply(
 # Anaemia Flag
 CKD_review['Anaemia_Flag'] = CKD_review['haemoglobin'].apply(
     lambda x: "Consider ESA/Iron" if pd.notna(x) and x < 110 else "No Action Needed"
-)
-
-# Vitamin D Flag
-CKD_review['Vitamin_D_Flag'] = CKD_review['Vitamin_D'].apply(
-    lambda x: "Vitamin D Deficiency" if pd.notna(x) and x < 30 else "Normal"
 )
 
 # All Contraindications

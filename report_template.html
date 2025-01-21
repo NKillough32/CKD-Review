@@ -51,12 +51,12 @@
 <div class="center">
   <strong>Review Status:</strong> {{ patient.review_message }}<br>
   <strong>Current EMIS Status:</strong> {{ patient.EMIS_CKD_Code }}
-  {% if patient.Transplant_Kidney %}
-    <li><strong>Transplant:</strong> {{ patient.Transplant_Kidney }}</li>
-    {% endif %}
-    {% if patient.Dialysis %}
-    <li><strong>Dialysis:</strong> {{ patient.Dialysis }}</li>
-    {% endif %}
+  {% if patient.Transplant_Kidney and patient.Transplant_Kidney != 'nan' %}
+    <strong>Transplant:</strong> {{ patient.Transplant_Kidney }}
+  {% endif %}
+  {% if patient.Dialysis and patient.Dialysis != 'nan' %}
+    <strong>Dialysis:</strong> {{ patient.Dialysis }}
+  {% endif %}
 </div>
 
 <h2>Results Overview</h2>
@@ -119,8 +119,7 @@
      </ul>
     </li>
     <li><strong>Anaemia Management:</strong> {{ patient.Anaemia_Flag }}</li>
-    <li><strong>Bicarbonate:</strong> {{ patient.Bicarbonate }} mmol/L</li> | <strong>Date:</strong> {{ patient.Sample_Date13 }}
-  </ul>
+     </ul>
 </div>
 
 <div class="boxed">
@@ -131,6 +130,11 @@
         {{ patient.Potassium }} mmol/L
       </span> 
       | <strong>Status:</strong> {{ patient.Potassium_Flag }} | <strong>Date:</strong> {{ patient.Sample_Date7 }}
+    <li><strong>Bicarbonate:</strong> 
+      <span class="{{ 'critical' if patient.Bicarbonate < 22 else 'low' if patient.Bicarbonate > 29 else '' }}">
+      {{ patient.Bicarbonate }} mmol/L
+      </span> 
+      | <strong>Status:</strong> {{ patient.Bicarbonate_Flag }} | <strong>Date:</strong> {{ patient.Sample_Date13 }}
     </li>
     <li><strong>Phosphate:</strong> 
       <span class="{{ 'critical' if patient.Phosphate > 1.5 else 'low' if patient.Phosphate < 0.8 else '' }}">
@@ -145,18 +149,20 @@
       | <strong>Status:</strong> {{ patient.Calcium_Flag }} | <strong>Date:</strong> {{ patient.Sample_Date9 }}
     </li>
     <li><strong>Parathyroid Hormone (PTH):</strong> 
-      {{ patient.Parathyroid }} pg/mL | <strong>Date:</strong> {{ patient.Sample_Date12 }}
+      <span class="{{ 'critical' if patient.Parathyroid > 65 else 'low' if patient.Parathyroid < 15 else '' }}">
+      {{ patient.Parathyroid }} pg/mL
+      </span> 
+      | <strong>Status:</strong> {{ patient.Parathyroid_Flag }} | <strong>Date:</strong> {{ patient.Sample_Date12 }}
     </li>
-    <ul>
-      <li><strong>MBD Status:</strong> {{ patient.CKD_MBD_Flag }}</li>
-    </ul>  
     <li><strong>Vitamin D Level:</strong> 
       <span class="{{ 'low' if patient.Vitamin_D < 30 else '' }}">
         {{ patient.Vitamin_D | default(0, true) | int }} ng/mL
       </span> 
-      | <strong>Date:</strong> {{ patient.Sample_Date10 }}
+      | <strong>Vitamin D Status:</strong> {{ patient.Vitamin_D_Flag }} | <strong>Date:</strong> {{ patient.Sample_Date10 }}
     </li>
-    <li><strong>Vitamin D Status:</strong> {{ patient.Vitamin_D_Flag }}</li>
+    <ul>
+      <li><strong>MBD Status:</strong> {{ patient.CKD_MBD_Flag }}</li>
+    </ul> 
   </ul>
 </div>
 
@@ -195,7 +201,6 @@
       </span>
     </li>
   </ul>
-
 
   <ul>
     <i>The patient's 2- and 5-year kidney failure risk scores estimate the likelihood that their kidney disease will progress to kidney failure within the next 2 or 5 years. These scores are calculated based on the patient's current kidney function and other risk factors such as age, blood pressure, and existing health conditions. Understanding these risk scores helps in predicting disease progression and planning appropriate treatment strategies.</i>
