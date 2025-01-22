@@ -176,15 +176,6 @@ CKD_review.rename(columns={
 # Replace missing ACR values with 0
 CKD_review.loc[:, 'ACR'] = CKD_review['ACR'].fillna(0)
 
-# Handle empty date fields by replacing with "Missing value"
-for col in ['Date.1', 'Date.2', 'Date.3', 'Date.4', 'Date.5', 'Date.6', 'Date.7', 'Date.8', 'Date.9', 'Date.10', 'Date.11', 'Date.12', 'Date.13']:
-    CKD_review.loc[:,col] = CKD_review[col].replace({
-        "": "Missing value",
-        None: "Missing value",
-        pd.NA: "Missing value",
-        np.nan: "Missing value"
-    })
-
 # Ensure numeric types for Age and Creatinine
 CKD_review['Creatinine'] = pd.to_numeric(CKD_review['Creatinine'], errors='coerce')
 CKD_review['Age'] = pd.to_numeric(CKD_review['Age'], errors='coerce')
@@ -694,6 +685,15 @@ CKD_review.rename(columns={
 
 # Convert HC_Number to integer safely
 CKD_review['HC_Number'] = pd.to_numeric(CKD_review['HC_Number'], errors='coerce').astype('Int64')
+
+# Handle empty date fields by replacing with "Missing value"
+for col in ['Sample_Date', 'Sample_Date1', 'Sample_Date2', 'Sample_Date3', 'Sample_Date4', 'Sample_Date5', 'Sample_Date6', 'Sample_Date7', 'Sample_Date8', 'Sample_Date9', 'Sample_Date10', 'Sample_Date11', 'Sample_Date12', 'Sample_Date13', 'Sample_Date14', 'Sample_Date15']:
+    CKD_review.loc[:,col] = CKD_review[col].replace({
+        "": "Missing value",
+        None: "Missing value",
+        pd.NA: "Missing value",
+        np.nan: "Missing value"
+    })
 
 print("Data preprocessing and metrics calculation complete.")
 print("Writing Output Data ...")
