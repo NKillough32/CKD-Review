@@ -794,15 +794,6 @@ def review_message(row):
 # Apply review message function to add 'review_message' column
 data['review_message'] = data.apply(review_message, axis=1)
 
-# Handle empty date fields by replacing with "Missing value"
-for col in ['Sample_Date', 'Sample_Date1', 'Sample_Date2', 'Sample_Date3', 'Sample_Date4', 'Sample_Date5', 'Sample_Date6', 'Sample_Date7', 'Sample_Date8', 'Sample_Date9', 'Sample_Date10', 'Sample_Date11', 'Sample_Date12', 'Sample_Date13', 'Sample_Date14', 'Sample_Date15']:
-    CKD_review.loc[:,col] = CKD_review[col].replace({
-        "": "Missing value",
-        None: "Missing value",
-        pd.NA: "Missing value",
-        np.nan: "Missing value"
-    })
-
 print("Generating reports...")
 
 # Modify generate_patient_pdf to use absolute paths
@@ -823,6 +814,15 @@ def generate_patient_pdf(data, template_dir=current_dir, output_dir="Patient_Sum
     # Set up Jinja2 environment to load HTML template
     env = Environment(loader=FileSystemLoader(template_dir))
     template = env.get_template("report_template.html")  # Template for patient summaries
+    
+    # Handle empty date fields by replacing with "Missing value"
+    for col in ['Sample_Date', 'Sample_Date1', 'Sample_Date2', 'Sample_Date3', 'Sample_Date4', 'Sample_Date5', 'Sample_Date6', 'Sample_Date7', 'Sample_Date8', 'Sample_Date9', 'Sample_Date10', 'Sample_Date11', 'Sample_Date12', 'Sample_Date13', 'Sample_Date14', 'Sample_Date15']:
+        CKD_review.loc[:, col] = CKD_review[col].replace({
+            "": "Missing value",
+            None: "Missing value",
+            pd.NA: "Missing value",
+            np.nan: "Missing value"
+        })
     
     # Loop through each patient's data and generate PDF
     for _, patient in data.iterrows():
