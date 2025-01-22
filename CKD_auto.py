@@ -241,7 +241,7 @@ def calculate_egfr_trend(row):
         return "No Data"
     
     # Calculate the annualized eGFR change
-    days_between = (row['Sample_Date'] - row['Sample_Date2']).days
+    days_between = (row['Date'] - row['Date.2']).days
     if days_between == 0:
         return "No Data"
     
