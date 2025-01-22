@@ -27,7 +27,7 @@
     .caution { color: orange; font-weight: bold; background-color: #fff3cd; }
     .safe { color: green; font-weight: bold; background-color: #d4edda; }
     .low { color: blue; font-weight: bold; background-color: #d1ecf1; }
-    .missing { color: rgb(65, 65, 65); font-weight: bold; background-color: #e2e3e5; }
+    .missing { color: rgb(221, 29, 205); font-weight: bold; background-color: #e2e3e5; }
     /* Prevent page breaks inside the container */
     .no-page-break {
     page-break-inside: avoid; /* For older browsers */
@@ -149,6 +149,12 @@
       </span> 
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Bicarbonate_Flag == 'Missing' else '' }}"></span>{{ patient.Bicarbonate_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date13 }}
     </li>
+    <li><strong>Parathyroid Hormone (PTH):</strong> 
+      <span class="{{ 'critical' if patient.Parathyroid > 65 else 'low' if patient.Parathyroid < 15 else 'missing' if patient.Parathyroid == 'NaN' else '' }}"></span>
+        {{ patient.Parathyroid }} pg/mL
+      </span> 
+      | <strong>Status:</strong> <span class="{{ 'missing' if patient.Parathyroid_Flag == 'Missing' else '' }}"></span>{{ patient.Parathyroid_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date12 }}
+    </li>
     <li><strong>Phosphate:</strong> 
       <span class="{{ 'critical' if patient.Phosphate > 1.5 else 'low' if patient.Phosphate < 0.8 else 'missing' if patient.Phosphate == 'NaN' else '' }}"></span>
         {{ patient.Phosphate }} mmol/L
@@ -160,12 +166,6 @@
         {{ patient.Calcium }} mmol/L
       </span> 
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Calcium_Flag == 'Missing' else '' }}"></span>{{ patient.Calcium_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date9 }}
-    </li>
-    <li><strong>Parathyroid Hormone (PTH):</strong> 
-      <span class="{{ 'critical' if patient.Parathyroid > 65 else 'low' if patient.Parathyroid < 15 else 'missing' if patient.Parathyroid == 'NaN' else '' }}"></span>
-        {{ patient.Parathyroid }} pg/mL
-      </span> 
-      | <strong>Status:</strong> <span class="{{ 'missing' if patient.Parathyroid_Flag == 'Missing' else '' }}"></span>{{ patient.Parathyroid_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date12 }}
     </li>
     <li><strong>Vitamin D Level:</strong> 
       <span class="{{ 'low' if patient.Vitamin_D < 30 else 'missing' if patient.Vitamin_D == 'NaN' else '' }}"></span>
