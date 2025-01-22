@@ -686,15 +686,6 @@ CKD_review.rename(columns={
 # Convert HC_Number to integer safely
 CKD_review['HC_Number'] = pd.to_numeric(CKD_review['HC_Number'], errors='coerce').astype('Int64')
 
-# Handle empty date fields by replacing with "Missing value"
-for col in ['Sample_Date', 'Sample_Date1', 'Sample_Date2', 'Sample_Date3', 'Sample_Date4', 'Sample_Date5', 'Sample_Date6', 'Sample_Date7', 'Sample_Date8', 'Sample_Date9', 'Sample_Date10', 'Sample_Date11', 'Sample_Date12', 'Sample_Date13', 'Sample_Date14', 'Sample_Date15']:
-    CKD_review.loc[:,col] = CKD_review[col].replace({
-        "": "Missing value",
-        None: "Missing value",
-        pd.NA: "Missing value",
-        np.nan: "Missing value"
-    })
-
 print("Data preprocessing and metrics calculation complete.")
 print("Writing Output Data ...")
 
@@ -802,6 +793,15 @@ def review_message(row):
 
 # Apply review message function to add 'review_message' column
 data['review_message'] = data.apply(review_message, axis=1)
+
+# Handle empty date fields by replacing with "Missing value"
+for col in ['Sample_Date', 'Sample_Date1', 'Sample_Date2', 'Sample_Date3', 'Sample_Date4', 'Sample_Date5', 'Sample_Date6', 'Sample_Date7', 'Sample_Date8', 'Sample_Date9', 'Sample_Date10', 'Sample_Date11', 'Sample_Date12', 'Sample_Date13', 'Sample_Date14', 'Sample_Date15']:
+    CKD_review.loc[:,col] = CKD_review[col].replace({
+        "": "Missing value",
+        None: "Missing value",
+        pd.NA: "Missing value",
+        np.nan: "Missing value"
+    })
 
 print("Generating reports...")
 
