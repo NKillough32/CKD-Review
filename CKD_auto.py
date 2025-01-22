@@ -177,8 +177,13 @@ CKD_review.rename(columns={
 CKD_review.loc[:, 'ACR'] = CKD_review['ACR'].fillna(0)
 
 # Handle empty date fields by replacing with "Missing value"
-for col in ['Date', 'Date.1', 'Date.2', 'Date.3', 'Date.4', 'Date.5', 'Date.6', 'Date.7', 'Date.8', 'Date.9', 'Date.10']:
-    CKD_review.loc[:,col] = CKD_review[col].replace("", "Missing value")
+for col in ['Date', 'Date.1', 'Date.2', 'Date.3', 'Date.4', 'Date.5', 'Date.6', 'Date.7', 'Date.8', 'Date.9', 'Date.10', 'Date.11', 'Date.12', 'Date.13']:
+    CKD_review.loc[:,col] = CKD_review[col].replace({
+        "": "Missing value",
+        None: "Missing value",
+        pd.NA: "Missing value",
+        np.nan: "Missing value"
+    })
 
 # Ensure numeric types for Age and Creatinine
 CKD_review['Creatinine'] = pd.to_numeric(CKD_review['Creatinine'], errors='coerce')

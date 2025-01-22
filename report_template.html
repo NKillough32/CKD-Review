@@ -27,7 +27,7 @@
     .caution { color: orange; font-weight: bold; background-color: #fff3cd; }
     .safe { color: green; font-weight: bold; background-color: #d4edda; }
     .low { color: blue; font-weight: bold; background-color: #d1ecf1; }
-    .missing { color: rgb(221, 29, 205); font-weight: bold; background-color: #e2e3e5; }
+    .missing { color: purple; font-weight: bold; background-color: #e2e3e5; }
     /* Prevent page breaks inside the container */
     .no-page-break {
     page-break-inside: avoid; /* For older browsers */
@@ -75,14 +75,14 @@
   <ul>
     <li><strong>Stage:</strong> {{ patient.CKD_Stage }} | <strong>ACR criteria:</strong> {{ patient.CKD_ACR }}</li>
     <li><strong>Albumin-Creatinine Ratio (ACR):</strong> 
-     <span class="{{ 'critical' if patient.ACR >= 30 else 'caution' if patient.ACR > 3 else 'missing' if patient.ACR == 'NaN' else '' }}"></span>
+     <span class="{{ 'missing' if patient.ACR == 'NaN' else 'critical' if patient.ACR >= 30 else 'caution' if patient.ACR > 3 else '' }}"></span>
         {{ patient.ACR }} mg/mmol
      </span> | <strong>Date:</strong> {{ patient.Sample_Date1 | default("N/A", true) }}
     </li>
      <li><strong>Creatinine:</strong>
       <ul>
         <li><strong>Current:</strong> 
-          <span class="{{ 'critical' if patient.Creatinine > 150 else 'caution' if 100 <= patient.Creatinine <= 150 else 'missing' if patient.Creatinine == 'NaN' else '' }}"></span>
+          <span class="{{ 'missing' if patient.Creatinine == 'NaN' else 'critical' if patient.Creatinine > 150 else 'caution' if 100 <= patient.Creatinine <= 150 else '' }}"></span>
            {{ patient.Creatinine | default(0, true) | int }} µmol/L
           </span>
           | <strong>Date:</strong> {{ patient.Sample_Date | default("N/A", true) }}
@@ -96,7 +96,7 @@
     <li><strong>eGFR:</strong>
      <ul>
        <li><strong>Current:</strong>
-         <span class="{{ 'critical' if patient.eGFR < 30 else 'caution' if 30 <= patient.eGFR <= 59 else 'low' if 60 <= patient.eGFR <= 89 else 'missing' if patient.eGFR == 'NaN' else '' }}"></span>
+         <span class="{{ 'missing' if patient.eGFR == 'NaN' else 'critical' if patient.eGFR < 30 else 'caution' if 30 <= patient.eGFR <= 59 else 'low' if 60 <= patient.eGFR <= 89 else '' }}"></span>
            {{ patient.eGFR | default(0, true) | int }} ml/min/1.73m<sup>2</sup>
           </span>
          | <strong>Date:</strong> {{ patient.Sample_Date }}
@@ -118,13 +118,13 @@
     <li><strong>Anaemia Overview:</strong>
      <ul>
        <li><strong>Haemoglobin:</strong> 
-       <span class="{{ 'critical' if patient.haemoglobin < 80 else 'caution' if 80 <= patient.haemoglobin <= 110 else 'missing' if patient.haemoglobin == 'NaN' else '' }}"></span>
+       <span class="{{ 'missing' if patient.haemoglobin == '' else 'critical' if patient.haemoglobin < 80 else 'caution' if 80 <= patient.haemoglobin <= 110 else '' }}"></span>
          {{ patient.haemoglobin | default(0, true) | int }} g/L
        </span> 
        | <strong>Date:</strong> {{ patient.Sample_Date5 }}
        </li>
       <li><strong>Current Status:</strong> 
-        <span class="{{ 'missing' if patient.Anaemia_Classification == 'Missing' else '' }}"></span>
+        <span class="{{ 'missing' if patient.Anaemia_Classification == '' else '' }}"></span>
         {{ patient.Anaemia_Classification }}
       </span>
       </li>
@@ -138,37 +138,37 @@
   <h3>Electrolyte and Mineral Bone Disorder (MBD) Management</h3>
   <ul>
     <li><strong>Potassium:</strong> 
-      <span class="{{ 'critical' if patient.Potassium > 5.5 else 'low' if patient.Potassium < 3.5 else 'missing' if patient.Potassium == 'NaN' else '' }}"></span>
+      <span class="{{ 'missing' if patient.Potassium == 'NaN' else 'critical' if patient.Potassium > 5.5 else 'low' if patient.Potassium < 3.5 else '' }}"></span>
         {{ patient.Potassium }} mmol/L
       </span> 
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Potassium_Flag == 'Missing' else '' }}"></span>{{ patient.Potassium_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date7 }}
     </li>
     <li><strong>Bicarbonate:</strong> 
-      <span class="{{ 'critical' if patient.Bicarbonate < 22 else 'low' if patient.Bicarbonate > 29 else 'missing' if patient.Bicarbonate == 'NaN' else '' }}"></span>
+      <span class="{{ 'missing' if patient.Bicarbonate == 'NaN' else 'critical' if patient.Bicarbonate < 22 else 'low' if patient.Bicarbonate > 29 else '' }}"></span>
         {{ patient.Bicarbonate }} mmol/L
       </span> 
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Bicarbonate_Flag == 'Missing' else '' }}"></span>{{ patient.Bicarbonate_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date13 }}
     </li>
     <li><strong>Parathyroid Hormone (PTH):</strong> 
-      <span class="{{ 'critical' if patient.Parathyroid > 65 else 'low' if patient.Parathyroid < 15 else 'missing' if patient.Parathyroid == 'NaN' else '' }}"></span>
+      <span class="{{ 'missing' if patient.Parathyroid == 'NaN' else 'critical' if patient.Parathyroid > 65 else 'low' if patient.Parathyroid < 15 else '' }}"></span>
         {{ patient.Parathyroid }} pg/mL
       </span> 
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Parathyroid_Flag == 'Missing' else '' }}"></span>{{ patient.Parathyroid_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date12 }}
     </li>
     <li><strong>Phosphate:</strong> 
-      <span class="{{ 'critical' if patient.Phosphate > 1.5 else 'low' if patient.Phosphate < 0.8 else 'missing' if patient.Phosphate == 'NaN' else '' }}"></span>
+      <span class="{{ 'missing' if patient.Phosphate == 'NaN' else 'critical' if patient.Phosphate > 1.5 else 'low' if patient.Phosphate < 0.8 else '' }}"></span>
         {{ patient.Phosphate }} mmol/L
       </span> 
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Phosphate_Flag == 'Missing' else '' }}"></span>{{ patient.Phosphate_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date8 }}
     </li>
     <li><strong>Calcium:</strong> 
-      <span class="{{ 'critical' if patient.Calcium > 2.6 else 'low' if patient.Calcium < 2.2 else 'missing' if patient.Calcium == 'NaN' else '' }}"></span>
+      <span class="{{ 'missing' if patient.Calcium == 'NaN' else 'critical' if patient.Calcium > 2.6 else 'low' if patient.Calcium < 2.2 else '' }}"></span>
         {{ patient.Calcium }} mmol/L
       </span> 
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Calcium_Flag == 'Missing' else '' }}"></span>{{ patient.Calcium_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date9 }}
     </li>
     <li><strong>Vitamin D Level:</strong> 
-      <span class="{{ 'low' if patient.Vitamin_D < 30 else 'missing' if patient.Vitamin_D == 'NaN' else '' }}"></span>
+      <span class="{{ 'missing' if patient.Vitamin_D == 'NaN' else 'low' if patient.Vitamin_D < 30 else '' }}"></span>
         {{ patient.Vitamin_D | default(0, true) | int }} ng/mL
       </span> 
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Vitamin_D_Flag == 'Missing' else '' }}"></span>{{ patient.Vitamin_D_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date10 }}
@@ -184,16 +184,16 @@
   <ul>
     <li><strong>Classification:</strong> {{ patient.BP_Classification }} | <strong>Date:</strong> {{ patient.Sample_Date3 }}</li>
     <li><strong>Systolic / Diastolic:</strong> 
-      <span class="{{ 'critical' if patient.Systolic_BP >= 180 else 'caution' if 140 <= patient.Systolic_BP < 180 else 'low' if patient.Systolic_BP < 90 else 'missing' if patient.Systolic_BP == 'NaN' else '' }}">
+      <span class="{{ 'missing' if patient.Systolic_BP == 'NaN' else 'critical' if patient.Systolic_BP >= 180 else 'caution' if 140 <= patient.Systolic_BP < 180 else 'low' if patient.Systolic_BP < 90 else '' }}">
         {{ patient.Systolic_BP | default(0, true) | int }}
       </span> 
       /
-      <span class="{{ 'critical' if patient.Diastolic_BP >= 120 else 'caution' if 90 <= patient.Diastolic_BP < 120 else 'low' if patient.Diastolic_BP < 60 else 'missing' if patient.Diastolic_BP == 'NaN' else '' }}">
+      <span class="{{ 'missing' if patient.Diastolic_BP == 'NaN' else 'critical' if patient.Diastolic_BP >= 120 else 'caution' if 90 <= patient.Diastolic_BP < 120 else 'low' if patient.Diastolic_BP < 60 else '' }}">
         {{ patient.Diastolic_BP | default(0, true) | int }}
       </span> mmHg
     </li>
     <li><strong>Target BP:</strong> {{ patient.BP_Target }} | <strong>BP Status:</strong> 
-      <span class="{{ 'critical' if patient.BP_Flag == 'Above Target' else 'missing' if patient.BP_Flag == 'Missing' }}"></span>
+      <span class="{{ 'critical' if patient.BP_Flag == 'Above Target' else 'caution' if patient.BP_Flag == 'Below Target' else 'missing' if patient.BP_Flag == 'Missing' else '' }}"></span>
       {{ patient.BP_Flag }}
       </span>
     </li>
@@ -204,13 +204,13 @@
   <h3>Diabetes and HbA1c Management</h3>
   <ul>
     <li><strong>HbA1c Level:</strong> 
-      <span class="{{ 'critical' if patient.HbA1c > 75 else 'caution' if 53 <= patient.HbA1c <= 75 else 'low' if 48 <= patient.HbA1c < 53 else 'safe' if patient.HbA1c < 48 else 'missing' if patient.HbA1c == 'NaN' else '' }}">
+      <span class="{{ 'missing' if patient.HbA1c == 'NaN' else 'critical' if patient.HbA1c > 75 else 'caution' if 53 <= patient.HbA1c <= 75 else 'low' if 48 <= patient.HbA1c < 53 else 'safe' if patient.HbA1c < 48 else '' }}">
         {{ patient.HbA1c | default(0, true) | int }} mmol/mol
       </span> 
       | <strong>Date:</strong> {{ patient.Sample_Date6 }}
     </li>
     <li><strong>HbA1c Management:</strong> 
-      <span class="{{ 'critical' if patient.HbA1c_Target == 'Adjust Diabetes Management' else 'missing' if patient.HbA1c_Target == 'NaN' else '' }}"></span>
+      <span class="{{ 'missing' if patient.HbA1c_Target == 'NaN' else 'critical' if patient.HbA1c_Target == 'Adjust Diabetes Management' else '' }}"></span>
         {{ patient.HbA1c_Target }}
       </span>
     </li>
@@ -221,12 +221,12 @@
   <h3>Kidney Failure Risk</h3>
   <ul>
     <li><strong>2-Year Risk:</strong> 
-      <span class="{{ 'critical' if patient.risk_2yr >= 20 else 'caution' if 10 <= patient.risk_2yr < 20 else 'low' if 1 <= patient.risk_2yr < 10 else 'missing' if patient.risk_2yr == 'NaN' else '' }}"></span>
+      <span class="{{ 'missing' if patient.risk_2yr == 'NaN' else 'critical' if patient.risk_2yr >= 20 else 'caution' if 10 <= patient.risk_2yr < 20 else 'low' if 1 <= patient.risk_2yr < 10 else '' }}"></span>
         {{ patient.risk_2yr if patient.CKD_Stage in ["Stage 3A", "Stage 3B", "Stage 4", "Stage 5"] else "N/A" }}%
       </span>
     </li>
     <li><strong>5-Year Risk:</strong> 
-      <span class="{{ 'critical' if patient.risk_5yr >= 10 else 'caution' if 5 <= patient.risk_5yr < 10 else 'low' if 1 <= patient.risk_5yr < 5 else 'missing' if patient.risk_5yr == 'NaN' else '' }}"></span>
+      <span class="{{ 'missing' if patient.risk_5yr == 'NaN' else 'critical' if patient.risk_5yr >= 10 else 'caution' if 5 <= patient.risk_5yr < 10 else 'low' if 1 <= patient.risk_5yr < 5 else '' }}"></span>
         {{ patient.risk_5yr if patient.CKD_Stage in ["Stage 3A", "Stage 3B", "Stage 4", "Stage 5"] else "N/A" }}%
       </span>
     </li>
