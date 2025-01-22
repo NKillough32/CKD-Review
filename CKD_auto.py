@@ -803,12 +803,21 @@ def generate_patient_pdf(data, template_dir=current_dir, output_dir="Patient_Sum
     date_columns = [col for col in data.columns if "Date" in col]
     for date_col in date_columns:
         data[date_col] = pd.to_datetime(data[date_col]).dt.strftime("%Y-%m-%d")
-        data[date_col] = data[date_col].replace({
-            "": "Missing value",
-            None: "Missing value",
-            pd.NA: "Missing value",
-            np.nan: "Missing value"
+        #data[date_col] = data[date_col].replace({
+        #    "": "Missing",
+        #    None: "Missing",
+        #    pd.NA: "Missing",
+        #    np.nan: "Missing"
+        #})
+
+    #Replace all NaN values with "Missing"
+    data = data.replace({
+            "": "Missing",
+            None: "Missing",
+            pd.NA: "Missing",
+            np.nan: "Missing"
         })
+
     # Create the absolute path for output directory
     output_dir = os.path.abspath(output_dir)
     
