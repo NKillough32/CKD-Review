@@ -236,6 +236,26 @@ def classify_CKD_stage(eGFR):
 CKD_review['CKD_Stage'] = CKD_review['eGFR'].apply(classify_CKD_stage)
 CKD_review['CKD_Stage_3m'] = CKD_review['eGFR_3m_prior'].apply(classify_CKD_stage)
 
+def calculate_egfr_trend(row):
+    if pd.isna(row['eGFR']) or pd.isna(row['eGFR_3m_prior']):
+        return "No Data"
+    
+    # Calculate the annualized eGFR change
+    days_between = (row['Sample_Date'] - row['Sample_Date2']).days
+    if days_between == 0:
+        return "No Data"
+    
+    annualized_change = (row['eGFR'] - row['eGFR_3m_prior']) * (365 / days_between)
+    
+    # Check for rapid decline criteria
+    if annualized_change < -5 or (row['eGFR_3m_prior'] - row['eGFR']) / row['eGFR_3m_prior'] >= 0.25:
+        return "Rapid Decline"
+    else:
+        return "Stable"
+
+# Apply the function to the DataFrame
+CKD_review['eGFR_Trend'] = CKD_review.apply(calculate_egfr_trend, axis=1)
+
 # Step 1: Identify rows with missing data in any required column
 required_columns = ['Age', 'Gender', 'eGFR', 'ACR']
 missing_data_df = CKD_review[CKD_review[required_columns].isnull().any(axis=1)]

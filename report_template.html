@@ -106,6 +106,9 @@
        <li><strong>3 Months Prior:</strong> 
          {{ patient.eGFR_3m_prior | default(0, true) | int }} ml/min/1.73m<sup>2</sup> | Date: {{ patient.Sample_Date2 }}
        </li>
+       <li><strong>eGFR Trend:</strong> 
+        {{ patient.eGFR_Trend }}
+       </li>
       </ul>
     </li>
     </ul>
