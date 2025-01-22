@@ -811,7 +811,7 @@ def generate_patient_pdf(data, template_dir=current_dir, output_dir="Patient_Sum
     # Format date columns to "YYYY-MM-DD" if present
     date_columns = [col for col in data.columns if "Date" in col]
     for date_col in date_columns:
-        data[date_col] = pd.to_datetime(data[date_col]).dt.strftime("%Y-%m-%d")
+        data[date_col] = data[date_col].apply(lambda x: pd.to_datetime(x).strftime("%Y-%m-%d") if x != "Missing value" else x)
     
     # Create the absolute path for output directory
     output_dir = os.path.abspath(output_dir)
