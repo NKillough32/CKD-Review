@@ -61,15 +61,15 @@ def preprocess_data(df):
     
     # Apply date parsing to all date columns
     for date_col in date_columns:
-        df[date_col] = df[date_col].apply(parse_dates)
+        df.loc[:, date_col] = df[date_col].apply(parse_dates)
     
     # Handle other preprocessing steps
     if 'Name, Dosage and Quantity' in df.columns:
-        df['Name, Dosage and Quantity'] = df['Name, Dosage and Quantity'].astype(str)
+        df.loc[:, 'Name, Dosage and Quantity'] = df['Name, Dosage and Quantity'].astype(str)
     
     # Fill missing HC Number values forward
     if 'HC Number' in df.columns:
-        df['HC Number'] = df['HC Number'].replace("", np.nan).ffill()
+        df.loc[:, 'HC Number'] = df['HC Number'].replace("", np.nan).ffill()
     
     return df
 
@@ -116,7 +116,7 @@ def summarize_medications(df):
 if not creatinine.empty:
     medications_summary_creatinine = summarize_medications(creatinine)
     creatinine = creatinine.merge(medications_summary_creatinine, on="HC Number", how="left")
-    creatinine["Code Term"] = "No EMIS CKD entry"
+    creatinine.loc[:, "Code Term"] = "No EMIS CKD entry"
 
 if not CKD_check.empty:
     medications_summary_ckd = summarize_medications(CKD_check)
@@ -124,9 +124,9 @@ if not CKD_check.empty:
     
 # Remove rows with missing Age
 if not creatinine.empty:
-    creatinine.dropna(subset=['Age'], inplace=True)
+    creatinine = creatinine.loc[creatinine['Age'].notna()]
 if not CKD_check.empty:    
-    CKD_check.dropna(subset=['Age'], inplace=True)
+    CKD_check = CKD_check.loc[CKD_check['Age'].notna()]
 
 # Merge CKD_check and Creatinine based on HC Number, selecting only rows in Creatinine not present in CKD_check
 # Prepare merged data based on available files
@@ -172,11 +172,11 @@ CKD_review.rename(columns={
 }, inplace=True)
 
 # Replace missing ACR values with 0
-CKD_review['ACR'] = CKD_review['ACR'].fillna(0)
+CKD_review.loc[:, 'ACR'] = CKD_review['ACR'].fillna(0)
 
 # Handle empty date fields by replacing with "Missing value"
 for col in ['Date', 'Date.1', 'Date.2', 'Date.3', 'Date.4', 'Date.5', 'Date.6', 'Date.7', 'Date.8', 'Date.9', 'Date.10']:
-    CKD_review[col] = CKD_review[col].replace("", "Missing value")
+    CKD_review.loc[:,col] = CKD_review[col].replace("", "Missing value")
 
 # Ensure numeric types for Age and Creatinine
 CKD_review['Creatinine'] = pd.to_numeric(CKD_review['Creatinine'], errors='coerce')
@@ -352,7 +352,7 @@ def classify_BP(systolic, diastolic):
         return None
 
 # Classify BP
-CKD_review['BP_Classification'] = CKD_review.apply(lambda row: classify_BP(row['Systolic_BP'], row['Diastolic_BP']), axis=1)
+CKD_review.loc[:, 'BP_Classification'] = CKD_review.apply(lambda row: classify_BP(row['Systolic_BP'], row['Diastolic_BP']), axis=1)
 
 # CKD-ACR Grade Classification
 def classify_CKD_ACR_grade(ACR):
@@ -363,32 +363,33 @@ def classify_CKD_ACR_grade(ACR):
     else:
         return "A3"
 
-CKD_review['CKD_ACR'] = CKD_review['ACR'].apply(classify_CKD_ACR_grade)
+CKD_review.loc[:, 'CKD_ACR'] = CKD_review['ACR'].apply(classify_CKD_ACR_grade)
 
 # Adjust CKD Stage based on conditions
-CKD_review['CKD_Stage'] = CKD_review.apply(
+CKD_review.loc[:, 'CKD_Stage'] = CKD_review.apply(
     lambda row: "Normal Function" if row['ACR'] <= 3 and row['eGFR'] > 60 and row['Date'] != "" else row['CKD_Stage'], 
     axis=1
 )
-CKD_review['CKD_Stage'] = CKD_review.apply(
+
+CKD_review.loc[:,'CKD_Stage'] = CKD_review.apply(
     lambda row: "Normal/Stage1" if row['CKD_Stage'] == "Stage 1" and row['Date'] == "" else row['CKD_Stage'], 
     axis=1
 )
 
 # Nephrology Referral
-CKD_review['Nephrology_Referral'] = CKD_review.apply(
+CKD_review.loc[:,'Nephrology_Referral'] = CKD_review.apply(
     lambda row: "Indicated on the basis of risk calculation" 
                 if row['CKD_Stage'] in ["Stage 3A", "Stage 3B", "Stage 4", "Stage 5"] and row['risk_5yr'] >= 5 
                 else "Not Indicated", 
     axis=1
 )
-CKD_review['Multidisciplinary_Care'] = CKD_review.apply(
+CKD_review.loc[:,'Multidisciplinary_Care'] = CKD_review.apply(
     lambda row: "Indicated on the basis of risk calculation" 
                 if row['CKD_Stage'] in ["Stage 3A", "Stage 3B", "Stage 4", "Stage 5"] and row['risk_2yr'] > 10 
                 else "Not Indicated", 
     axis=1
 )
-CKD_review['Modality_Education'] = CKD_review.apply(
+CKD_review.loc[:,'Modality_Education'] = CKD_review.apply(
     lambda row: "Indicated on the basis of risk calculation" 
                 if row['CKD_Stage'] in ["Stage 3A", "Stage 3B", "Stage 4", "Stage 5"] and row['risk_2yr'] > 40 
                 else "Not Indicated", 
@@ -396,7 +397,7 @@ CKD_review['Modality_Education'] = CKD_review.apply(
 )
 
 # Check for "Normal Function" in CKD_Stage_3m and overwrite CKD_Stage with "Acute Kidney Injury"
-CKD_review['CKD_Stage'] = CKD_review.apply(
+CKD_review.loc[:,'CKD_Stage'] = CKD_review.apply(
     lambda row: "Acute Kidney Injury" if row['CKD_Stage_3m'] == "Normal Function" else row['CKD_Stage'],
     axis=1
 )
@@ -426,14 +427,14 @@ def classify_anaemia(haemoglobin, gender):
     else:
         return None
 
-CKD_review['Anaemia_Classification'] = CKD_review.apply(lambda row: classify_anaemia(row['haemoglobin'], row['Gender']), axis=1)
+CKD_review.loc[:,'Anaemia_Classification'] = CKD_review.apply(lambda row: classify_anaemia(row['haemoglobin'], row['Gender']), axis=1)
 
 # BP Target and Flag
-CKD_review['BP_Target'] = CKD_review.apply(
+CKD_review.loc[:,'BP_Target'] = CKD_review.apply(
     lambda row: "<130/80" if row['ACR'] >= 70 or not pd.isna(row['HbA1c']) else "<140/90", 
     axis=1
 )
-CKD_review['BP_Flag'] = CKD_review.apply(
+CKD_review.loc[:,'BP_Flag'] = CKD_review.apply(
     lambda row: "Above Target" if (
         ((row['Systolic_BP'] >= 140 or row['Diastolic_BP'] >= 90) and row['BP_Target'] == "<140/90") or 
         ((row['Systolic_BP'] >= 130 or row['Diastolic_BP'] >= 80) and row['BP_Target'] == "<130/80")
@@ -502,23 +503,23 @@ def classify_vitamin_d(vitamin_d):
     else:
         return "Sufficient"
 
-CKD_review['Potassium_Flag'] = CKD_review['Potassium'].apply(classify_potassium)
-CKD_review['Calcium_Flag'] = CKD_review['Calcium'].apply(classify_calcium)
-CKD_review['Phosphate_Flag'] = CKD_review['Phosphate'].apply(classify_phosphate)
-CKD_review['Bicarbonate_Flag'] = CKD_review['Bicarbonate'].apply(classify_bicarbonate)
-CKD_review['Parathyroid_Flag'] = CKD_review['Parathyroid'].apply(classify_parathyroid)
-CKD_review['Vitamin_D_Flag'] = CKD_review['Vitamin_D'].apply(classify_vitamin_d)
+CKD_review.loc[:,'Potassium_Flag'] = CKD_review['Potassium'].apply(classify_potassium)
+CKD_review.loc[:, 'Calcium_Flag'] = CKD_review['Calcium'].apply(classify_calcium)
+CKD_review.loc[:, 'Phosphate_Flag'] = CKD_review['Phosphate'].apply(classify_phosphate)
+CKD_review.loc[:, 'Bicarbonate_Flag'] = CKD_review['Bicarbonate'].apply(classify_bicarbonate)
+CKD_review.loc[:, 'Parathyroid_Flag'] = CKD_review['Parathyroid'].apply(classify_parathyroid)
+CKD_review.loc[:, 'Vitamin_D_Flag'] = CKD_review['Vitamin_D'].apply(classify_vitamin_d)
 
 def classify_ckd_mbd(calcium_flag, phosphate_flag):
     return "Check CKD-MBD" if calcium_flag != "Normal" or phosphate_flag != "Normal" else "Normal"
 
-CKD_review['CKD_MBD_Flag'] = CKD_review.apply(
+CKD_review.loc[:, 'CKD_MBD_Flag'] = CKD_review.apply(
     lambda row: classify_ckd_mbd(row['Calcium_Flag'], row['Phosphate_Flag']),
     axis=1
 )
 
 # Proteinuria Flag
-CKD_review['Proteinuria_Flag'] = CKD_review.apply(
+CKD_review.loc[:,'Proteinuria_Flag'] = CKD_review.apply(
     lambda row: "Persistent Proteinuria - Consider Referral" if row['ACR'] >= 3 and row['eGFR'] > 60 else "No Referral Needed", 
     axis=1
 )
@@ -537,7 +538,7 @@ def check_contraindications(medications, contraindicated):
     prescribed_contraindicated = [drug for drug in contraindicated if re.search(r'\b' + re.escape(drug) + r'\b', medications, re.IGNORECASE)]
     return ", ".join(prescribed_contraindicated) if prescribed_contraindicated else "No contraindications"
 
-CKD_review['contraindicated_prescribed'] = CKD_review.apply(
+CKD_review.loc[:,'contraindicated_prescribed'] = CKD_review.apply(
     lambda row: check_contraindications(row['Medications'], get_contraindicated_drugs(row['eGFR'])), 
     axis=1
 )
@@ -545,7 +546,7 @@ CKD_review['contraindicated_prescribed'] = CKD_review.apply(
 # Statin Recommendation
 statins = ["Atorvastatin", "Simvastatin", "Rosuvastatin", "Pravastatin", "Fluvastatin", "Pitavastatin"]
 
-CKD_review['Statin_Recommendation'] = CKD_review.apply(
+CKD_review.loc[:,'Statin_Recommendation'] = CKD_review.apply(
     lambda row: (
         "On Statin" if any(statin in row['Medications'] for statin in statins)
         else "Consider Statin" if row['eGFR'] < 60 or pd.isna(row['Medications'])
@@ -602,13 +603,13 @@ def check_recommendations(medications, recommended):
 
     return ", ".join(recommended_missing)
 
-CKD_review['Recommended_Medications'] = CKD_review.apply(
+CKD_review.loc[:,'Recommended_Medications'] = CKD_review.apply(
     lambda row: check_recommendations(row['Medications'], recommended_medications(row['eGFR'])), 
     axis=1
 )
 
 # HbA1c Target
-CKD_review['HbA1c_Target'] = CKD_review['HbA1c'].apply(
+CKD_review.loc[:,'HbA1c_Target'] = CKD_review['HbA1c'].apply(
     lambda x: "Adjust Diabetes Management" if pd.notna(x) and x > 53 else "On Target" if pd.notna(x) else None
 )
 
@@ -638,7 +639,7 @@ def lifestyle_advice(ckd_stage):
             "Avoid over-the-counter NSAIDs and consult a healthcare provider for any new symptoms."
         )
 
-CKD_review['Lifestyle_Advice'] = CKD_review['CKD_Stage'].apply(lifestyle_advice)
+CKD_review.loc[:,'Lifestyle_Advice'] = CKD_review['CKD_Stage'].apply(lifestyle_advice)
 
 # Dose Adjustment
 def drug_adjustment(eGFR):
@@ -654,13 +655,13 @@ def check_dose_adjustments(medications, adjustment_list):
     prescribed_adjustments = [drug for drug in adjustment_list if drug in medications]
     return ", ".join(prescribed_adjustments) if prescribed_adjustments else "No adjustments needed"
 
-CKD_review['dose_adjustment_prescribed'] = CKD_review.apply(
+CKD_review.loc[:,'dose_adjustment_prescribed'] = CKD_review.apply(
     lambda row: check_dose_adjustments(row['Medications'], drug_adjustment(row['eGFR'])), 
     axis=1
 )
 
 # Anaemia Flag
-CKD_review['Anaemia_Flag'] = CKD_review['haemoglobin'].apply(
+CKD_review.loc[:,'Anaemia_Flag'] = CKD_review['haemoglobin'].apply(
     lambda x: "Consider ESA/Iron" if pd.notna(x) and x < 110 else "No Action Needed"
 )
 
@@ -670,7 +671,7 @@ def check_all_contraindications(medications, eGFR):
     contraindicated_in_meds = [drug for drug in contraindicated if drug in medications]
     return ", ".join(contraindicated_in_meds) if contraindicated_in_meds else "No contraindications"
 
-CKD_review['All_Contraindications'] = CKD_review.apply(
+CKD_review.loc[:,'All_Contraindications'] = CKD_review.apply(
     lambda row: check_all_contraindications(row['Medications'], row['eGFR']), 
     axis=1
 )
@@ -685,7 +686,7 @@ CKD_review.rename(columns={
 }, inplace=True)
 
 # Convert HC_Number to integer safely
-CKD_review['HC_Number'] = pd.to_numeric(CKD_review['HC_Number'], errors='coerce').astype('Int64')
+CKD_review.loc[:,'HC_Number'] = pd.to_numeric(CKD_review['HC_Number'], errors='coerce').astype('Int64')
 
 print("Data preprocessing and metrics calculation complete.")
 print("Writing Output Data ...")
