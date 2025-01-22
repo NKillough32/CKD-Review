@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 import pdfkit  # type: ignore
 from jinja2 import Environment, FileSystemLoader  # type: ignore
 
-warnings.filterwarnings("ignore", category=pandas.errors.SettingWithCopyWarning)
+warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
 # Get the current working directory
 current_dir = os.getcwd()
 
@@ -63,7 +63,7 @@ def preprocess_data(df):
     
     # Apply date parsing to all date columns
     for date_col in date_columns:
-        df.loc[:, date_col] = df[date_col].apply(parse_dates)
+        df[date_col] = df[date_col].apply(parse_dates)
     
     # Handle other preprocessing steps
     if 'Name, Dosage and Quantity' in df.columns:
@@ -71,7 +71,7 @@ def preprocess_data(df):
     
     # Fill missing HC Number values forward
     if 'HC Number' in df.columns:
-        df.loc[:, 'HC Number'] = df['HC Number'].replace("", np.nan).ffill()
+        df['HC Number'] = df['HC Number'].replace("", np.nan).ffill()
     
     return df
 
@@ -118,7 +118,7 @@ def summarize_medications(df):
 if not creatinine.empty:
     medications_summary_creatinine = summarize_medications(creatinine)
     creatinine = creatinine.merge(medications_summary_creatinine, on="HC Number", how="left")
-    creatinine.loc[:, "Code Term"] = "No EMIS CKD entry"
+    creatinine["Code Term"] = "No EMIS CKD entry"
 
 if not CKD_check.empty:
     medications_summary_ckd = summarize_medications(CKD_check)
@@ -774,7 +774,7 @@ def review_message(row):
     # Check if 'eGFR_date' is valid and calculate days since eGFR
     if eGFR_date:
         days_since_eGFR = (datetime.now().date() - eGFR_date).days
-        print(f"Patient HC_Number {row['HC_Number']} - eGFR Date: {eGFR_date}, Days since eGFR: {days_since_eGFR}")
+        #print(f"Patient HC_Number {row['HC_Number']} - eGFR Date: {eGFR_date}, Days since eGFR: {days_since_eGFR}")
 
         # NICE guideline checks based on CKD stage and ACR
         if row['CKD_Stage'] in ["Stage 1", "Stage 2"]:
