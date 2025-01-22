@@ -6,10 +6,12 @@ import csv
 import shutil
 import subprocess
 import requests  # type: ignore
+import warnings
 from datetime import datetime, timedelta
 import pdfkit  # type: ignore
 from jinja2 import Environment, FileSystemLoader  # type: ignore
 
+warnings.filterwarnings("ignore", category=pandas.errors.SettingWithCopyWarning)
 # Get the current working directory
 current_dir = os.getcwd()
 
@@ -686,7 +688,7 @@ CKD_review.rename(columns={
 }, inplace=True)
 
 # Convert HC_Number to integer safely
-CKD_review.loc[:,'HC_Number'] = pd.to_numeric(CKD_review['HC_Number'], errors='coerce').astype('Int64')
+CKD_review['HC_Number'] = pd.to_numeric(CKD_review['HC_Number'], errors='coerce').astype('Int64')
 
 print("Data preprocessing and metrics calculation complete.")
 print("Writing Output Data ...")
