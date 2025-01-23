@@ -146,7 +146,7 @@
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Potassium_Flag == 'Missing' else '' }}">{{ patient.Potassium_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date7 }}
     </li>
     <li><strong>Bicarbonate:</strong> 
-      <span class="{{ 'low' if try_convert(patient.Bicarbonate, int) > 29 else 'critical' if try_convert(patient.Bicarbonate, int) < 22 else '' }}">
+      <span class="{{ 'missing' if patient.Bicarbonate == 'Missing' else 'low' if patient.Bicarbonate > 29 else 'critical' if patient.Bicarbonate < 22 else '' }}">
         {{ patient.Bicarbonate }} mmol/L
       </span>
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Bicarbonate_Flag == 'Missing' else '' }}">{{ patient.Bicarbonate_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date13 }}
