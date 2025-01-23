@@ -104,8 +104,10 @@
        <li><strong>3 Months Prior:</strong> 
          {{ patient.eGFR_3m_prior | default(0, true) | int }} ml/min/1.73m<sup>2</sup> | Date: {{ patient.Sample_Date2 }}
        </li>
-       <li><strong>eGFR Trend:</strong> 
-        {{ patient.eGFR_Trend }}
+      <li><strong>eGFR Trend:</strong> 
+        <span class="{{ 'missing' if patient.eGFR_Trend == 'No Data' else 'critical' if patient.eGFR_Trend == 'Rapid decline' else 'safe' if patient.eGFR_Trend == 'Stable' else '' }}">
+          {{ patient.eGFR_Trend }}
+        </span>
        </li>
       </ul>
     </li>
