@@ -810,13 +810,14 @@ def generate_patient_pdf(data, template_dir=current_dir, output_dir="Patient_Sum
         #    np.nan: "Missing"
         #})
 
-    #Replace all NaN values with "Missing"
-    data = data.replace({
-            "": "Missing",
-            None: "Missing",
-            pd.NA: "Missing",
-            np.nan: "Missing"
-        })
+    # Replace empty cells with "Missing" only in specific columns
+    columns_to_replace = data.columns  # Replace empty cells with "Missing" in all columns
+    data[columns_to_replace] = data[columns_to_replace].replace({
+        "": "Missing",
+        None: "Missing",
+        pd.NA: "Missing",
+        np.nan: "Missing"
+    })
 
     # Create the absolute path for output directory
     output_dir = os.path.abspath(output_dir)
