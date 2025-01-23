@@ -354,7 +354,7 @@ CKD_review.loc[:, 'BP_Classification'] = CKD_review.apply(lambda row: classify_B
 
 # CKD-ACR Grade Classification
 def classify_CKD_ACR_grade(ACR):
-    if ACR <= 3:
+    if ACR < 3:
         return "A1"
     elif ACR < 30:
         return "A2"
@@ -365,12 +365,12 @@ CKD_review.loc[:, 'CKD_ACR'] = CKD_review['ACR'].apply(classify_CKD_ACR_grade)
 
 # Adjust CKD Stage based on conditions
 CKD_review.loc[:, 'CKD_Stage'] = CKD_review.apply(
-    lambda row: "Normal Function" if row['ACR'] <= 3 and row['eGFR'] > 60 and row['Date'] != "" else row['CKD_Stage'], 
+    lambda row: "Normal Function" if row['ACR'] < 3 and row['eGFR'] > 60 and row['Date'] != "" else row['CKD_Stage'], 
     axis=1
 )
 
-CKD_review.loc[:,'CKD_Stage'] = CKD_review.apply(
-    lambda row: "Normal/Stage1" if row['CKD_Stage'] == "Stage 1" and row['Date'] == "" else row['CKD_Stage'], 
+CKD_review.loc[:, 'CKD_Stage_3m'] = CKD_review.apply(
+    lambda row: "Normal Function" if row['ACR'] < 3 and row['eGFR'] > 60 and row['Date'] != "" else row['CKD_Stage_3m'], 
     axis=1
 )
 
@@ -898,42 +898,42 @@ def get_ckd_stage_acr_group(row):
 
     # Check eGFR to determine the CKD stage
     if eGFR >= 90:
-        if ACR <= 3:
+        if ACR < 3:
             return "Normal Function"
         elif ACR <= 30:
             return "Stage 1 A2"
         else:
             return "Stage 1 A3"
     elif eGFR >= 60:
-        if ACR <= 3:
+        if ACR < 3:
             return "Normal Function"
         elif ACR <= 30:
             return "Stage 2 A2"
         else:
             return "Stage 2 A3"
     elif eGFR >= 45:
-        if ACR <= 3:
+        if ACR < 3:
             return "Stage 3A A1"
         elif ACR <= 30:
             return "Stage 3A A2"
         else:
             return "Stage 3A A3"
     elif eGFR >= 30:
-        if ACR <= 3:
+        if ACR < 3:
             return "Stage 3B A1"
         elif ACR <= 30:
             return "Stage 3B A2"
         else:
             return "Stage 3B A3"
     elif eGFR >= 15:
-        if ACR <= 3:
+        if ACR < 3:
             return "Stage 4 A1"
         elif ACR <= 30:
             return "Stage 4 A2"
         else:
             return "Stage 4 A3"
     elif 0< eGFR < 15:
-        if ACR <= 3:
+        if ACR < 3:
             return "Stage 5 A1"
         elif ACR <= 30:
             return "Stage 5 A2"
