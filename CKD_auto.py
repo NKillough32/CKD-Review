@@ -810,8 +810,8 @@ def generate_patient_pdf(data, template_dir=current_dir, output_dir="Patient_Sum
         #    np.nan: "Missing"
         #})
 
-    # Replace empty cells with "Missing" only in specific columns
-    columns_to_replace = data.columns  # Replace empty cells with "Missing" in all columns
+   # Replace empty cells with "Missing" in all columns
+    columns_to_replace = data.columns  
     data[columns_to_replace] = data[columns_to_replace].replace({
         "": "Missing",
         None: "Missing",
