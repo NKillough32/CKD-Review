@@ -803,13 +803,7 @@ def generate_patient_pdf(data, template_dir=current_dir, output_dir="Patient_Sum
     date_columns = [col for col in data.columns if "Date" in col]
     for date_col in date_columns:
         data[date_col] = pd.to_datetime(data[date_col]).dt.strftime("%Y-%m-%d")
-        #data[date_col] = data[date_col].replace({
-        #    "": "Missing",
-        #    None: "Missing",
-        #    pd.NA: "Missing",
-        #    np.nan: "Missing"
-        #})
-
+       
    # Replace empty cells with "Missing" in all columns
     columns_to_replace = data.columns  
     data[columns_to_replace] = data[columns_to_replace].replace({
