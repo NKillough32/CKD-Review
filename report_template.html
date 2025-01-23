@@ -152,7 +152,7 @@
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Bicarbonate_Flag == 'Missing' else '' }}">{{ patient.Bicarbonate_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date13 }}
     </li>
     <li><strong>Parathyroid Hormone (PTH):</strong> 
-      <span class="{{ 'critical' if patient.Parathyroid > 65 else 'low' if patient.Parathyroid =< 15 else '' }}">
+      <span class="{{ 'critical' if patient.Parathyroid > 65 else 'low' if patient.Parathyroid < 15 else '' }}">
         {{ patient.Parathyroid }} pg/mL
       </span> 
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Parathyroid_Flag == 'Missing' else '' }}">{{ patient.Parathyroid_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date12 }}
