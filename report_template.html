@@ -140,37 +140,37 @@
   <h3>Electrolyte and Mineral Bone Disorder (MBD) Management</h3>
   <ul>
     <li><strong>Potassium:</strong> 
-      <span class="{{ 'missing' if patient.Potassium == 'Missing' else 'critical' if patient.Potassium > 5.5 else 'low' if patient.Potassium < 3.5 else '' }}">
+      <span class="{{ 'critical' if patient.Potassium > 5.5 else 'low' if patient.Potassium < 3.5 else '' }}">
         {{ patient.Potassium }} mmol/L
       </span> 
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Potassium_Flag == 'Missing' else '' }}">{{ patient.Potassium_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date7 }}
     </li>
     <li><strong>Bicarbonate:</strong> 
-      <span class="{{ 'missing' if patient.Bicarbonate == 'Missing' else 'critical' if patient.Bicarbonate < 22 else 'low' if patient.Bicarbonate > 29 else '' }}">
+      <span class="{{ 'critical' if patient.Bicarbonate < 22 else 'low' if patient.Bicarbonate > 29 else '' }}">
         {{ patient.Bicarbonate }} mmol/L
       </span> 
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Bicarbonate_Flag == 'Missing' else '' }}">{{ patient.Bicarbonate_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date13 }}
     </li>
     <li><strong>Parathyroid Hormone (PTH):</strong> 
-      <span class="{{ 'missing' if patient.Parathyroid == 'Missing' else 'critical' if patient.Parathyroid > 65 else 'low' if patient.Parathyroid < 15 else '' }}">
+      <span class="{{ 'critical' if patient.Parathyroid > 65 else 'low' if patient.Parathyroid < 15 else '' }}">
         {{ patient.Parathyroid }} pg/mL
       </span> 
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Parathyroid_Flag == 'Missing' else '' }}">{{ patient.Parathyroid_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date12 }}
     </li>
     <li><strong>Phosphate:</strong> 
-      <span class="{{ 'missing' if patient.Phosphate == 'Missing' else 'critical' if patient.Phosphate > 1.5 else 'low' if patient.Phosphate < 0.8 else '' }}">
+      <span class="{{ 'critical' if patient.Phosphate > 1.5 else 'low' if patient.Phosphate < 0.8 else '' }}">
         {{ patient.Phosphate }} mmol/L
       </span> 
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Phosphate_Flag == 'Missing' else '' }}">{{ patient.Phosphate_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date8 }}
     </li>
     <li><strong>Calcium:</strong> 
-      <span class="{{ 'missing' if patient.Calcium == 'Missing' else 'critical' if patient.Calcium > 2.6 else 'low' if patient.Calcium < 2.2 else '' }}">
+      <span class="{{ 'critical' if patient.Calcium > 2.6 else 'low' if patient.Calcium < 2.2 else '' }}">
         {{ patient.Calcium }} mmol/L
       </span> 
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Calcium_Flag == 'Missing' else '' }}">{{ patient.Calcium_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date9 }}
     </li>
     <li><strong>Vitamin D Level:</strong> 
-      <span class="{{ 'missing' if patient.Vitamin_D == 'Missing' else 'low' if patient.Vitamin_D < 30 else '' }}">
+      <span class="{{ 'low' if patient.Vitamin_D < 30 else '' }}">
         {{ patient.Vitamin_D | default(0, true) | int }} ng/mL
       </span> 
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Vitamin_D_Flag == 'Missing' else '' }}">{{ patient.Vitamin_D_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date10 }}
