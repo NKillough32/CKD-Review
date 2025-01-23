@@ -140,7 +140,7 @@
   <h3>Electrolyte and Mineral Bone Disorder (MBD) Management</h3>
   <ul>
     <li><strong>Potassium:</strong> 
-      <span class="{{ 'critical' if patient.Potassium > 5.5 else 'low' if patient.Potassium < 3.5 else '' }}">
+      <span class="{{  'missing' if patient.Potassium == 'Missing' else 'critical' if patient.Potassium > 5.5 else 'low' if patient.Potassium < 3.5 else '' }}">
         {{ patient.Potassium }} mmol/L
       </span> 
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Potassium_Flag == 'Missing' else '' }}">{{ patient.Potassium_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date7 }}
@@ -158,13 +158,13 @@
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Parathyroid_Flag == 'Missing' else '' }}">{{ patient.Parathyroid_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date12 }}
     </li>
     <li><strong>Phosphate:</strong> 
-      <span class="{{ 'missing' if patient.Phosphate == 'Missing' else'critical' if patient.Phosphate > 1.5 else 'low' if patient.Phosphate < 0.8 else '' }}">
+      <span class="{{ 'missing' if patient.Phosphate == 'Missing' else 'critical' if patient.Phosphate > 1.5 else 'low' if patient.Phosphate < 0.8 else '' }}">
         {{ patient.Phosphate }} mmol/L
       </span> 
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Phosphate_Flag == 'Missing' else '' }}">{{ patient.Phosphate_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date8 }}
     </li>
     <li><strong>Calcium:</strong> 
-      <span class="{{ 'critical' if patient.Calcium > 2.6 else 'low' if patient.Calcium < 2.2 else '' }}">
+      <span class="{{  'missing' if patient.Calcium == 'Missing' else 'critical' if patient.Calcium > 2.6 else 'low' if patient.Calcium < 2.2 else '' }}">
         {{ patient.Calcium }} mmol/L
       </span> 
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Calcium_Flag == 'Missing' else '' }}">{{ patient.Calcium_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date9 }}

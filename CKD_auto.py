@@ -813,6 +813,15 @@ def generate_patient_pdf(data, template_dir=current_dir, output_dir="Patient_Sum
         np.nan: "Missing"
     })
 
+    # Convert numeric columns while preserving "Missing"
+    numeric_columns = ['Phosphate', 'Calcium', 'Vitamin_D', 'Parathyroid', 'Bicarbonate']
+    
+    def convert_to_numeric(value):
+        return float(value) if value != "Missing" else "Missing"
+    
+    for col in numeric_columns:
+        data[col] = data[col].apply(convert_to_numeric)
+
     # Create the absolute path for output directory
     output_dir = os.path.abspath(output_dir)
     
