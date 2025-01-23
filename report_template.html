@@ -27,7 +27,7 @@
     .caution { color: orange; font-weight: bold; background-color: #fff3cd; }
     .safe { color: green; font-weight: bold; background-color: #d4edda; }
     .low { color: blue; font-weight: bold; background-color: #d1ecf1; }
-    .missing { color: purple; font-weight: bold; background-color: #e2e3e5; }
+    .missing { color: grey; font-weight: bold; background-color: #e2e3e5; }
     /* Prevent page breaks inside the container */
     .no-page-break {
     page-break-inside: avoid; /* For older browsers */
@@ -170,7 +170,7 @@
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Calcium_Flag == 'Missing' else '' }}">{{ patient.Calcium_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date9 }}
     </li>
     <li><strong>Vitamin D Level:</strong> 
-      <span class="{{ 'low' if patient.Vitamin_D < 30 else '' }}">
+      <span class="{{ 'missing' if patient.Vitamin_D == 'Missing' else 'low' if patient.Vitamin_D < 30 else '' }}">
         {{ patient.Vitamin_D | default(0, true) | int }} ng/mL
       </span> 
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Vitamin_D_Flag == 'Missing' else '' }}">{{ patient.Vitamin_D_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date10 }}
