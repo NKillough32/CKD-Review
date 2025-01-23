@@ -158,7 +158,7 @@
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Parathyroid_Flag == 'Missing' else '' }}">{{ patient.Parathyroid_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date12 }}
     </li>
     <li><strong>Phosphate:</strong> 
-      <span class="{{ 'critical' if patient.Phosphate > 1.5 else 'low' if patient.Phosphate < 0.8 else '' }}">
+      <span class="{{ 'missing' if patient.Phosphate == 'Missing' else'critical' if patient.Phosphate > 1.5 else 'low' if patient.Phosphate < 0.8 else '' }}">
         {{ patient.Phosphate }} mmol/L
       </span> 
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Phosphate_Flag == 'Missing' else '' }}">{{ patient.Phosphate_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date8 }}
