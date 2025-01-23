@@ -394,12 +394,6 @@ CKD_review.loc[:,'Modality_Education'] = CKD_review.apply(
     axis=1
 )
 
-# Check for "Normal Function" in CKD_Stage_3m and overwrite CKD_Stage with "Acute Kidney Injury"
-CKD_review.loc[:,'CKD_Stage'] = CKD_review.apply(
-    lambda row: "Acute Kidney Injury" if row['CKD_Stage_3m'] == "Normal Function" else row['CKD_Stage'],
-    axis=1
-)
-
 # Anemia Classification
 def classify_anaemia(haemoglobin, gender):
     if pd.isna(haemoglobin):
