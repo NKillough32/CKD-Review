@@ -508,11 +508,11 @@ CKD_review.loc[:, 'Bicarbonate_Flag'] = CKD_review['Bicarbonate'].apply(classify
 CKD_review.loc[:, 'Parathyroid_Flag'] = CKD_review['Parathyroid'].apply(classify_parathyroid)
 CKD_review.loc[:, 'Vitamin_D_Flag'] = CKD_review['Vitamin_D'].apply(classify_vitamin_d)
 
-def classify_ckd_mbd(calcium_flag, phosphate_flag):
-    return "Check CKD-MBD" if calcium_flag != "Normal" or phosphate_flag != "Normal" else "Normal"
+def classify_ckd_mbd(calcium_flag, phosphate_flag, parathyroid_flag):
+    return "Check CKD-MBD" if calcium_flag != "Normal" or phosphate_flag != "Normal" or parathyroid_flag != "Normal" else "Normal"
 
 CKD_review.loc[:, 'CKD_MBD_Flag'] = CKD_review.apply(
-    lambda row: classify_ckd_mbd(row['Calcium_Flag'], row['Phosphate_Flag']),
+    lambda row: classify_ckd_mbd(row['Calcium_Flag'], row['Phosphate_Flag'], row['Parathyroid_Flag']),
     axis=1
 )
 
@@ -542,7 +542,7 @@ CKD_review.loc[:,'contraindicated_prescribed'] = CKD_review.apply(
 )
 
 # Statin Recommendation
-statins = ["Atorvastatin", "Simvastatin", "Rosuvastatin", "Pravastatin", "Fluvastatin", "Pitavastatin"]
+statins = ["Atorvastatin", "Simvastatin", "Rosuvastatin", "Pravastatin", "Fluvastatin", "Pitavastatin", "Lovastatin", "Cerivastatin"]
 
 CKD_review.loc[:,'Statin_Recommendation'] = CKD_review.apply(
     lambda row: (
@@ -941,8 +941,7 @@ def get_ckd_stage_acr_group(row):
             return "Stage 5 A3"
     else:
         return "No Data"
-            
-
+       
 # Apply the function to categorize patients
 CKD_review['CKD_Group'] = CKD_review.apply(get_ckd_stage_acr_group, axis=1)
 
@@ -966,10 +965,15 @@ for group in ckd_groups:
     filtered_patients.to_csv(group_file_path, index=False, sep='\t', header=False)
     print(f"Saved {group} patients to: {group_file_path}")
 
+# Save output to CSV
+output_file_name2 = f"data_check_{pd.Timestamp.today().date()}.csv"
+data.to_csv(output_file_name2, index=False)
+
 # Function to move both the eGFR file and CKD_review file to the date-stamped folder
 def move_ckd_files(date_folder):
     # Construct file names based on today's date
     egfr_file = f"eGFR_check_{pd.Timestamp.today().date()}.csv"
+    data_file = f"data_check_{pd.Timestamp.today().date()}.csv"
     ckd_review_file = "CKD_review.csv"  # Static filename for CKD_review
     missing_KFRE_file = "missing_data_subjects.csv"
 
@@ -977,12 +981,22 @@ def move_ckd_files(date_folder):
     egfr_source = os.path.join(current_dir, egfr_file)
     egfr_destination = os.path.join(date_folder, egfr_file)
     
+    data_source = os.path.join(current_dir, data_file)
+    data_destination = os.path.join(date_folder, data_file)
+    
     ckd_source = os.path.join(current_dir, ckd_review_file)
     ckd_destination = os.path.join(date_folder, ckd_review_file)
 
     missing_source = os.path.join(current_dir, missing_KFRE_file)
     missing_destination = os.path.join(date_folder, missing_KFRE_file)
 
+   # Move the data file
+    try:
+        shutil.move(data_source, data_destination)
+        print(f"Moved {data_file} to {date_folder}")
+    except Exception as e:
+        print(f"Failed to move {data_file}: {e}")
+    
    # Move the eGFR file
     try:
         shutil.move(egfr_source, egfr_destination)
@@ -997,7 +1011,7 @@ def move_ckd_files(date_folder):
     except Exception as e:
         print(f"Failed to move {ckd_review_file}: {e}")
 
-            # Move the missing_KFRE file
+    # Move the missing_KFRE file
     try:
         shutil.move(missing_source, missing_destination)
         print(f"Moved {missing_KFRE_file} to {date_folder}")
