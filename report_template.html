@@ -118,13 +118,13 @@
     <li><strong>Anaemia Overview:</strong>
      <ul>
        <li><strong>Haemoglobin:</strong> 
-       <span class="{{ 'missing' if patient.haemoglobin == '' else 'critical' if patient.haemoglobin < 80 else 'caution' if 80 <= patient.haemoglobin <= 110 else '' }}"></span>
+       <span class="{{ 'missing' if patient.haemoglobin == 'Missing' else 'critical' if patient.haemoglobin < 80 else 'caution' if 80 <= patient.haemoglobin <= 110 else '' }}"></span>
          {{ patient.haemoglobin | default(0, true) | int }} g/L
        </span> 
        | <strong>Date:</strong> {{ patient.Sample_Date5 }}
        </li>
       <li><strong>Current Status:</strong> 
-        <span class="{{ 'missing' if patient.Anaemia_Classification == '' else '' }}"></span>
+        <span class="{{ 'missing' if patient.Anaemia_Classification == 'Missing' else '' }}"></span>
         {{ patient.Anaemia_Classification }}
       </span>
       </li>
