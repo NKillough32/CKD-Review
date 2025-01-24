@@ -97,7 +97,7 @@ def select_closest_3m_prior_creatinine(row):
     differences = [abs((row['Date'] - date) - three_month_threshold) for date in valid_prior_dates]
     min_diff_index = differences.index(min(differences))
     
-    return valid_prior_values[min_diff_index]
+    return pd.Series([valid_prior_values[min_diff_index], valid_prior_dates[min_diff_index]], index=['Creatinine_3m_prior', 'Date_3m_prior'])
 
 # Apply the function to both datasets if needed
 if not creatinine.empty:
