@@ -10,8 +10,8 @@ import warnings
 from datetime import datetime, timedelta
 import pdfkit  # type: ignore
 from jinja2 import Environment, FileSystemLoader  # type: ignore
-
 warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
+
 # Get the current working directory
 current_dir = os.getcwd()
 
@@ -657,6 +657,10 @@ CKD_review.loc[:,'Anaemia_Flag'] = CKD_review['haemoglobin'].apply(
     lambda x: "Consider ESA/Iron" if pd.notna(x) and x < 110 else "No Action Needed"
 )
 
+# Vitamin D Flag
+CKD_review.loc[:,'Vitamin_D_Flag'] = CKD_review['Vitamin_D'].apply(
+    lambda x: "Vitamin D Deficiency" if pd.notna(x) and x < 30 else "Normal"
+)
 # All Contraindications
 def check_all_contraindications(medications, eGFR):
     contraindicated = get_contraindicated_drugs(eGFR)
