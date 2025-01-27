@@ -812,9 +812,6 @@ data['review_message'] = data.apply(review_message, axis=1)
 
 print("Generating reports...")
 
-# To use the surgery info:
-surgery_info = load_surgery_info()
-
 # Modify generate_patient_pdf to use absolute paths
 def generate_patient_pdf(data, template_dir=current_dir, output_dir="Patient_Summaries"):
     
@@ -851,9 +848,17 @@ def generate_patient_pdf(data, template_dir=current_dir, output_dir="Patient_Sum
     # Set up Jinja2 environment to load HTML template
     env = Environment(loader=FileSystemLoader(template_dir))
     template = env.get_template("report_template.html")  # Template for patient summaries
-      
+    
+    # To use the surgery info:
+    surgery_info = load_surgery_info()
+    
     # Loop through each patient's data and generate PDF
     for _, patient in data.iterrows():
+
+        # Merge surgery info into patient data
+        patient_data = patient.to_dict()
+        patient_data.update(surgery_info)  # Add surgery details to the patient's data              
+       
         # Print info message before generating report
         print(f"Generating report for Patient HC_Number: {patient['HC_Number']}...")
         
@@ -866,7 +871,7 @@ def generate_patient_pdf(data, template_dir=current_dir, output_dir="Patient_Sum
         os.makedirs(review_folder, exist_ok=True)
         
         # Render the HTML content for each patient
-        html_content = template.render(patient=patient)
+        html_content = template.render(patient=patient_data)
         file_name = os.path.join(review_folder, f"Patient_Summary_{patient['HC_Number']}.pdf")
         
         options = {
