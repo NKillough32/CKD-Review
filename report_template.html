@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title> Surgery Name | Chronic Kidney Disease Review</title>
+  <title> Chronic Kidney Disease Review</title>
   <style>
     body { font-family: Arial, sans-serif; 
       counter-reset: page;}
@@ -31,7 +31,7 @@
     /* Prevent page breaks inside the container */
     .no-page-break {
     page-break-inside: avoid; /* For older browsers */
-     break-inside: avoid;      /* For modern browsers */
+    break-inside: avoid;      /* For modern browsers */
     }
     /* Page number styling */
     .footer {
@@ -47,7 +47,7 @@
 </head>
 <body>
 <!--EDIT THE NAME HERE -->
-<h1>Surgery Name <br> Chronic Kidney Disease Review</h1>
+<h1>{{ patient.surgery_name }}<br> Chronic Kidney Disease Review</h1>
 
 <div class="center">
   <strong>Review Status:</strong> {{ patient.review_message }}<br>
@@ -392,12 +392,14 @@
 </div>
 <!-- EDIT THESE DETAILS-->
 <div class="center">
-  Surgery Name, <br>
-  Add 1, <br>
-  Add 2, <br>
-  Belfast, <br>
-  BT123456 <br><br>
-  Telephone: 028 90***********
+  {{ patient.surgery_name }}<br>
+  {{ patient.surgery_address_line1 }}<br>
+  {% if patient.surgery_address_line2 %}
+      {{ patient.surgery_address_line2 }}<br>
+  {% endif %}
+  {{ patient.surgery_city }}<br>
+  {{ patient.surgery_postcode }}<br>
+  Tel: {{ patient.surgery_phone }}
 </div>
 <br>
 <div class="footer">

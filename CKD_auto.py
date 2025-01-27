@@ -23,6 +23,7 @@ contraindicated_drugs_file = os.path.join(current_dir, "contraindicated_drugs.cs
 drug_adjustment_file = os.path.join(current_dir, "drug_adjustment.csv")
 template_dir = current_dir  # Assuming template file is in current folder
 output_dir = os.path.join(current_dir, "Patient_Summaries")  # Output directory for PDFs
+surgery_info_file = os.path.join(current_dir, "surgery_information.csv")
 
 def check_files_exist(*file_paths):
     missing_files = [file for file in file_paths if not os.path.exists(file)]
@@ -756,6 +757,23 @@ data = pd.read_csv(file_path)
 data['risk_2yr'] = pd.to_numeric(data['risk_2yr'], errors='coerce')
 data['risk_5yr'] = pd.to_numeric(data['risk_5yr'], errors='coerce')
 
+def load_surgery_info(csv_path=surgery_info_file):
+    """
+    Load surgery information from CSV file
+    Returns dictionary with surgery details
+    """
+    try:
+        surgery_df = pd.read_csv(csv_path)
+        # Convert first row to dictionary
+        surgery_info = surgery_df.iloc[0].to_dict()
+        return surgery_info
+    except FileNotFoundError:
+        print(f"Warning: Surgery information file not found at {csv_path}")
+        return {}
+    except Exception as e:
+        print(f"Error reading surgery information: {str(e)}")
+        return {}
+
 # Define review message based on NICE guideline criteria
 def review_message(row):
     # Parse 'Sample_Date' to ensure it's in datetime format if not already
@@ -793,6 +811,9 @@ def review_message(row):
 data['review_message'] = data.apply(review_message, axis=1)
 
 print("Generating reports...")
+
+# To use the surgery info:
+surgery_info = load_surgery_info()
 
 # Modify generate_patient_pdf to use absolute paths
 def generate_patient_pdf(data, template_dir=current_dir, output_dir="Patient_Summaries"):
