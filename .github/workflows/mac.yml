@@ -54,14 +54,10 @@ jobs:
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          # Stage and commit unstaged changes
+          git pull origin main
           git add -f NephroPath.exe
           git commit -m "Update built NephroPath.exe" || echo "No changes to commit"
-          # Fetch latest changes and rebase
-          git fetch origin main
-          git rebase origin/main
-          # Push changes to remote repository
-          git push origin main
+          git push -f origin main
 
       - name: Upload Windows executable
         uses: actions/upload-artifact@v4
