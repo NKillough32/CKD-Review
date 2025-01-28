@@ -6,22 +6,29 @@ on:
     paths-ignore:
       - 'NephroPath.exe'
 
+# Prevent multiple simultaneous runs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
-  contents: write  # Allow write access for the GITHUB_TOKEN
+  contents: write
+  id-token: write
 
 jobs:
   build-windows:
     runs-on: windows-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
@@ -43,14 +50,17 @@ jobs:
           .\NephroPath.exe
           if (!$?) { exit 1 }
 
-      - name: Commit and push changes
+      - name: Commit and push changes  
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          git config pull.rebase false
-          git pull origin main
+          # Stage and commit unstaged changes
           git add -f NephroPath.exe
-          git commit -m "Add built NephroPath.exe" || echo "No changes to commit"
+          git commit -m "Update built NephroPath.exe" || echo "No changes to commit"
+          # Fetch latest changes and rebase
+          git fetch origin main
+          git rebase origin/main
+          # Push changes to remote repository
           git push origin main
 
       - name: Upload Windows executable
