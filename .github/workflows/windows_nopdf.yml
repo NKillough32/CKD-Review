@@ -26,12 +26,12 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r Dependencies/requirements.txt
           pip install pyinstaller
 
       - name: Build with PyInstaller
         run: |
-          python -m PyInstaller --onefile --name=NephroPath_nopdf --icon=NephroPath_installer_icon.ico CKD_auto_nopdf.py
+          python -m PyInstaller --onefile --name=NephroPath_nopdf --icon=Dependencies/NephroPath_installer_icon.ico Code/CKD_auto_nopdf.py
 
       - name: Move release
         run: |
