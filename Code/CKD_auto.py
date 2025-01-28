@@ -21,6 +21,7 @@ CKD_check_file = os.path.join(current_dir, "CKD_check.csv")
 CKD_review_file = os.path.join(current_dir, "CKD_review.csv") 
 contraindicated_drugs_file = os.path.join(current_dir,"Dependencies", "contraindicated_drugs.csv") # File containing contraindicated drugs
 drug_adjustment_file = os.path.join(current_dir,"Dependencies", "drug_adjustment.csv") # File containing drug adjustments
+statins_file = os.path.join(current_dir,"Dependencies", "statins.csv") # File containing statin drugs
 template_dir = os.path.join(current_dir, "Dependencies") # Directory containing HTML templates
 output_dir = os.path.join(current_dir, "Patient_Summaries")  # Output directory for PDFs
 surgery_info_file = os.path.join(current_dir,"Dependencies", "surgery_information.csv")
@@ -537,7 +538,9 @@ CKD_review.loc[:,'contraindicated_prescribed'] = CKD_review.apply(
 )
 
 # Statin Recommendation
-statins = ["Atorvastatin", "Simvastatin", "Rosuvastatin", "Pravastatin", "Fluvastatin", "Pitavastatin", "Lovastatin", "Cerivastatin"]
+# Read statins from the file and store them in a list
+with open(statins_file, 'r') as file:
+    statins = [line.strip() for line in file]
 
 CKD_review.loc[:,'Statin_Recommendation'] = CKD_review.apply(
     lambda row: (
