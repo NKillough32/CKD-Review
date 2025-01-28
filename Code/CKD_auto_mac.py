@@ -820,7 +820,7 @@ def review_message(row):
     # Check if 'eGFR_date' is valid and calculate days since eGFR
     if eGFR_date:
         days_since_eGFR = (datetime.now().date() - eGFR_date).days
-        print(f"Patient HC_Number {row['HC_Number']} - eGFR Date: {eGFR_date}, Days since eGFR: {days_since_eGFR}")
+        #print(f"Patient HC_Number {row['HC_Number']} - eGFR Date: {eGFR_date}, Days since eGFR: {days_since_eGFR}")
 
         # NICE guideline checks based on CKD stage and ACR
         if row['CKD_Stage'] in ["Stage 1", "Stage 2"]:
