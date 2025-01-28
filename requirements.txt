@@ -1,5 +1,0 @@
-pandas
-numpy
-requests
-pdfkit
-jinja2
