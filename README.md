@@ -92,7 +92,7 @@ This process aids in early identification and proactive management of CKD cases,
   - Monitoring frequency
   - Medication adjustments
   - Specialist referral criteria
-- Batch files for group data updating (https://support.primarycareit.co.uk/portal/en-gb/kb/articles/how-to-bulk-code-p#Introduction)
+- Batch files for group data updating [EMIS Batch loading Guide](https://support.primarycareit.co.uk/portal/en-gb/kb/articles/how-to-bulk-code-p#Introduction)
 
 ### Practice-Level Summary
 - Patient distribution by CKD stage
