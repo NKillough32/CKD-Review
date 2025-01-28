@@ -4,36 +4,45 @@
 The NephroPath program is a tool designed to streamline the creation of Chronic Kidney Disease (CKD) staging reports for patients, using data exported from the EMIS system in UK healthcare settings.
 
 ## Key Features
-- **Automated Reports:** Generates patient-specific CKD staging reports from EMIS data.
-- **NICE Guidelines Compliance:** Aligns with the latest NICE CKD guidelines for accurate staging.
-- **Medication Recommendations:** Includes drug adjustments and highlights contraindicated medications based on kidney function.
+- **Automated Reports:** Generates patient-specific CKD staging reports from EMIS data, including eGFR trends and risk assessments
+- **NICE Guidelines Compliance:** Aligns with the latest NICE CKD guidelines for accurate staging and monitoring recommendations
+- **Medication Management:** 
+  - Provides drug dosage adjustment recommendations based on kidney function
+  - Highlights contraindicated medications
+  - Reviews statin requirements
+- **Lifestyle Advice:** Generates stage-specific lifestyle and dietary recommendations
+- **Risk Stratification:** Calculates 2-year and 5-year kidney failure risk scores for appropriate patients
 
 ---
 
 ## Prerequisites
-### 1. Executable File:
-- **NephroPath.exe:** Handles report generation and includes built-in dependencies.
-- **NephroPath_nopdf.exe:** Produces HTML files if third-party apps are not desired.
+### 1. Executable Files:
+- **NephroPath.exe:** Full version with PDF report generation capabilities
+- **NephroPath_nopdf.exe:** Lightweight version that produces HTML reports only
 
-### 2. PDF Generation Dependency:
-- The program will attempt to download `wkhtmltopdf`. A manual installation will be required.
+### 2. PDF Generation (Full Version Only):
+- Required: `wkhtmltopdf` for PDF generation
+- The program will attempt automatic installation
+- Manual installation may be required if automatic installation fails
 - (Project maintained by Ashish Kulkarni, originally developed by Jakob Truelsen.)
 
-### 3. Required Files:
-- `report_template.html`: Formatting template for reports.
-- `contraindicated_drugs.csv`: List of medications contraindicated in CKD.
-- `drug_adjustment.csv`: Guidance for dosage adjustments based on CKD stage.
-- `Creatinine.csv`: Generated from EMIS XML data present in a password protected zip file. 
-- `CKD_check.csv`: Generated from EMIS XML data.
+### 3. Required Data Files:
+- Input Files (from EMIS):
+  - `Creatinine.csv`: Patient laboratory data
+  - `CKD_check.csv`: CKD diagnosis and coding data
+- Program Files (included in repository):
+  - `report_template.html`: Report formatting template
+  - `contraindicated_drugs.csv`: Medication safety database
+  - `drug_adjustment.csv`: Dosage adjustment guidelines
 
 ---
 
 ## Setup Instructions
-### Option 1: Download the Repository
-1. Download the repository as a ZIP file:  
-   [https://github.com/NKillough32/CKD-Review/archive/refs/heads/main.zip](https://github.com/NKillough32/CKD-Review/archive/refs/heads/main.zip)
-2. Extract the ZIP file to your Desktop.
-3. Move the EMIS downloads (`Creatinine.csv`, `CKD_check.csv`) to the extracted directory (e.g., `/CKD-Review`).
+### Option 1: Simple Setup (Recommended)
+1. Download the latest release from:  
+   [https://github.com/NKillough32/CKD-Review/releases](https://github.com/NKillough32/CKD-Review/releases)
+2. Extract the ZIP file to a location of your choice
+3. Copy your EMIS exports (`Creatinine.csv`, `CKD_check.csv`) to the same folder as NephroPath.exe (e.g., `/CKD-Review`).
 
 ### Option 2: Clone the Repository
 1. Open Bash:  
@@ -73,10 +82,21 @@ This process aids in early identification and proactive management of CKD cases,
 
 ---
 
-## Output
-Each report includes:
-- CKD stage.
-- Recommended interventions.
-- Medication adjustments, if applicable.
+## Output Format
+### Individual Patient Reports
+- Demographics
+- Current CKD Stage (1-5)
+- eGFR Trend Graph
+- Risk Stratification
+- Clinical Recommendations
+  - Monitoring frequency
+  - Medication adjustments
+  - Specialist referral criteria
+- Batch files for group data updating (https://support.primarycareit.co.uk/portal/en-gb/kb/articles/how-to-bulk-code-p#Introduction)
+
+### Practice-Level Summary
+- Patient distribution by CKD stage
+- Monitoring compliance rates
+- Intervention priorities
 
 This tool supports systematic CKD management, ensuring adherence to clinical guidelines while enabling efficient patient care.
