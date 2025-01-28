@@ -16,12 +16,14 @@ current_dir = os.getcwd()
 
 # Set up relative paths for data and output files
 creatinine_file = os.path.join(current_dir, "Creatinine.csv")
-CKD_check_file = os.path.join(current_dir, "CKD_check.csv")
-CKD_review_file = os.path.join(current_dir, "CKD_review.csv")
-contraindicated_drugs_file = os.path.join(current_dir, "contraindicated_drugs.csv")
-drug_adjustment_file = os.path.join(current_dir, "drug_adjustment.csv")
-template_dir = current_dir  # Assuming template file is in current folder
+CKD_check_file = os.path.join(current_dir, "CKD_check.csv") 
+CKD_review_file = os.path.join(current_dir, "CKD_review.csv") 
+contraindicated_drugs_file = os.path.join(current_dir,"Dependencies", "contraindicated_drugs.csv") # File containing contraindicated drugs
+drug_adjustment_file = os.path.join(current_dir,"Dependencies", "drug_adjustment.csv") # File containing drug adjustments
+statins_file = os.path.join(current_dir,"Dependencies", "statins.csv") # File containing statin drugs
+template_dir = os.path.join(current_dir, "Dependencies") # Directory containing HTML templates
 output_dir = os.path.join(current_dir, "Patient_Summaries")  # Output directory for PDFs
+surgery_info_file = os.path.join(current_dir,"Dependencies", "surgery_information.csv")
 
 def check_files_exist(*file_paths):
     missing_files = [file for file in file_paths if not os.path.exists(file)]
@@ -335,7 +337,7 @@ CKD_review['BP_Classification'] = CKD_review.apply(lambda row: classify_BP(row['
 
 # CKD-ACR Grade Classification
 def classify_CKD_ACR_grade(ACR):
-    if ACR <= 3:
+    if ACR < 3:
         return "A1"
     elif ACR < 30:
         return "A2"
@@ -345,12 +347,13 @@ def classify_CKD_ACR_grade(ACR):
 CKD_review['CKD_ACR'] = CKD_review['ACR'].apply(classify_CKD_ACR_grade)
 
 # Adjust CKD Stage based on conditions
-CKD_review['CKD_Stage'] = CKD_review.apply(
-    lambda row: "Normal Function" if row['ACR'] <= 3 and row['eGFR'] > 60 and row['Date'] != "" else row['CKD_Stage'], 
+CKD_review.loc[:, 'CKD_Stage'] = CKD_review.apply(
+    lambda row: "Normal Function" if row['ACR'] < 3 and row['eGFR'] > 60 and row['Date'] != "" else row['CKD_Stage'], 
     axis=1
 )
-CKD_review['CKD_Stage'] = CKD_review.apply(
-    lambda row: "Normal/Stage1" if row['CKD_Stage'] == "Stage 1" and row['Date'] == "" else row['CKD_Stage'], 
+
+CKD_review.loc[:, 'CKD_Stage_3m'] = CKD_review.apply(
+    lambda row: "Normal Function" if row['ACR'] < 3 and row['eGFR'] > 60 and row['Date'] != "" else row['CKD_Stage_3m'], 
     axis=1
 )
 
@@ -489,9 +492,11 @@ CKD_review['contraindicated_prescribed'] = CKD_review.apply(
 )
 
 # Statin Recommendation
-statins = ["Atorvastatin", "Simvastatin", "Rosuvastatin", "Pravastatin", "Fluvastatin", "Pitavastatin"]
+# Read statins from the file and store them in a list
+with open(statins_file, 'r') as file:
+    statins = [line.strip() for line in file]
 
-CKD_review['Statin_Recommendation'] = CKD_review.apply(
+CKD_review.loc[:,'Statin_Recommendation'] = CKD_review.apply(
     lambda row: (
         "On Statin" if any(statin in row['Medications'] for statin in statins)
         else "Consider Statin" if row['eGFR'] < 60 or pd.isna(row['Medications'])
@@ -786,6 +791,23 @@ data = pd.read_csv(file_path)
 data['risk_2yr'] = pd.to_numeric(data['risk_2yr'], errors='coerce')
 data['risk_5yr'] = pd.to_numeric(data['risk_5yr'], errors='coerce')
 
+def load_surgery_info(csv_path=surgery_info_file):
+    """
+    Load surgery information from CSV file
+    Returns dictionary with surgery details
+    """
+    try:
+        surgery_df = pd.read_csv(csv_path)
+        # Convert first row to dictionary
+        surgery_info = surgery_df.iloc[0].to_dict()
+        return surgery_info
+    except FileNotFoundError:
+        print(f"Warning: Surgery information file not found at {csv_path}")
+        return {}
+    except Exception as e:
+        print(f"Error reading surgery information: {str(e)}")
+        return {}
+
 # Define review message based on NICE guideline criteria
 def review_message(row):
     # Parse 'Sample_Date' to ensure it's in datetime format if not already
@@ -825,13 +847,31 @@ data['review_message'] = data.apply(review_message, axis=1)
 print("Generating reports...")
 
 # Modify generate_patient_pdf to use absolute paths
-def generate_patient_pdf(data, template_dir=current_dir, output_dir="Patient_Summaries"):
+def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependencies"), output_dir="Patient_Summaries"):
     
     # Format date columns to "YYYY-MM-DD" if present
     date_columns = [col for col in data.columns if "Date" in col]
     for date_col in date_columns:
         data[date_col] = pd.to_datetime(data[date_col]).dt.strftime("%Y-%m-%d")
+
+     # Replace empty cells with "Missing" in all columns
+    columns_to_replace = data.columns  
+    data[columns_to_replace] = data[columns_to_replace].replace({
+        "": "Missing",
+        None: "Missing",
+        pd.NA: "Missing",
+        np.nan: "Missing"
+    })
+
+    # Convert numeric columns while preserving "Missing"
+    numeric_columns = ['Phosphate', 'Calcium', 'Vitamin_D', 'Parathyroid', 'Bicarbonate']
     
+    def convert_to_numeric(value):
+        return float(value) if value != "Missing" else "Missing"
+    
+    for col in numeric_columns:
+        data[col] = data[col].apply(convert_to_numeric)
+
     # Create the absolute path for output directory
     output_dir = os.path.abspath(output_dir)
     
@@ -843,8 +883,16 @@ def generate_patient_pdf(data, template_dir=current_dir, output_dir="Patient_Sum
     env = Environment(loader=FileSystemLoader(template_dir))
     template = env.get_template("report_template.html")  # Template for patient summaries
     
+   # To use the surgery info:
+    surgery_info = load_surgery_info()
+
     # Loop through each patient's data and generate PDF
     for _, patient in data.iterrows():
+        
+        # Merge surgery info into patient data
+        patient_data = patient.to_dict()
+        patient_data.update(surgery_info)  # Add surgery details to the patient's data              
+               
         # Print info message before generating report
         print(f"Generating report for Patient HC_Number: {patient['HC_Number']}...")
         
@@ -917,42 +965,42 @@ def get_ckd_stage_acr_group(row):
 
     # Check eGFR to determine the CKD stage
     if eGFR >= 90:
-        if ACR <= 3:
+        if ACR < 3:
             return "Normal Function"
         elif ACR <= 30:
             return "Stage 1 A2"
         else:
             return "Stage 1 A3"
     elif eGFR >= 60:
-        if ACR <= 3:
+        if ACR < 3:
             return "Normal Function"
         elif ACR <= 30:
             return "Stage 2 A2"
         else:
             return "Stage 2 A3"
     elif eGFR >= 45:
-        if ACR <= 3:
+        if ACR < 3:
             return "Stage 3A A1"
         elif ACR <= 30:
             return "Stage 3A A2"
         else:
             return "Stage 3A A3"
     elif eGFR >= 30:
-        if ACR <= 3:
+        if ACR < 3:
             return "Stage 3B A1"
         elif ACR <= 30:
             return "Stage 3B A2"
         else:
             return "Stage 3B A3"
     elif eGFR >= 15:
-        if ACR <= 3:
+        if ACR < 3:
             return "Stage 4 A1"
         elif ACR <= 30:
             return "Stage 4 A2"
         else:
             return "Stage 4 A3"
     else:  # eGFR < 15
-        if ACR <= 3:
+        if ACR < 3:
             return "Stage 5 A1"
         elif ACR <= 30:
             return "Stage 5 A2"
