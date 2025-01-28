@@ -17,12 +17,14 @@ current_dir = os.getcwd()
 
 # Set up relative paths for data and output files
 creatinine_file = os.path.join(current_dir, "Creatinine.csv")
-CKD_check_file = os.path.join(current_dir, "CKD_check.csv")
+CKD_check_file = os.path.join(current_dir, "CKD_check.csv") 
 CKD_review_file = os.path.join(current_dir, "CKD_review.csv")
-contraindicated_drugs_file = os.path.join(current_dir, "contraindicated_drugs.csv")
-drug_adjustment_file = os.path.join(current_dir, "drug_adjustment.csv")
-template_dir = current_dir  # Assuming template file is in current folder
+contraindicated_drugs_file = os.path.join(current_dir,"Dependencies", "contraindicated_drugs.csv") # File containing contraindicated drugs
+drug_adjustment_file = os.path.join(current_dir,"Dependencies", "drug_adjustment.csv") # File containing drug adjustments
+statins_file = os.path.join(current_dir,"Dependencies", "statins.csv") # File containing statin drugs
+template_dir = os.path.join(current_dir, "Dependencies") # Directory containing HTML templates
 output_dir = os.path.join(current_dir, "Patient_Summaries")  # Output directory for PDFs
+surgery_info_file = os.path.join(current_dir,"Dependencies", "surgery_information.csv")
 
 def check_files_exist(*file_paths):
     missing_files = [file for file in file_paths if not os.path.exists(file)]
@@ -81,7 +83,7 @@ if not creatinine.empty:
 if not CKD_check.empty:
     CKD_check = preprocess_data(CKD_check)
 
-# Function to select the closest 3-month prior creatinine value
+# Function to select the closest 3-month prior creatinine value and its corresponding date
 def select_closest_3m_prior_creatinine(row):
     three_month_threshold = timedelta(days=90)
     
@@ -536,7 +538,9 @@ CKD_review.loc[:,'contraindicated_prescribed'] = CKD_review.apply(
 )
 
 # Statin Recommendation
-statins = ["Atorvastatin", "Simvastatin", "Rosuvastatin", "Pravastatin", "Fluvastatin", "Pitavastatin", "Lovastatin", "Cerivastatin"]
+# Read statins from the file and store them in a list
+with open(statins_file, 'r') as file:
+    statins = [line.strip() for line in file]
 
 CKD_review.loc[:,'Statin_Recommendation'] = CKD_review.apply(
     lambda row: (
@@ -692,8 +696,26 @@ print("Writing Output Data ...")
 output_file_name = f"eGFR_check_{pd.Timestamp.today().date()}.csv"
 CKD_review.to_csv(output_file_name, index=False)
 
+def load_surgery_info(csv_path=surgery_info_file):
+    """
+    Load surgery information from CSV file
+    Returns dictionary with surgery details
+    """
+    try:
+        surgery_df = pd.read_csv(csv_path)
+        # Convert first row to dictionary
+        surgery_info = surgery_df.iloc[0].to_dict()
+        return surgery_info
+    except FileNotFoundError:
+        print(f"Warning: Surgery information file not found at {csv_path}")
+        return {}
+    except Exception as e:
+        print(f"Error reading surgery information: {str(e)}")
+        return {}
+    
 # Modify generate_patient_html to save HTML reports
-def generate_patient_html(data, template_dir=current_dir, output_dir="Patient_Summaries_HTML"):
+def generate_patient_html(data, template_dir=os.path.join(current_dir, "Dependencies"), output_dir="Patient_Summaries_HTML"):
+    
     # Format date columns to "YYYY-MM-DD" if present
     date_columns = [col for col in data.columns if "Date" in col]
     for date_col in date_columns:
@@ -728,8 +750,16 @@ def generate_patient_html(data, template_dir=current_dir, output_dir="Patient_Su
     env = Environment(loader=FileSystemLoader(template_dir))
     template = env.get_template("report_template.html")  # Template for patient summaries
     
+    # To use the surgery info:
+    surgery_info = load_surgery_info()
+
     # Loop through each patient's data and generate HTML
     for _, patient in data.iterrows():
+        
+        # Merge surgery info into patient data
+        patient_data = patient.to_dict()
+        patient_data.update(surgery_info)  # Add surgery details to the patient's data    
+        
         # Print info message before generating report
         print(f"Generating HTML report for Patient HC_Number: {patient['HC_Number']}...")
         
