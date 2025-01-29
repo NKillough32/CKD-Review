@@ -401,14 +401,28 @@ print("Preprocessing data and performing CKD metrics calculations...")
 CKD_review['Date'] = pd.to_datetime(CKD_review['Date'], errors='coerce')
 CKD_review['Date.2'] = pd.to_datetime(CKD_review['Date.2'], errors='coerce')
 
-# Rename columns for clarity
-CKD_review.rename(columns={
-    'Value': 'Creatinine', 'Value.1': 'ACR',
-    'Value.3': 'Systolic_BP', 'Value.4': 'Diastolic_BP', 'Value.5': 'haemoglobin',
-    'Value.6': 'HbA1c', 'Value.7': 'Potassium', 'Value.8': 'Phosphate',
-    'Value.9': 'Calcium', 'Value.10': 'Vitamin_D', 'Code Term': 'EMIS_CKD_Code', 'Value.11': 'Height',
-    'Value.12': 'Parathyroid', 'Value.13': 'Bicarbonate', 'Code Term.1': 'Transplant_Kidney', 'Code Term.2': 'Dialysis',
-}, inplace=True)
+# Rename columns for clarity and consistency in the dataset
+CKD_review.rename(
+    columns={
+        'Value': 'Creatinine',
+        'Value.1': 'ACR',
+        'Value.3': 'Systolic_BP',
+        'Value.4': 'Diastolic_BP',
+        'Value.5': 'haemoglobin',
+        'Value.6': 'HbA1c',
+        'Value.7': 'Potassium',
+        'Value.8': 'Phosphate',
+        'Value.9': 'Calcium',
+        'Value.10': 'Vitamin_D',
+        'Value.11': 'Height',
+        'Value.12': 'Parathyroid',
+        'Value.13': 'Bicarbonate',
+        'Code Term': 'EMIS_CKD_Code',
+        'Code Term.1': 'Transplant_Kidney',
+        'Code Term.2': 'Dialysis'
+    },
+    inplace=True
+)
 
 # Replace missing ACR values with 0
 CKD_review.loc[:,'ACR'] = CKD_review['ACR'].fillna(0)
@@ -547,6 +561,7 @@ CKD_review.loc[:,'Modality_Education'] = CKD_review.apply(
                 else "Not Indicated", 
     axis=1
 )
+
 # Anaemia Classification
 CKD_review.loc[:,'Anaemia_Classification'] = CKD_review.apply(lambda row: classify_anaemia(row['haemoglobin'], row['Gender']), axis=1)
 
@@ -555,6 +570,7 @@ CKD_review.loc[:,'BP_Target'] = CKD_review.apply(
     lambda row: "<130/80" if row['ACR'] >= 70 or not pd.isna(row['HbA1c']) else "<140/90", 
     axis=1
 )
+
 CKD_review.loc[:,'BP_Flag'] = CKD_review.apply(
     lambda row: "Above Target" if (
         ((row['Systolic_BP'] >= 140 or row['Diastolic_BP'] >= 90) and row['BP_Target'] == "<140/90") or 
@@ -632,11 +648,23 @@ CKD_review.loc[:,'All_Contraindications'] = CKD_review.apply(
 
 # Rename columns for clarity
 CKD_review.rename(columns={
-    'Date': 'Sample_Date', 'Date.1': 'Sample_Date1', 'Date_3m_prior': 'Sample_Date2', 'Date.3': 'Sample_Date3', 
-    'Date.4': 'Sample_Date4', 'Date.5': 'Sample_Date5', 'Date.6': 'Sample_Date6', 
-    'Date.7': 'Sample_Date7', 'Date.8': 'Sample_Date8', 'Date.9': 'Sample_Date9', 
-    'Date.10': 'Sample_Date10', 'Date.11': 'Sample_Date11', 'HC Number': 'HC_Number', 
-    'Date.12': 'Sample_Date12', 'Date.13': 'Sample_Date13', 'Date.14': 'Sample_Date14', 'Date.15': 'Sample_Date15'
+    'HC Number': 'HC_Number',
+    'Date': 'Sample_Date',
+    'Date.1': 'Sample_Date1',
+    'Date_3m_prior': 'Sample_Date2',
+    'Date.3': 'Sample_Date3',
+    'Date.4': 'Sample_Date4',
+    'Date.5': 'Sample_Date5',
+    'Date.6': 'Sample_Date6',
+    'Date.7': 'Sample_Date7',
+    'Date.8': 'Sample_Date8',
+    'Date.9': 'Sample_Date9',
+    'Date.10': 'Sample_Date10',
+    'Date.11': 'Sample_Date11',
+    'Date.12': 'Sample_Date12',
+    'Date.13': 'Sample_Date13',
+    'Date.14': 'Sample_Date14',
+    'Date.15': 'Sample_Date15',
 }, inplace=True)
 
 # Convert HC_Number to integer safely
@@ -648,9 +676,3 @@ print("Writing Output Data ...")
 # Save output to CSV
 output_file_name = f"eGFR_check_{pd.Timestamp.today().date()}.csv"
 CKD_review.to_csv(output_file_name, index=False)
-
-# Load data from CSV file
-file_path = f"eGFR_check_{datetime.now().date()}.csv"
-data = pd.read_csv(file_path)
-
-
