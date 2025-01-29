@@ -17,8 +17,8 @@ The NephroPath program is a tool designed to streamline the creation of Chronic 
 
 ## Prerequisites
 ### 1. Executable Files:
-- **NephroPath.exe:** Full version with PDF report generation capabilities
-- **NephroPath_nopdf.exe:** Lightweight version that produces HTML reports only
+- **NephroPath.exe:** Full version with PDF report generation capabilities (MAC version avilable) 
+- **NephroPath_html.exe:** Lightweight version that produces HTML reports only (MAC version avilable) 
 
 ### 2. PDF Generation (Full Version Only):
 - Required: `wkhtmltopdf` for PDF generation
@@ -61,8 +61,8 @@ The NephroPath program is a tool designed to streamline the creation of Chronic 
 2. Import the provided EMIS XML files.  
    - Detailed step-by-step instructions: [EMIS XML Import Guide](https://www.emisnow.com/csm?id=kb_article&sys_id=a45d7aefc36cca10794e322d0501316a).
 3. Export the EMIS data and save it in the project directory:
-   - Save creatinine data as `Creatinine.csv`.
-   - Save CKD-coded data as `CKD_check.csv`.
+   - Save creatinine data as `Creatinine.csv` to the EMIS_File folder overwriting the sample data.
+   - Save CKD-coded data as `CKD_check.csv` to the EMIS_File folder overwriting the sample data.
 
 ---
 
