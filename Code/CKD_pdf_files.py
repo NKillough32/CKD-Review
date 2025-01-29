@@ -1,6 +1,7 @@
 import pandas as pd  # type: ignore
 import numpy as np  # type: ignore
 import os
+import shutil
 import warnings
 from datetime import datetime
 import pdfkit  # type: ignore

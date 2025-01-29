@@ -8,9 +8,7 @@ warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
 current_dir = os.getcwd()
 
 # Import the main CKD processing logic
-from CKD_core1 import * #as process_ckd_data
-from CKD_pdf_files import *# as generate_patient_pdf # Import PDF generation
-from CKD_html_files import * # as generate_patient_html# Import HTML report generation
+from CKD_core1 import * 
 
 # Detect the operating system and import the appropriate wkhtmltopdf setup file
 if platform.system() == "Windows":
@@ -20,18 +18,13 @@ elif platform.system() == "Darwin":  # macOS
 else:
     raise EnvironmentError("Unsupported operating system. This script only supports Windows and macOS.")
 
-def main():
-    print("\nStarting CKD Auto Processing...")
+# Ask the user for their preferred output format
+output_format = input("Enter the preferred output format (pdf/html): ").strip().lower()
 
-    # Process CKD data
-    processed_data = process_ckd_data()
-
-    # Generate reports
-    date_folder_html = generate_patient_html(processed_data)
-    date_folder_pdf = generate_patient_pdf(processed_data)
-
-    print("\nCKD Analysis and Reporting Completed.")
-    print(f"All reports saved in: {date_folder_pdf} and {date_folder_html}")
-
-if __name__ == "__main__":
-    main()
+# Import the appropriate module based on user input
+if output_format == "pdf":
+    from CKD_pdf_files import *  
+elif output_format == "html":
+    from CKD_html_files import *  
+else:
+    raise ValueError("Invalid output format. Please enter 'pdf' or 'html'.")
