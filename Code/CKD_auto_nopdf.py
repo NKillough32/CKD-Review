@@ -18,7 +18,7 @@ current_dir = os.getcwd()
 # Set up relative paths for data and output files
 creatinine_file = os.path.join(current_dir, "Creatinine.csv")
 CKD_check_file = os.path.join(current_dir, "CKD_check.csv") 
-CKD_review_file = os.path.join(current_dir, "CKD_review.csv")
+CKD_review_file = os.path.join(current_dir, "CKD_review.csv") 
 contraindicated_drugs_file = os.path.join(current_dir,"Dependencies", "contraindicated_drugs.csv") # File containing contraindicated drugs
 drug_adjustment_file = os.path.join(current_dir,"Dependencies", "drug_adjustment.csv") # File containing drug adjustments
 statins_file = os.path.join(current_dir,"Dependencies", "statins.csv") # File containing statin drugs
@@ -69,7 +69,7 @@ def preprocess_data(df):
     
     # Handle other preprocessing steps
     if 'Name, Dosage and Quantity' in df.columns:
-        df.loc[:, 'Name, Dosage and Quantity'] = df['Name, Dosage and Quantity'].astype(str)
+        df.loc[:,'Name, Dosage and Quantity'] = df['Name, Dosage and Quantity'].astype(str)
     
     # Fill missing HC Number values forward
     if 'HC Number' in df.columns:
@@ -95,7 +95,7 @@ def select_closest_3m_prior_creatinine(row):
     
     if not pd.notna(row.get('Date')) or not valid_prior_dates:
         return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
-    
+
     differences = [abs((row['Date'] - date) - three_month_threshold) for date in valid_prior_dates]
     min_diff_index = differences.index(min(differences))
     
@@ -103,9 +103,9 @@ def select_closest_3m_prior_creatinine(row):
 
 # Apply the function to both datasets if needed
 if not creatinine.empty:
-    creatinine[['Creatinine_3m_prior', 'Date_3m_prior']] = creatinine.apply(select_closest_3m_prior_creatinine, axis=1)
+    creatinine['Creatinine_3m_prior', 'Date_3m_prior'] = creatinine.apply(select_closest_3m_prior_creatinine, axis=1)
 if not CKD_check.empty:
-    CKD_check[['Creatinine_3m_prior', 'Date_3m_prior']] = CKD_check.apply(select_closest_3m_prior_creatinine, axis=1)
+    CKD_check['Creatinine_3m_prior', 'Date_3m_prior'] = CKD_check.apply(select_closest_3m_prior_creatinine, axis=1)
 
 # Summarise medications by HC Number, renaming the result to avoid conflicts
 def summarize_medications(df):
@@ -176,7 +176,7 @@ CKD_review.rename(columns={
 }, inplace=True)
 
 # Replace missing ACR values with 0
-CKD_review.loc[:, 'ACR'] = CKD_review['ACR'].fillna(0)
+CKD_review.loc[:,'ACR'] = CKD_review['ACR'].fillna(0)
 
 # Ensure numeric types for Age and Creatinine
 CKD_review['Creatinine'] = pd.to_numeric(CKD_review['Creatinine'], errors='coerce')
@@ -352,7 +352,7 @@ def classify_BP(systolic, diastolic):
         return None
 
 # Classify BP
-CKD_review.loc[:, 'BP_Classification'] = CKD_review.apply(lambda row: classify_BP(row['Systolic_BP'], row['Diastolic_BP']), axis=1)
+CKD_review.loc[:,'BP_Classification'] = CKD_review.apply(lambda row: classify_BP(row['Systolic_BP'], row['Diastolic_BP']), axis=1)
 
 # CKD-ACR Grade Classification
 def classify_CKD_ACR_grade(ACR):
@@ -363,15 +363,15 @@ def classify_CKD_ACR_grade(ACR):
     else:
         return "A3"
 
-CKD_review.loc[:, 'CKD_ACR'] = CKD_review['ACR'].apply(classify_CKD_ACR_grade)
+CKD_review.loc[:,'CKD_ACR'] = CKD_review['ACR'].apply(classify_CKD_ACR_grade)
 
 # Adjust CKD Stage based on conditions
-CKD_review.loc[:, 'CKD_Stage'] = CKD_review.apply(
+CKD_review.loc[:,'CKD_Stage'] = CKD_review.apply(
     lambda row: "Normal Function" if row['ACR'] < 3 and row['eGFR'] > 60 and row['Date'] != "" else row['CKD_Stage'], 
     axis=1
 )
 
-CKD_review.loc[:, 'CKD_Stage_3m'] = CKD_review.apply(
+CKD_review.loc[:,'CKD_Stage_3m'] = CKD_review.apply(
     lambda row: "Normal Function" if row['ACR'] < 3 and row['eGFR'] > 60 and row['Date'] != "" else row['CKD_Stage_3m'], 
     axis=1
 )
@@ -486,7 +486,7 @@ def classify_phosphate(phosphate):
         return "Hyperphosphatemia"
     else:
         return "Normal"
-        
+
 def classify_vitamin_d(vitamin_d):
     if pd.isna(vitamin_d):
         return "Missing"
@@ -498,16 +498,16 @@ def classify_vitamin_d(vitamin_d):
         return "Sufficient"
 
 CKD_review.loc[:,'Potassium_Flag'] = CKD_review['Potassium'].apply(classify_potassium)
-CKD_review.loc[:, 'Calcium_Flag'] = CKD_review['Calcium'].apply(classify_calcium)
-CKD_review.loc[:, 'Phosphate_Flag'] = CKD_review['Phosphate'].apply(classify_phosphate)
-CKD_review.loc[:, 'Bicarbonate_Flag'] = CKD_review['Bicarbonate'].apply(classify_bicarbonate)
-CKD_review.loc[:, 'Parathyroid_Flag'] = CKD_review['Parathyroid'].apply(classify_parathyroid)
-CKD_review.loc[:, 'Vitamin_D_Flag'] = CKD_review['Vitamin_D'].apply(classify_vitamin_d)
+CKD_review.loc[:,'Calcium_Flag'] = CKD_review['Calcium'].apply(classify_calcium)
+CKD_review.loc[:,'Phosphate_Flag'] = CKD_review['Phosphate'].apply(classify_phosphate)
+CKD_review.loc[:,'Bicarbonate_Flag'] = CKD_review['Bicarbonate'].apply(classify_bicarbonate)
+CKD_review.loc[:,'Parathyroid_Flag'] = CKD_review['Parathyroid'].apply(classify_parathyroid)
+CKD_review.loc[:,'Vitamin_D_Flag'] = CKD_review['Vitamin_D'].apply(classify_vitamin_d)
 
 def classify_ckd_mbd(calcium_flag, phosphate_flag, parathyroid_flag):
     return "Check CKD-MBD" if calcium_flag != "Normal" or phosphate_flag != "Normal" or parathyroid_flag != "Normal" else "Normal"
 
-CKD_review.loc[:, 'CKD_MBD_Flag'] = CKD_review.apply(
+CKD_review.loc[:,'CKD_MBD_Flag'] = CKD_review.apply(
     lambda row: classify_ckd_mbd(row['Calcium_Flag'], row['Phosphate_Flag'], row['Parathyroid_Flag']),
     axis=1
 )
@@ -679,7 +679,7 @@ CKD_review.loc[:,'All_Contraindications'] = CKD_review.apply(
 
 # Rename columns for clarity
 CKD_review.rename(columns={
-    'Date': 'Sample_Date', 'Date.1': 'Sample_Date1', 'Date.2': 'Sample_Date2', 'Date.3': 'Sample_Date3', 
+    'Date': 'Sample_Date', 'Date.1': 'Sample_Date1', 'Date_3m_prior': 'Sample_Date2', 'Date.3': 'Sample_Date3', 
     'Date.4': 'Sample_Date4', 'Date.5': 'Sample_Date5', 'Date.6': 'Sample_Date6', 
     'Date.7': 'Sample_Date7', 'Date.8': 'Sample_Date8', 'Date.9': 'Sample_Date9', 
     'Date.10': 'Sample_Date10', 'Date.11': 'Sample_Date11', 'HC Number': 'HC_Number', 

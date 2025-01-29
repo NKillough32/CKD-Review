@@ -665,6 +665,7 @@ CKD_review.loc[:,'Anaemia_Flag'] = CKD_review['haemoglobin'].apply(
 CKD_review.loc[:,'Vitamin_D_Flag'] = CKD_review['Vitamin_D'].apply(
     lambda x: "Vitamin D Deficiency" if pd.notna(x) and x < 30 else "Normal"
 )
+
 # All Contraindications
 def check_all_contraindications(medications, eGFR):
     contraindicated = get_contraindicated_drugs(eGFR)
@@ -823,7 +824,7 @@ def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependenc
     for date_col in date_columns:
         data[date_col] = pd.to_datetime(data[date_col]).dt.strftime("%Y-%m-%d")
 
-   # Replace empty cells with "Missing" in all columns
+    # Replace empty cells with "Missing" in all columns
     columns_to_replace = data.columns  
     data[columns_to_replace] = data[columns_to_replace].replace({
         "": "Missing",
@@ -861,10 +862,10 @@ def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependenc
         # Merge surgery info into patient data
         patient_data = patient.to_dict()
         patient_data.update(surgery_info)  # Add surgery details to the patient's data              
-       
+
         # Print info message before generating report
         print(f"Generating report for Patient HC_Number: {patient['HC_Number']}...")
-        
+
         # Render the HTML content for each patient
         review_message = patient['review_message'] if patient['review_message'] else "Uncategorized"
         sanitized_review_folder = "".join([c if c.isalnum() or c.isspace() else "_" for c in review_message]).replace(" ", "_")

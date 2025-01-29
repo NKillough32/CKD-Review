@@ -97,7 +97,6 @@ def select_closest_3m_prior_creatinine(row):
     if not pd.notna(row.get('Date')) or not valid_prior_dates:
         return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
 
-
     differences = [abs((row['Date'] - date) - three_month_threshold) for date in valid_prior_dates]
     min_diff_index = differences.index(min(differences))
     
@@ -254,6 +253,7 @@ def calculate_egfr_trend(row):
         return "Rapid Decline"
     else:
         return "Stable"
+
 # Apply the function to the DataFrame
 CKD_review['eGFR_Trend'] = CKD_review.apply(calculate_egfr_trend, axis=1)
 
@@ -514,7 +514,7 @@ CKD_review.loc[:,'CKD_MBD_Flag'] = CKD_review.apply(
 )
 
 # Proteinuria Flag
-CKD_review['Proteinuria_Flag'] = CKD_review.apply(
+CKD_review.loc[:,'Proteinuria_Flag'] = CKD_review.apply(
     lambda row: "Persistent Proteinuria - Consider Referral" if row['ACR'] >= 3 and row['eGFR'] > 60 else "No Referral Needed", 
     axis=1
 )
@@ -1046,7 +1046,7 @@ def get_ckd_stage_acr_group(row):
             return "Stage 4 A2"
         else:
             return "Stage 4 A3"
-    elif  0< eGFR < 15:
+    elif 0< eGFR < 15:
         if ACR < 3:
             return "Stage 5 A1"
         elif ACR <= 30:
