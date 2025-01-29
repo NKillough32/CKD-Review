@@ -103,9 +103,9 @@ def select_closest_3m_prior_creatinine(row):
 
 # Apply the function to both datasets if needed
 if not creatinine.empty:
-    creatinine['Creatinine_3m_prior', 'Date_3m_prior'] = creatinine.apply(select_closest_3m_prior_creatinine, axis=1)
+    creatinine[['Creatinine_3m_prior', 'Date_3m_prior']] = creatinine.apply(select_closest_3m_prior_creatinine, axis=1)
 if not CKD_check.empty:
-    CKD_check['Creatinine_3m_prior', 'Date_3m_prior'] = CKD_check.apply(select_closest_3m_prior_creatinine, axis=1)
+    CKD_check[['Creatinine_3m_prior', 'Date_3m_prior']] = CKD_check.apply(select_closest_3m_prior_creatinine, axis=1)
 
 # Summarise medications by HC Number, renaming the result to avoid conflicts
 def summarize_medications(df):
