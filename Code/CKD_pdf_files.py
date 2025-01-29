@@ -1,3 +1,4 @@
+import sys
 import pandas as pd  # type: ignore
 import numpy as np  # type: ignore
 import os
@@ -20,8 +21,32 @@ data = pd.read_csv(file_path)
 data['risk_2yr'] = pd.to_numeric(data['risk_2yr'], errors='coerce')
 data['risk_5yr'] = pd.to_numeric(data['risk_5yr'], errors='coerce')
 
-# Define path to wkhtmltopdf executable and installer
-path_to_wkhtmltopdf = "C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe"  # Adjust for your system
+# Dynamically find the path to wkhtmltopdf
+path_to_wkhtmltopdf = shutil.which("wkhtmltopdf")
+
+if path_to_wkhtmltopdf is None:
+    if os.name == 'nt':  # Windows
+        possible_paths = [
+            'C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe',
+            'C:\\Program Files (x86)\\wkhtmltopdf\\bin\\wkhtmltopdf.exe'
+        ]
+    elif os.name == 'posix':  # macOS or Linux
+        possible_paths = [
+            '/usr/local/bin/wkhtmltopdf',
+            '/usr/bin/wkhtmltopdf',
+            '/opt/homebrew/bin/wkhtmltopdf'  # For Apple Silicon Macs
+        ]
+    else:
+        possible_paths = []
+
+    for path in possible_paths:
+        if os.path.isfile(path) and os.access(path, os.X_OK):
+            path_to_wkhtmltopdf = path
+            break
+
+if path_to_wkhtmltopdf is None:
+    print("wkhtmltopdf not found in PATH or common directories.")
+    sys.exit(1)
 
 # Configure pdfkit to use wkhtmltopdf
 try:
