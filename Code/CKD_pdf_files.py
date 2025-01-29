@@ -250,21 +250,19 @@ def get_ckd_stage_acr_group(row):
     else:
         return "No Data"
 
-CKD_review = pd.read_csv(f"eGFR_check_{pd.Timestamp.today().date()}.csv")
-
 # Apply the function to categorize patients
-CKD_review['CKD_Group'] = CKD_review.apply(get_ckd_stage_acr_group, axis=1)
+data['CKD_Group'] = data.apply(get_ckd_stage_acr_group, axis=1)
 
 # Save each CKD group to a separate CSV for EMIS batch uploads
 emis_clinical_code_dir = os.path.join(current_dir, "EMIS_Clinical_Code_Batch_Files")
 os.makedirs(emis_clinical_code_dir, exist_ok=True)
 
 # Generate batch files for each group
-ckd_groups = CKD_review['CKD_Group'].unique()
+ckd_groups = data['CKD_Group'].unique()
 
 for group in ckd_groups:
     # Filter patients in the current group
-    filtered_patients = CKD_review[CKD_review['CKD_Group'] == group][["HC_Number"]].copy()
+    filtered_patients = data[data['CKD_Group'] == group][["HC_Number"]].copy()
     filtered_patients.rename(columns={'HC_Number': 'HCN'}, inplace= True)
 
     # Generate the file path
