@@ -1,34 +1,16 @@
-name: Build NephroPath for Windows
-
-on:
-  push:
-    branches: [main]
-    paths-ignore:
-      - 'NephroPath.exe'
-
-# Prevent multiple simultaneous runs
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-permissions:
-  contents: write
-  id-token: write
-
+name: Build NephroPath for macOS
+on: [push]
 jobs:
-  build-windows:
-    runs-on: windows-latest
+  build-macos:
+    runs-on: macos-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v2
         with:
-          python-version: '3.10'
-          cache: 'pip'
+          python-version: '3.10'  # Specify a stable version here
 
       - name: Install dependencies
         run: |
@@ -38,29 +20,34 @@ jobs:
 
       - name: Build with PyInstaller
         run: |
-          python -m PyInstaller --onefile --name=NephroPath --icon=Dependencies/NephroPath_installer_icon.ico Code/CKD_auto.py
+          python -m PyInstaller --onefile --name=NephroPath_mac --icon=Dependencies/NephroPath_installer_icon.icns Code/CKD_auto_mac.py
 
       - name: Move release
         run: |
-          Move-Item dist\NephroPath.exe .\NephroPath.exe -Force
-
-      - name: Test NephroPath.exe
-        shell: pwsh
+          mv dist/NephroPath_mac ./NephroPath_mac
+      
+      - name: Test NephroPath_mac
         run: |
-          .\NephroPath.exe
-          if (!$?) { exit 1 }
-
-      - name: Commit and push changes  
+          chmod +x ./NephroPath_mac
+          ./NephroPath_mac  # Simply execute the file
+          
+      - name: Set up Git
         run: |
-          git config user.email "actions@github.com"
-          git config user.name "GitHub Actions"
+          git config --global user.email "nicholas.killough@outlook.com"
+          git config --global user.name "NKillough32"
+          git remote set-url origin https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/NKillough32/CKD-Review.git
+          git fetch origin
+
+      - name: Commit and push changes
+        run: |
+          git checkout main
           git pull origin main
-          git add -f NephroPath.exe
-          git commit -m "Update built NephroPath.exe" || echo "No changes to commit"
-          git push -f origin main
+          git add NephroPath_mac
+          git commit -m "Add built NephroPath_mac"
+          git push origin main
 
-      - name: Upload Windows executable
+      - name: Upload macOS executable
         uses: actions/upload-artifact@v4
         with:
-          name: NephroPath-Windows
-          path: NephroPath.exe
+          name: NephroPath-macOS
+          path: NephroPath_mac
