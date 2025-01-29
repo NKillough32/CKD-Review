@@ -324,8 +324,8 @@ def check_all_contraindications(medications, eGFR):
 # Get the current working directory
 current_dir = os.getcwd()
 # Set up relative paths for data and output files
-creatinine_file = os.path.join(current_dir, "Creatinine.csv")
-CKD_check_file = os.path.join(current_dir, "CKD_check.csv") 
+creatinine_file = os.path.join(current_dir,"EMIS_Files", "Creatinine.csv")
+CKD_check_file = os.path.join(current_dir,"EMIS_Files", "CKD_check.csv") 
 CKD_review_file = os.path.join(current_dir, "CKD_review.csv") 
 contraindicated_drugs_file = os.path.join(current_dir,"Dependencies", "contraindicated_drugs.csv") # File containing contraindicated drugs
 drug_adjustment_file = os.path.join(current_dir,"Dependencies", "drug_adjustment.csv") # File containing drug adjustments
