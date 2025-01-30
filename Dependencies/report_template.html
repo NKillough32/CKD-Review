@@ -19,7 +19,7 @@
       padding: 15px;          /* Add padding inside the box */
       margin-bottom: 20px;    /* Add space below the box */
       border-radius: 8px;     /* Rounded corners */
-      background-color: #f9f9f9; /* Light background color for contrast */
+      background-color: whitesmoke; /* Light background color for contrast */
       /* Prevent page breaks inside the box */
       page-break-inside: avoid; /* For older browsers */
       break-inside: avoid;      /* For modern browsers */}
@@ -27,21 +27,21 @@
       position: absolute;
       top: 10px;
       right: 10px;
-      background-color: #f0f0f0;
+      background-color: rgba(245, 245, 245, 0.952);
       border: 1px solid #ccc;
       padding: 10px;
       font-size: 14px;
       text-align: center; /* Center the text */}
     /* Alert color styles */
-    .critical { color: red; font-weight: bold; background-color: #f8d7da; }
-    .caution { color: darkorange; font-weight: bold; background-color: #fff3cd; }
-    .warning { color: yellow; font-weight: bold; background-color: #ffeeba; }
-    .safe { color: green; font-weight: bold; background-color: #d4edda; }
-    .low { color: blue; font-weight: bold; background-color: #d1ecf1; }
-    .missing { color: grey; font-weight: bold; background-color: #e2e3e5; }
-    .info { color: deepskyblue; font-weight: bold; background-color: #d1ecf1; }
-    .success { color: darkgreen; font-weight: bold; background-color: #c3e6cb; }
-    .error { color: darkred; font-weight: bold; background-color: #f5c6cb; }
+    .critical { color: red; font-weight: bold; background-color: oldlace; }
+    .caution { color: darkorange; font-weight: bold; background-color: oldlace; }
+    .warning { color: gold; font-weight: bold; background-color: oldlace; }
+    .safe { color: green; font-weight: bold; background-color: oldlace; }
+    .low { color: blue; font-weight: bold; background-color: oldlace; }
+    .missing { color: grey; font-weight: bold; background-color: oldlace; }
+    .info { color: deepskyblue; font-weight: bold; background-color: oldlace; }
+    .success { color: darkgreen; font-weight: bold; background-color: oldlace; }
+    .error { color: darkred; font-weight: bold; background-color: oldlace; }
     /* Prevent page breaks inside the container */
     .no-page-break {
     page-break-inside: avoid; /* For older browsers */
@@ -84,8 +84,8 @@
   </ul>
 </div>
 <div class="boxed">
-  <div class="top-right-box {{ 'safe' if patient.CKD_Group in ['Stage 1 A1', 'Stage 2 A1'] else 'warning' if patient.CKD_Group in ['Stage 1 A2', 'Stage 2 A2', 'Stage 3 A1'] else 'caution' if patient.CKD_Group in ['Stage 1 A3', 'Stage 2 A3', 'Stage 3 A2', 'Stage 4 A1'] else 'critical' }}">
-    <strong>KDGIO 2024 Classification:</strong> {{ patient.CKD_Group }}
+  <div class="top-right-box"> 
+    <strong>KDGIO 2024 Classification</strong> <br> <span class="{{ 'safe' if patient.CKD_Group in ['Normal Function','Stage 1 A1', 'Stage 2 A1'] else 'warning' if patient.CKD_Group in ['Stage 1 A2', 'Stage 2 A2', 'Stage 3 A1'] else 'caution' if patient.CKD_Group in ['Stage 1 A3', 'Stage 2 A3', 'Stage 3 A2', 'Stage 4 A1'] else 'critical' }}"> {{ patient.CKD_Group }} 
   </div>
   <h3>CKD Overview</h3>
   <ul>
