@@ -139,7 +139,7 @@
        | <strong>Date:</strong> {{ patient.Sample_Date5 }}
        </li>
       <li><strong>Current Status:</strong> 
-        <span class="{{ 'missing' if patient.Anaemia_Classification == 'Missing' else '' }}">
+        <span class="{{ 'missing' if patient.Anaemia_Classification == 'Missing' else 'caution' if patient.Anaemia_Classification == 'Mild Anaemia' else 'critical' if patient.Anaemia_Classification == 'Moderate Anaemia'else '' }}">
         {{ patient.Anaemia_Classification }}
       </span>
       </li>
