@@ -44,40 +44,7 @@
     page-break-inside: avoid; /* For older browsers */
     break-inside: avoid;      /* For modern browsers */
     }
-    /* Page number styling */
-    .footer {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      text-align: center;
-      font-size: 12px;
-      color: #555;
-    }
-    /* QR code section */
-    .qr-section {
-        text-align: center;
-        margin: 30px auto;
-        padding: 20px;
-        max-width: 200px;
-    }
-    .qr-section img {
-        width: 150px;
-        height: 150px;
-        margin-bottom: 10px;
-    }
-    .qr-section p {
-        font-size: 14px;
-        color: #555;
-        margin: 0;
-    }
-    @media print {
-        .qr-section {
-            page-break-inside: avoid;
-            break-inside: avoid;
-        }
-    }
-</style>
+  </style>
 </head>
 <body>
 <h1>{{ patient.surgery_name }}<br> Chronic Kidney Disease Review</h1>
@@ -427,10 +394,10 @@
 <hr>
 </div>
 
-<div class="qr-section">
-  <img src="{{ qr_generate(https://patient.info/kidney-urinary-tract/chronic-kidney-disease-leaflet) }}" 
-       alt="CKD Patient Information">
-  <p>Scan for Patient-Friendly Resources</p>
+<div class="center">
+  <img src="{{ url_for('static', filename='Patient_QRCode.png') }}" 
+       alt="Patient QR Code" 
+       style="width: 150px; height: 150px; margin: 10px;">
 </div>
 
 <div class="center">
