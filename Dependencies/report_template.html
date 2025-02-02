@@ -395,12 +395,6 @@
 </div>
 
 <div class="center">
-  <img src="{{ url_for('static', filename='Patient_QRCode.png') }}" 
-       alt="Patient QR Code" 
-       style="width: 150px; height: 150px; margin: 10px;">
-</div>
-
-<div class="center">
   {{ patient.surgery_name }}<br>
   {{ patient.surgery_address_line1 }}<br>
   {% if patient.surgery_address_line2 %}
