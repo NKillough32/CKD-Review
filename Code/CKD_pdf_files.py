@@ -161,7 +161,7 @@ def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependenc
    
     # Generate CKD info QR code once
     qr_filename = "ckd_info_qr.png"
-    qr_path = os.path.join(current_dir, "Dependencies")
+    qr_path = os.path.join(current_dir, "Dependencies", qr_filename)
     generate_ckd_info_qr(qr_path)
     
     # Print debug information
