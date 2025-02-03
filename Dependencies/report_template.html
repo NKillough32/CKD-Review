@@ -395,16 +395,40 @@
 <hr>
 </div>
 
+{% set show_recommendations = (
+  patient.review_message.startswith("Review Required") or 
+  patient.Nephrology_Referral not in ["No Referral Needed", "N/A", "Missing", None] or
+  patient.dose_adjustment_prescribed not in ["No adjustments needed", "N/A", "Missing", None] or
+  patient.Statin_Recommendation not in ["Not Indicated", "N/A", "Missing", None] or
+  patient.BP_Target not in ["Within Target", "N/A", "Missing", None]
+) %}
+
+{% if show_recommendations %}
 <div class="boxed">
-  <h3>Final Clinical Recommendations</h3>
-  <ul>
-    <li><strong>Review Needed:</strong> {{ "Yes" if patient.review_message.startswith("Review Required") else "No" }}</li>
-    <li><strong>Nephrology Referral:</strong> {{ patient.Nephrology_Referral }}</li>
-    <li><strong>Medication Adjustments Required:</strong> {{ "Yes" if patient.dose_adjustment_prescribed != "No adjustments needed" else "No" }}</li>
-    <li><strong>Consider Statin Therapy:</strong> {{ patient.Statin_Recommendation }}</li>
-    <li><strong>Blood Pressure Management:</strong> {{ patient.BP_Target }}</li>
-  </ul>
+<h3>Final Clinical Recommendations</h3>
+<ul>
+  {% if patient.review_message.startswith("Review Required") %}
+  <li><strong>Review Needed:</strong> Yes</li>
+  {% endif %}
+  
+  {% if patient.Nephrology_Referral not in ["No Referral Needed", "N/A", "Missing", None] %}
+  <li><strong>Nephrology Referral:</strong> {{ patient.Nephrology_Referral }}</li>
+  {% endif %}
+  
+  {% if patient.dose_adjustment_prescribed not in ["No adjustments needed", "N/A", "Missing", None] %}
+  <li><strong>Medication Adjustments Required:</strong> Yes</li>
+  {% endif %}
+  
+  {% if patient.Statin_Recommendation not in ["Not Indicated", "N/A", "Missing", None] %}
+  <li><strong>Consider Statin Therapy:</strong> {{ patient.Statin_Recommendation }}</li>
+  {% endif %}
+  
+  {% if patient.BP_Target not in ["Within Target", "N/A", "Missing", None] %}
+  <li><strong>Blood Pressure Management:</strong> {{ patient.BP_Target }}</li>
+  {% endif %}
+</ul>
 </div>
+{% endif %}
 
 <h2>More Information on Chronic Kidney Disease</h2>
 <div class="center" style="margin: 20px 0;">
