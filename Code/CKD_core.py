@@ -566,10 +566,12 @@ CKD_review.loc[:,'Modality_Education'] = CKD_review.apply(
 CKD_review.loc[:,'Anaemia_Classification'] = CKD_review.apply(lambda row: classify_anaemia(row['haemoglobin'], row['Gender']), axis=1)
 
 # BP Target and Flag
-CKD_review.loc[:,'BP_Target'] = CKD_review.apply(
-    lambda row: "<130/80" if row['ACR'] >= 70 or not pd.isna(row['HbA1c']) else "<140/90", 
-    axis=1
+CKD_review.loc[:, 'BP_Target'] = CKD_review.apply(
+    lambda row: "<130/80" if pd.notna(row['ACR']) and row['ACR'] >= 70 
+    else "<130/80" if pd.notna(row['HbA1c']) and row['HbA1c'] > 53 
+    else "<140/90", axis=1
 )
+
 
 CKD_review.loc[:,'BP_Flag'] = CKD_review.apply(
     lambda row: "Above Target" if (
