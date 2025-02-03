@@ -591,10 +591,15 @@ CKD_review.loc[:,'CKD_MBD_Flag'] = CKD_review.apply(
     axis=1
 )
 # Proteinuria Flag
-CKD_review.loc[:,'Proteinuria_Flag'] = CKD_review.apply(
-    lambda row: "Persistent Proteinuria - Consider Referral" if row['ACR'] >= 3 and row['eGFR'] > 60 else "No Referral Needed", 
-    axis=1
+CKD_review.loc[:, 'Proteinuria_Flag'] = CKD_review.apply(
+    lambda row: (
+        "High Proteinuria - Urgent Referral" if pd.notna(row['ACR']) and row['ACR'] >= 30 
+        else "Persistent Proteinuria - Consider Referral" if pd.notna(row['ACR']) and row['ACR'] >= 3 
+        else "Review Required (ACR Missing)" if pd.isna(row['ACR'])  
+        else "No Referral Needed"
+    ), axis=1
 )
+
 # Contraindicated Medications
 CKD_review.loc[:,'contraindicated_prescribed'] = CKD_review.apply(
     lambda row: check_contraindications(row['Medications'], get_contraindicated_drugs(row['eGFR'])), 

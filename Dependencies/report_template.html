@@ -262,7 +262,7 @@
       </span>
     </li>
     <li><strong>Persistent Proteinuria:</strong> 
-      <span class="{{ 'critical' if patient.Proteinuria_Flag == 'Consider Referral' else 'caution' if patient.Proteinuria_Flag == 'Monitor' else 'missing' if patient.Proteinuria_Flag == 'Missing' else '' }}">
+      <span class="{{ 'critical' if patient.Proteinuria_Flag == 'High Proteinuria - Urgent Referral' else 'caution' if patient.Proteinuria_Flag == 'Persistent Proteinuria - Consider Referral' else 'missing' if patient.Proteinuria_Flag == 'Review Required (ACR Missing)' else '' }}">
         {{ patient.Proteinuria_Flag }}
       </span>
     </li>
