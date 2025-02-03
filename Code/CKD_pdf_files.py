@@ -4,6 +4,8 @@ import numpy as np  # type: ignore
 import os
 import shutil
 import warnings
+import qrcode
+from qrcode.image.pil import PilImage
 from datetime import datetime
 import pdfkit  # type: ignore
 from jinja2 import Environment, FileSystemLoader  # type: ignore
@@ -112,6 +114,21 @@ data['review_message'] = data.apply(review_message, axis=1)
 
 print("Generating reports...")
 
+# Function to generate QR code linking to CKD patient information
+def generate_ckd_info_qr(output_path):
+    """Generate QR code linking to CKD patient information"""
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data("https://patient.info/kidney-urinary-tract/chronic-kidney-disease-leaflet")
+    qr.make(fit=True)
+    qr_image = qr.make_image(fill_color="black", back_color="white")
+    qr_image.save(output_path)
+    return output_path
+
 # Modify generate_patient_pdf to use absolute paths
 def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependencies"), output_dir="Patient_Summaries"):
     
@@ -119,7 +136,20 @@ def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependenc
     date_columns = [col for col in data.columns if "Date" in col]
     for date_col in date_columns:
         data[date_col] = pd.to_datetime(data[date_col]).dt.strftime("%Y-%m-%d")
-
+    
+    # Create QR codes directory in date folder
+    qr_folder = os.path.join(date_folder, "qr_codes")
+    os.makedirs(qr_folder, exist_ok=True)
+    
+    # Generate CKD info QR code once
+    qr_path = os.path.join(qr_folder, "ckd_info_qr.png")
+    generate_ckd_info_qr(qr_path)
+    
+    for _, patient in data.iterrows():
+        patient_data = patient.to_dict()
+        patient_data.update(surgery_info)
+        patient_data['qr_code_path'] = qr_path  # Add QR path to template data
+    
     # Replace empty cells with "Missing" in all columns
     columns_to_replace = data.columns  
     data[columns_to_replace] = data[columns_to_replace].replace({
