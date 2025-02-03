@@ -395,7 +395,11 @@
 </div>
 
 <div class="center" style="margin: 20px 0;">
-  <img src="{{ patient.qr_code_path }}" alt="CKD Information QR Code" style="width: 150px; height: 150px;">
+  {% if patient.qr_code_path %}
+      <img src="{{ patient.qr_code_path }}" alt="CKD Information QR Code" style="width: 150px; height: 150px; border: 1px solid #ccc;">
+  {% else %}
+      <p>QR code unavailable</p>
+  {% endif %}
   <p style="margin-top: 10px;">Scan for more information about Chronic Kidney Disease</p>
 </div>
 

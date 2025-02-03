@@ -117,17 +117,28 @@ print("Generating reports...")
 # Function to generate QR code linking to CKD patient information
 def generate_ckd_info_qr(output_path):
     """Generate QR code linking to CKD patient information"""
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
-        box_size=10,
-        border=4,
-    )
-    qr.add_data("https://patient.info/kidney-urinary-tract/chronic-kidney-disease-leaflet")
-    qr.make(fit=True)
-    qr_image = qr.make_image(fill_color="black", back_color="white")
-    qr_image.save(output_path)
-    return output_path
+    try:
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_H,  # Higher error correction
+            box_size=10,
+            border=4,
+        )
+        qr.add_data("https://patient.info/kidney-urinary-tract/chronic-kidney-disease-leaflet")
+        qr.make(fit=True)
+        qr_image = qr.make_image(fill_color="black", back_color="white")
+        
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        
+        # Save with explicit format
+        qr_image.save(output_path, format='PNG')
+        
+        print(f"QR code generated successfully at: {output_path}")
+        return output_path
+    except Exception as e:
+        print(f"Error generating QR code: {e}")
+        return None
 
 # Modify generate_patient_pdf to use absolute paths
 def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependencies"), output_dir="Patient_Summaries"):
