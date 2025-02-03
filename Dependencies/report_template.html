@@ -419,7 +419,7 @@
   <li><strong>Medication Adjustments Required:</strong> Yes</li>
   {% endif %}
   
-  {% if patient.Statin_Recommendation not in ["Not Indicated", "N/A", "Missing", None] %}
+  {% if patient.Statin_Recommendation not in ["Not Indicated", "On Statin", "N/A", "Missing", None] %}
   <li><strong>Consider Statin Therapy:</strong> {{ patient.Statin_Recommendation }}</li>
   {% endif %}
   
