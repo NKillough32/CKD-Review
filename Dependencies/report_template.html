@@ -211,7 +211,7 @@
   <ul>
     <li><strong>HbA1c Level:</strong> 
       <span class="{{ 'missing' if patient.HbA1c == 'Missing' else 'critical' if patient.HbA1c > 75 else 'caution' if 53 <= patient.HbA1c <= 75 else 'low' if 48 <= patient.HbA1c < 53 else 'safe' if patient.HbA1c < 48 else '' }}">
-        {{ patient.HbA1c | default(0, true) | int }} mmol/mol
+        {{ patient.HbA1c if patient.HbA1c != 'Missing' else 'N/A' }} mmol/mol
       </span> 
       | <strong>Date:</strong> {{ patient.Sample_Date6 }}
     </li>
@@ -411,7 +411,7 @@
   <li><strong>Review Needed:</strong> Yes</li>
   {% endif %}
   
-  {% if patient.Nephrology_Referral not in ["No Referral Needed", "N/A", "Missing", None] %}
+  {% if patient.Nephrology_Referral not in ["No Referral Needed", "N/A", "Missing", "Not Indicated", None] %}
   <li><strong>Nephrology Referral:</strong> {{ patient.Nephrology_Referral }}</li>
   {% endif %}
   
