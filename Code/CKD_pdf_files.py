@@ -146,9 +146,6 @@ def sanitize_path_for_url(path):
 
 # Modify generate_patient_pdf to use absolute paths
 def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependencies"), output_dir="Patient_Summaries"):
-    # Create assets directory for QR code
-    assets_dir = os.path.join(template_dir, "assets")
-    os.makedirs(assets_dir, exist_ok=True)
 
     # Load surgery info at start of function
     surgery_info = load_surgery_info()
@@ -161,10 +158,10 @@ def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependenc
     # Create date-stamped folder inside the output directory
     date_folder = os.path.join(output_dir, datetime.now().strftime("%Y-%m-%d"))
     os.makedirs(date_folder, exist_ok=True)
-
-    # Create QR codes directory in date folder
-    qr_folder = os.path.join(date_folder, "qr_codes")
-    os.makedirs(qr_folder, exist_ok=True)
+   
+    # Create assets directory for QR code
+    assets_dir = os.path.join(date_folder, "assets")
+    os.makedirs(assets_dir, exist_ok=True)
     
     # Generate CKD info QR code once
     qr_filename = "ckd_info_qr.png"
@@ -172,7 +169,7 @@ def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependenc
     generate_ckd_info_qr(qr_path)
         
     # Use relative path for QR code
-    qr_relative_path = os.path.join("assets", "ckd_info_qr.png")
+    qr_relative_path = "../assets/ckd_info_qr.png" 
     
     # Update patient data with absolute QR path
     for _, patient in data.iterrows():
@@ -182,7 +179,8 @@ def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependenc
 
     # Update PDF options to allow local file access
     options = {
-        'enable-local-file-access': None,
+        'enable-local-file-access': '',
+        'allow': [assets_dir],
         'footer-center': "Page [page] of [toPage]",
         'margin-bottom': "20mm",
         'footer-font-size': "10"
@@ -244,7 +242,7 @@ def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependenc
         file_name = os.path.join(review_folder, f"Patient_Summary_{patient['HC_Number']}.pdf")
         
         options = {
-        "enable-local-file-access": "",
+        "enable-local-file-access": '',
         "allow": [assets_dir],
         "footer-center": "Page [page] of [toPage]",  # Enables dynamic page numbering
         "margin-bottom": "20mm",  # Ensures space for the footer

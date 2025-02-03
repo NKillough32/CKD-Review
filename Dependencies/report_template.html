@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title> Chronic Kidney Disease Review</title>
   <style>
     body { font-family: Arial, sans-serif; counter-reset: page;}
@@ -394,9 +395,10 @@
 <hr>
 </div>
 
+<h2>CKD Info QR Code</h2>
 <div class="center" style="margin: 20px 0;">
   {% if patient.qr_code_path %}
-      <img src="{{ patient.qr_code_path }}" alt="CKD Information QR Code" style="width: 150px; height: 150px;">
+      <img src="{{ patient.qr_code_path }}" alt="CKD Info QR Code" width="150">
   {% else %}
       <p>QR code unavailable</p>
   {% endif %}
