@@ -486,7 +486,7 @@ CKD_review_complete = CKD_review_complete.dropna(subset=['sex'])
 CKD_review_complete['sex'] = CKD_review_complete['sex'].astype(float)
 
 # Adjust ACR to avoid math domain error (log of zero or negative)
-CKD_review_complete['ACR'] = CKD_review_complete['ACR'].replace(0, 0.01)
+CKD_review_complete['ACR'] = CKD_review_complete['ACR'].replace(0, 0.019)
 
 # Centering variables
 CKD_review_complete['Age_centered'] = (CKD_review_complete['Age'] / 10) - Age_mean
@@ -593,8 +593,10 @@ CKD_review.loc[:,'CKD_MBD_Flag'] = CKD_review.apply(
 # Proteinuria Flag
 CKD_review.loc[:, 'Proteinuria_Flag'] = CKD_review.apply(
     lambda row: (
-        "High Proteinuria - Urgent Referral" if pd.notna(row['ACR']) and row['ACR'] >= 30 
-        else "Persistent Proteinuria - Consider Referral" if pd.notna(row['ACR']) and row['ACR'] >= 3 
+        "Immediate Referral - Severe Proteinuria (ACR ≥70)" if pd.notna(row['ACR']) and row['ACR'] >= 70 
+        else "High Proteinuria - Urgent Referral (ACR 30-69)" if pd.notna(row['ACR']) and row['ACR'] >= 30 
+        else "Persistent Proteinuria - Consider Referral (ACR 3-29)" if pd.notna(row['ACR']) and row['ACR'] >= 3 
+        else "Review Required (ACR Missing)" if pd.notna(row['ACR']) and row['ACR'] == 0.019 
         else "Review Required (ACR Missing)" if pd.isna(row['ACR'])  
         else "No Referral Needed"
     ), axis=1
