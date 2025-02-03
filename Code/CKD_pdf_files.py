@@ -140,9 +140,16 @@ def generate_ckd_info_qr(output_path):
         print(f"Error generating QR code: {e}")
         return None
 
+def sanitize_path_for_url(path):
+    """Convert Windows path to URL-compatible format"""
+    return path.replace('\\', '/').replace(' ', '%20')
+
 # Modify generate_patient_pdf to use absolute paths
 def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependencies"), output_dir="Patient_Summaries"):
-    
+    # Create assets directory for QR code
+    assets_dir = os.path.join(template_dir, "assets")
+    os.makedirs(assets_dir, exist_ok=True)
+
     # Load surgery info at start of function
     surgery_info = load_surgery_info()
 
@@ -151,7 +158,7 @@ def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependenc
     for date_col in date_columns:
         data[date_col] = pd.to_datetime(data[date_col]).dt.strftime("%Y-%m-%d")
     
-     # Create date-stamped folder inside the output directory
+    # Create date-stamped folder inside the output directory
     date_folder = os.path.join(output_dir, datetime.now().strftime("%Y-%m-%d"))
     os.makedirs(date_folder, exist_ok=True)
 
@@ -160,14 +167,27 @@ def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependenc
     os.makedirs(qr_folder, exist_ok=True)
     
     # Generate CKD info QR code once
-    qr_path = os.path.join(qr_folder, "ckd_info_qr.png")
+    qr_filename = "ckd_info_qr.png"
+    qr_path = os.path.join(assets_dir, qr_filename)
     generate_ckd_info_qr(qr_path)
+        
+    # Use relative path for QR code
+    qr_relative_path = os.path.join("assets", "ckd_info_qr.png")
     
+    # Update patient data with absolute QR path
     for _, patient in data.iterrows():
         patient_data = patient.to_dict()
         patient_data.update(surgery_info)
-        patient_data['qr_code_path'] = qr_path  # Add QR path to template data
-    
+        patient_data['qr_code_path'] = qr_relative_path
+
+    # Update PDF options to allow local file access
+    options = {
+        'enable-local-file-access': None,
+        'footer-center': "Page [page] of [toPage]",
+        'margin-bottom': "20mm",
+        'footer-font-size': "10"
+        }
+
     # Replace empty cells with "Missing" in all columns
     columns_to_replace = data.columns  
     data[columns_to_replace] = data[columns_to_replace].replace({
@@ -206,6 +226,7 @@ def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependenc
         # Merge surgery info into patient data
         patient_data = patient.to_dict()
         patient_data.update(surgery_info)  # Add surgery details to the patient's data              
+        patient_data['qr_code_path'] = os.path.join("assets", qr_filename)
 
         # Print info message before generating report
         print(f"Generating report for Patient HC_Number: {patient['HC_Number']}...")
@@ -223,6 +244,8 @@ def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependenc
         file_name = os.path.join(review_folder, f"Patient_Summary_{patient['HC_Number']}.pdf")
         
         options = {
+        "enable-local-file-access": "",
+        "allow": [assets_dir],
         "footer-center": "Page [page] of [toPage]",  # Enables dynamic page numbering
         "margin-bottom": "20mm",  # Ensures space for the footer
         "footer-font-size": "10",  # Adjusts font size for readability
@@ -231,7 +254,7 @@ def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependenc
         }
         
         # Generate and save the PDF
-        pdfkit.from_string(html_content, file_name, configuration=config,options=options)
+        pdfkit.from_string(html_content, file_name, configuration=config, options=options)
         
         # Print success message after saving report
         print(f"Report saved as Patient_Summary_{patient['HC_Number']}.pdf in {review_folder}")
