@@ -395,6 +395,17 @@
 <hr>
 </div>
 
+<div class="boxed">
+  <h3>Final Clinical Recommendations</h3>
+  <ul>
+    <li><strong>Review Needed:</strong> {{ "Yes" if patient.review_message.startswith("Review Required") else "No" }}</li>
+    <li><strong>Nephrology Referral:</strong> {{ patient.Nephrology_Referral }}</li>
+    <li><strong>Medication Adjustments Required:</strong> {{ "Yes" if patient.dose_adjustment_prescribed != "No adjustments needed" else "No" }}</li>
+    <li><strong>Consider Statin Therapy:</strong> {{ patient.Statin_Recommendation }}</li>
+    <li><strong>Blood Pressure Management:</strong> {{ patient.BP_Target }}</li>
+  </ul>
+</div>
+
 <h2>More Information on Chronic Kidney Disease</h2>
 <div class="center" style="margin: 20px 0;">
   {% if patient.qr_code_path %}

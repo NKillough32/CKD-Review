@@ -80,7 +80,7 @@ def generate_patient_html(data, template_dir=os.path.join(current_dir, "Dependen
     qr_filename = "ckd_info_qr.png"
     qr_path = os.path.join(current_dir, "Dependencies", qr_filename)
     generate_ckd_info_qr(qr_path)
-    
+
     # Print debug information
     print(f"QR Code Path: {qr_path}")
 
@@ -88,17 +88,7 @@ def generate_patient_html(data, template_dir=os.path.join(current_dir, "Dependen
     for _, patient in data.iterrows():
         patient_data = patient.to_dict()
         patient_data.update(surgery_info)
-        # Convert backslashes to forward slashes for URL compatibility
-        relative_qr_path = os.path.relpath(qr_path, start=current_dir).replace("\\", "/")
-
-  # Update PDF options to allow local file access
-    options = {
-        "enable-local-file-access": "",
-        'allow': [qr_path],
-        'footer-center': "Page [page] of [toPage]",
-        'margin-bottom': "20mm",
-        'footer-font-size': "10"
-        }
+        patient_data['qr_code_path'] = os.path.join(qr_path, qr_filename).replace('\\', '/')
 
     # Replace empty cells with "Missing" in all columns
     columns_to_replace = data.columns  
@@ -135,7 +125,7 @@ def generate_patient_html(data, template_dir=os.path.join(current_dir, "Dependen
         # Merge surgery info into patient data
         patient_data = patient.to_dict()
         patient_data.update(surgery_info)  # Add surgery details to the patient's data              
-        patient_data['qr_code_path'] = relative_qr_path 
+        patient_data['qr_code_path'] = pathlib.Path(qr_path).as_uri()
  
         # Print info message before generating report
         print(f"Generating HTML report for Patient HC_Number: {patient['HC_Number']}...")
