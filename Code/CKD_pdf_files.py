@@ -4,7 +4,6 @@ import numpy as np  # type: ignore
 import os
 import shutil
 import warnings
-from os.path import relpath
 import qrcode
 from qrcode.image.pil import PilImage
 from datetime import datetime
@@ -170,7 +169,7 @@ def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependenc
     generate_ckd_info_qr(qr_path)
         
     # Use relative path for QR code
-    qr_relative_path = relpath(qr_path, start=date_folder)
+    qr_relative_path = os.path.relpath(qr_path, start=date_folder)
     
     # Print debug information
     print(f"QR Code Path: {qr_relative_path}")
@@ -180,11 +179,11 @@ def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependenc
         patient_data = patient.to_dict()
         patient_data.update(surgery_info)
         # Convert backslashes to forward slashes for URL compatibility
-        patient_data['qr_code_path'] = qr_relative_path.replace('\\', '/')
+        patient_data['qr_code_path'] = os.path.join("assets", qr_filename).replace('\\', '/')
 
     # Update PDF options to allow local file access
     options = {
-        'enable-local-file-access': '',
+        "enable-local-file-access": "",
         'allow': [assets_dir],
         'footer-center': "Page [page] of [toPage]",
         'margin-bottom': "20mm",
@@ -247,7 +246,7 @@ def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependenc
         file_name = os.path.join(review_folder, f"Patient_Summary_{patient['HC_Number']}.pdf")
         
         options = {
-        "enable-local-file-access": '',
+        "enable-local-file-access": "",
         "allow": [assets_dir],
         "footer-center": "Page [page] of [toPage]",  # Enables dynamic page numbering
         "margin-bottom": "20mm",  # Ensures space for the footer

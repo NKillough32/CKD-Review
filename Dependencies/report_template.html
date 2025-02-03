@@ -398,7 +398,7 @@
 <h2>CKD Info QR Code</h2>
 <div class="center" style="margin: 20px 0;">
   {% if patient.qr_code_path %}
-      <img src="{{ qr_code_path }}" alt="CKD Info QR Code" width="150">
+      <img src="{{ patient.qr_code_path }}" alt="CKD Info QR Code" width="150">
   {% else %}
       <p>QR code unavailable</p>
   {% endif %}
