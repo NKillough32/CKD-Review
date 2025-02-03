@@ -132,11 +132,18 @@ def generate_ckd_info_qr(output_path):
 # Modify generate_patient_pdf to use absolute paths
 def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependencies"), output_dir="Patient_Summaries"):
     
+    # Load surgery info at start of function
+    surgery_info = load_surgery_info()
+
     # Format date columns to "YYYY-MM-DD" if present
     date_columns = [col for col in data.columns if "Date" in col]
     for date_col in date_columns:
         data[date_col] = pd.to_datetime(data[date_col]).dt.strftime("%Y-%m-%d")
     
+     # Create date-stamped folder inside the output directory
+    date_folder = os.path.join(output_dir, datetime.now().strftime("%Y-%m-%d"))
+    os.makedirs(date_folder, exist_ok=True)
+
     # Create QR codes directory in date folder
     qr_folder = os.path.join(date_folder, "qr_codes")
     os.makedirs(qr_folder, exist_ok=True)
