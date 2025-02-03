@@ -5,7 +5,7 @@ import os
 import shutil
 import warnings
 import qrcode
-from qrcode.image.pil import PilImage
+import pathlib
 from datetime import datetime
 import pdfkit  # type: ignore
 from jinja2 import Environment, FileSystemLoader  # type: ignore
@@ -140,10 +140,6 @@ def generate_ckd_info_qr(output_path):
         print(f"Error generating QR code: {e}")
         return None
 
-def sanitize_path_for_url(path):
-    """Convert Windows path to URL-compatible format"""
-    return path.replace('\\', '/').replace(' ', '%20')
-
 # Modify generate_patient_pdf to use absolute paths
 def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependencies"), output_dir="Patient_Summaries"):
 
@@ -154,11 +150,7 @@ def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependenc
     date_columns = [col for col in data.columns if "Date" in col]
     for date_col in date_columns:
         data[date_col] = pd.to_datetime(data[date_col]).dt.strftime("%Y-%m-%d")
-    
-    # Create date-stamped folder inside the output directory
-    date_folder = os.path.join(output_dir, datetime.now().strftime("%Y-%m-%d"))
-    os.makedirs(date_folder, exist_ok=True)
-   
+     
     # Generate CKD info QR code once
     qr_filename = "ckd_info_qr.png"
     qr_path = os.path.join(current_dir, "Dependencies", qr_filename)
@@ -212,16 +204,18 @@ def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependenc
     env = Environment(loader=FileSystemLoader(template_dir))
     template = env.get_template("report_template.html")  # Template for patient summaries
     
-    # To use the surgery info:
-    surgery_info = load_surgery_info()
-
+    if not os.path.isfile(qr_path):
+        print(f"Error: QR code not found at {qr_path}")
+    else:
+        print(f"QR code exists at: {qr_path}")
+        
     # Loop through each patient's data and generate PDF
     for _, patient in data.iterrows():
 
         # Merge surgery info into patient data
         patient_data = patient.to_dict()
         patient_data.update(surgery_info)  # Add surgery details to the patient's data              
-        patient_data['qr_code_path'] = os.path.join("assets", qr_filename)
+        patient_data['qr_code_path'] = pathlib.Path(qr_path).as_uri()
 
         # Print info message before generating report
         print(f"Generating report for Patient HC_Number: {patient['HC_Number']}...")

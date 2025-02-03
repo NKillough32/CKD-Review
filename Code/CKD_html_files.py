@@ -3,6 +3,8 @@ import numpy as np  # type: ignore
 import os
 import shutil
 import warnings
+import qrcode
+import pathlib
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader  # type: ignore
 warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
@@ -35,15 +37,69 @@ def load_surgery_info(csv_path=surgery_info_file):
     except Exception as e:
         print(f"Error reading surgery information: {str(e)}")
         return {}
-    
+
+# Function to generate QR code linking to CKD patient information
+def generate_ckd_info_qr(output_path):
+    """Generate QR code linking to CKD patient information"""
+    try:
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_H,  # Higher error correction
+            box_size=10,
+            border=4,
+        )
+        qr.add_data("https://patient.info/kidney-urinary-tract/chronic-kidney-disease-leaflet")
+        qr.make(fit=True)
+        qr_image = qr.make_image(fill_color="black", back_color="white")
+        
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        
+        # Save with explicit format
+        qr_image.save(output_path, format='PNG')
+        
+        print(f"QR code generated successfully at: {output_path}")
+        return output_path
+    except Exception as e:
+        print(f"Error generating QR code: {e}")
+        return None
+
+
 # Modify generate_patient_html to save HTML reports
 def generate_patient_html(data, template_dir=os.path.join(current_dir, "Dependencies"), output_dir="Patient_Summaries_HTML"):
     
+    # Load surgery info at start of function
+    surgery_info = load_surgery_info()
+
     # Format date columns to "YYYY-MM-DD" if present
     date_columns = [col for col in data.columns if "Date" in col]
     for date_col in date_columns:
         data[date_col] = pd.to_datetime(data[date_col], errors='coerce').dt.strftime("%Y-%m-%d")
     
+        # Generate CKD info QR code once
+    qr_filename = "ckd_info_qr.png"
+    qr_path = os.path.join(current_dir, "Dependencies", qr_filename)
+    generate_ckd_info_qr(qr_path)
+    
+    # Print debug information
+    print(f"QR Code Path: {qr_path}")
+
+    # Update patient data with absolute QR path
+    for _, patient in data.iterrows():
+        patient_data = patient.to_dict()
+        patient_data.update(surgery_info)
+        # Convert backslashes to forward slashes for URL compatibility
+        relative_qr_path = os.path.relpath(qr_path, start=current_dir).replace("\\", "/")
+
+  # Update PDF options to allow local file access
+    options = {
+        "enable-local-file-access": "",
+        'allow': [qr_path],
+        'footer-center': "Page [page] of [toPage]",
+        'margin-bottom': "20mm",
+        'footer-font-size': "10"
+        }
+
     # Replace empty cells with "Missing" in all columns
     columns_to_replace = data.columns  
     data[columns_to_replace] = data[columns_to_replace].replace({
@@ -73,21 +129,19 @@ def generate_patient_html(data, template_dir=os.path.join(current_dir, "Dependen
     env = Environment(loader=FileSystemLoader(template_dir))
     template = env.get_template("report_template.html")  # Template for patient summaries
     
-    # To use the surgery info:
-    surgery_info = load_surgery_info()
-
-    # Loop through each patient's data and generate HTML
+# Loop through each patient's data and generate PDF
     for _, patient in data.iterrows():
-        
+
         # Merge surgery info into patient data
         patient_data = patient.to_dict()
-        patient_data.update(surgery_info)  # Add surgery details to the patient's data    
-        
+        patient_data.update(surgery_info)  # Add surgery details to the patient's data              
+        patient_data['qr_code_path'] = relative_qr_path 
+ 
         # Print info message before generating report
         print(f"Generating HTML report for Patient HC_Number: {patient['HC_Number']}...")
         
         # Render the HTML content for each patient
-        html_content = template.render(patient=patient)
+        html_content = template.render(patient=patient_data)
         
         # Save the HTML file in the respective folder
         sanitized_review_folder = "".join([c if c.isalnum() or c.isspace() else "_" for c in patient['review_message']]).replace(" ", "_")
