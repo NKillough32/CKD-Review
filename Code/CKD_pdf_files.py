@@ -4,6 +4,7 @@ import numpy as np  # type: ignore
 import os
 import shutil
 import warnings
+from os.path import relpath
 import qrcode
 from qrcode.image.pil import PilImage
 from datetime import datetime
@@ -169,13 +170,17 @@ def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependenc
     generate_ckd_info_qr(qr_path)
         
     # Use relative path for QR code
-    qr_relative_path = "../assets/ckd_info_qr.png" 
+    qr_relative_path = relpath(qr_path, start=date_folder)
     
+    # Print debug information
+    print(f"QR Code Path: {qr_relative_path}")
+
     # Update patient data with absolute QR path
     for _, patient in data.iterrows():
         patient_data = patient.to_dict()
         patient_data.update(surgery_info)
-        patient_data['qr_code_path'] = qr_relative_path
+        # Convert backslashes to forward slashes for URL compatibility
+        patient_data['qr_code_path'] = qr_relative_path.replace('\\', '/')
 
     # Update PDF options to allow local file access
     options = {
