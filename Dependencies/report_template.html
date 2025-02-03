@@ -73,7 +73,7 @@
 </div>
 <div class="boxed">
   <div class="top-right-box"> 
-    <strong>KDGIO 2024 Classification</strong> <br> <span class="{{ 'safe' if patient.CKD_Group in ['Normal Function','Stage 1 A1', 'Stage 2 A1'] else 'warning' if patient.CKD_Group in ['Stage 1 A2', 'Stage 2 A2', 'Stage 3 A1'] else 'caution' if patient.CKD_Group in ['Stage 1 A3', 'Stage 2 A3', 'Stage 3 A2', 'Stage 4 A1'] else 'critical' }}"> {{ patient.CKD_Group }} 
+    <strong>KDGIO 2024 Classification</strong> <br> <span class="{{ 'safe' if patient.CKD_Group in ['Normal Function','Stage 1 A1', 'Stage 2 A1'] else 'warning' if patient.CKD_Group in ['Stage 1 A2', 'Stage 2 A2', 'Stage 3A A1'] else 'caution' if patient.CKD_Group in ['Stage 1 A3', 'Stage 2 A3', 'Stage 3A A2', 'Stage 3B A1', 'Stage 4 A1'] else 'critical' }}"> {{ patient.CKD_Group }} 
   </div>
   <h3>CKD Overview</h3>
   <ul>
