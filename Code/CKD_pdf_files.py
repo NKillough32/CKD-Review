@@ -159,32 +159,25 @@ def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependenc
     date_folder = os.path.join(output_dir, datetime.now().strftime("%Y-%m-%d"))
     os.makedirs(date_folder, exist_ok=True)
    
-    # Create assets directory for QR code
-    assets_dir = os.path.join(date_folder, "assets")
-    os.makedirs(assets_dir, exist_ok=True)
-    
     # Generate CKD info QR code once
     qr_filename = "ckd_info_qr.png"
-    qr_path = os.path.join(assets_dir, qr_filename)
+    qr_path = os.path.join(current_dir, "Dependencies")
     generate_ckd_info_qr(qr_path)
-        
-    # Use relative path for QR code
-    qr_relative_path = os.path.relpath(qr_path, start=date_folder)
     
     # Print debug information
-    print(f"QR Code Path: {qr_relative_path}")
+    print(f"QR Code Path: {qr_path}")
 
     # Update patient data with absolute QR path
     for _, patient in data.iterrows():
         patient_data = patient.to_dict()
         patient_data.update(surgery_info)
         # Convert backslashes to forward slashes for URL compatibility
-        patient_data['qr_code_path'] = os.path.join("assets", qr_filename).replace('\\', '/')
+        patient_data['qr_code_path'] = os.path.join(qr_path, qr_filename).replace('\\', '/')
 
     # Update PDF options to allow local file access
     options = {
         "enable-local-file-access": "",
-        'allow': [assets_dir],
+        'allow': [qr_path],
         'footer-center': "Page [page] of [toPage]",
         'margin-bottom': "20mm",
         'footer-font-size': "10"
@@ -247,7 +240,7 @@ def generate_patient_pdf(data, template_dir=os.path.join(current_dir, "Dependenc
         
         options = {
         "enable-local-file-access": "",
-        "allow": [assets_dir],
+        "allow": [qr_path],
         "footer-center": "Page [page] of [toPage]",  # Enables dynamic page numbering
         "margin-bottom": "20mm",  # Ensures space for the footer
         "footer-font-size": "10",  # Adjusts font size for readability
