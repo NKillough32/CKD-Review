@@ -30,6 +30,14 @@
       padding: 10px;
       font-size: 14px;
       text-align: center; /* Center the text */}
+    .center-box {
+      width: 300px;               /* Set a fixed or max width */
+      margin: 10px auto;          /* Centres horizontally; adjust vertical margin as needed */
+      background-color: rgba(245, 245, 245, 0.952);
+      border: 1px solid #ccc;
+      padding: 10px;
+      font-size: 14px;
+      text-align: center;         /* Centers the text within the box */}
     /* Alert color styles */
     .critical { color: #B00020; background-color: #FFFFFF; font-weight: bold; } /* Deep red for critical alerts */
     .caution { color: #D35400; background-color: #FFFFFF; font-weight: bold; } /* Dark orange for caution alerts */
@@ -145,12 +153,12 @@
       | <strong>Status:</strong> <span class="{{ 'missing' if patient.Vitamin_D_Flag == 'Missing' else '' }}">{{ patient.Vitamin_D_Flag }}</span> | <strong>Date:</strong> {{ patient.Sample_Date10 }}
     </li>
   </ul>
-  <div class="boxed">
+  <div class="center-box">
     <h3>MBD Status</h3>
     <ul style="list-style: none; padding: 0; text-align: center;">
       <li><strong>MBD Status:</strong> {{ patient.CKD_MBD_Flag }}</li>
     </ul>
-  </div>
+  </div>  
 </div>
 
 <div class="boxed">
