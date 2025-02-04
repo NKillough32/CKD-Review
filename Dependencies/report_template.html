@@ -413,7 +413,7 @@
   <li><strong>Consider Statin Therapy:</strong> {{ patient.Statin_Recommendation }}</li>
   {% endif %}
   
-  {% if patient.BP_Status not in ["On Target", "N/A", "Missing", None] %}
+  {% if patient.BP_Flag not in ["On Target", "N/A", "Missing", None] %}
   <li><strong>Blood Pressure Management:</strong> {{ patient.BP_Target }}</li>
   {% endif %}
 </ul>
