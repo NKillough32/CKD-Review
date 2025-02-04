@@ -33,10 +33,10 @@
       .center-box {
       width: fit-content;  /* Adjusts width to content */
       margin: 10px auto;   /* Centers the box */
-      background-color: whitesmoke;
-      border: 2px solid #ccc;
-      border-radius: 8px;
-      padding: 15px;
+      background-color: rgba(245, 245, 245, 0.952);
+      border: 1px solid #ccc;
+      padding: 10px;
+      font-size: 14px;
       text-align: center;}
     /* Alert color styles */
     .critical { color: #B00020; background-color: #FFFFFF; font-weight: bold; } /* Deep red for critical alerts */
@@ -155,9 +155,7 @@
   </ul>
   <div class="container" style="text-align: center;">
     <div class="center-box">
-      <ul style="list-style: none; padding: 0; text-align: center;">
-        <li><strong>MBD Status</strong> <br> {{ patient.CKD_MBD_Flag }}</li>
-      </ul>
+      <strong>MBD Status</strong> <br> {{ patient.CKD_MBD_Flag }}
     </div>
   </div>
    
@@ -415,7 +413,7 @@
   <li><strong>Consider Statin Therapy:</strong> {{ patient.Statin_Recommendation }}</li>
   {% endif %}
   
-  {% if patient.BP_Target not in ["On Target", "N/A", "Missing", None] %}
+  {% if patient.BP_Status not in ["On Target", "N/A", "Missing", None] %}
   <li><strong>Blood Pressure Management:</strong> {{ patient.BP_Target }}</li>
   {% endif %}
 </ul>
