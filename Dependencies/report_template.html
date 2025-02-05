@@ -294,33 +294,19 @@
 <div class="no-page-break">
 <hr>
 <h2>NICE Guideline Recommendations</h2>
+<p>
+  For detailed guidance, please refer to the 
+  <a href="https://www.nice.org.uk/guidance/ng203" target="_blank" rel="noopener noreferrer">
+    NICE NG203 guideline on Chronic Kidney Disease
+  </a>.
+</p>
 
-{% if patient.CKD_Stage == "Acute Kidney Injury" %}
-<h3>Acute Kidney Injury (AKI) Management and Prevention</h3>
-<ul>
-  <li><strong>Risk Identification:</strong> Identify high-risk patients, including those with CKD, diabetes, heart failure, sepsis, or recent surgery. Ensure adequate hydration unless contraindicated.</li>
-  <li><strong>Medication Review:</strong> Avoid or withhold nephrotoxic drugs such as NSAIDs and ACE inhibitors in acutely ill patients.</li>
-  <li><strong>Monitoring:</strong> Regularly assess kidney function (serum creatinine, urine output) and electrolytes, particularly in hospitalized or high-risk patients.</li>
-  <li><strong>Fluid Management:</strong> Optimize fluid balance with IV fluids if hypovolemic; avoid fluid overload in patients with heart or renal issues.</li>
-  <li><strong>Treat Underlying Causes:</strong> Address underlying conditions promptly, such as sepsis, obstruction, or hypovolemia.</li>
-  <li><strong>Escalate Care:</strong> Refer to nephrology for severe or persistent AKI or potential need for dialysis.</li>
-  <li><strong>Patient Education:</strong> Educate on avoiding nephrotoxic drugs, staying hydrated, and arrange follow-up to monitor for potential CKD development.</li>
-</ul>
-
-{% elif patient.CKD_Stage == "Normal Function" %}
+{% if patient.CKD_Stage == "Normal Function" %}
 <h3>Recommendations for Normal Kidney Function:</h3>
 <ul>
   <li><strong>General Health Maintenance:</strong> Encourage a balanced diet and regular physical activity. Avoid excessive use of NSAIDs and other nephrotoxic agents. Regular monitoring is not required unless risk factors are present.</li>
   <li><strong>Risk Factor Management:</strong> Monitor blood pressure and maintain within normal ranges. Screen for diabetes and manage blood glucose levels if necessary.</li>
   <li><strong>Preventive Measures:</strong> Encourage smoking cessation and limit alcohol intake. Stay hydrated and maintain a healthy weight.</li>
-</ul>
-
-{% elif patient.CKD_Stage == "Normal/Stage1" %}
-<h3>CKD Stage G1 (Normal or High GFR with Evidence of Kidney Damage):</h3>
-<ul>
-  <li><strong>Monitoring:</strong> Annual review of renal function and urine ACR if risk factors are present. Monitor blood pressure and adjust treatment to maintain optimal levels.</li>
-  <li><strong>Risk Factor Management:</strong> Address underlying conditions such as hypertension or diabetes. Lifestyle modifications including diet and exercise.</li>
-  <li><strong>Preventive Measures:</strong> Avoid nephrotoxic medications where possible. Educate patient on signs of kidney issues and when to seek medical advice.</li>
 </ul>
 
 {% elif patient.CKD_Stage == "Stage 1" %}
@@ -390,7 +376,7 @@
   patient.Nephrology_Referral not in ["No Referral Needed", "N/A", "Missing", None] or
   patient.dose_adjustment_prescribed not in ["No adjustments needed", "N/A", "Missing", None] or
   patient.Statin_Recommendation not in ["Not Indicated", "N/A", "Missing", None] or
-  patient.BP_Target not in ["Within Target", "N/A", "Missing", None]
+  patient.BP_Flag not in ["On Target", "N/A", "Missing", None]
 ) %}
 
 {% if show_recommendations %}
