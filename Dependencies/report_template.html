@@ -30,8 +30,8 @@
       padding: 10px;
       font-size: 14px;
       text-align: center; /* Center the text */}
-      .center-box {
-      width: fit-content;  /* Adjusts width to content */
+    .center-box {
+      display: inline-block;  /* Adjusts width to content */
       margin: 10px auto;   /* Centers the box */
       background-color: rgba(245, 245, 245, 0.952);
       border: 1px solid #ccc;
@@ -375,7 +375,7 @@
   patient.review_message.startswith("Review Required") or 
   patient.Nephrology_Referral not in ["No Referral Needed", "N/A", "Missing", None] or
   patient.dose_adjustment_prescribed not in ["No adjustments needed", "N/A", "Missing", None] or
-  patient.Statin_Recommendation not in ["Not Indicated", "N/A", "Missing", None] or
+  patient.Statin_Recommendation not in ["On Statin", "Not Indicated", "N/A", "Missing", None] or
   patient.BP_Flag not in ["On Target", "N/A", "Missing", None]
 ) %}
 
