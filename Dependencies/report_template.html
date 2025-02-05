@@ -387,7 +387,7 @@
   <li><strong>Review Needed:</strong> Yes</li>
   {% endif %}
   
-  {% if patient.Nephrology_Referral not in [""Not Indicated", "N/A", "Missing", "Not Indicated", None] %}
+  {% if patient.Nephrology_Referral not in ["Not Indicated", "N/A", "Missing", "Not Indicated", None] %}
   <li><strong>Nephrology Referral:</strong> {{ patient.Nephrology_Referral }}</li>
   {% endif %}
   
