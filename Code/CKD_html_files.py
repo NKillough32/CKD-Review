@@ -162,7 +162,7 @@ def review_message(row):
     eGFR_date = pd.to_datetime(row['Sample_Date'], errors='coerce').date() if pd.notna(row['Sample_Date']) else None
 
     # Convert CKD_ACR and risk_5yr to numeric values, setting errors='coerce' to handle non-numeric entries
-    CKD_ACR = pd.to_numeric(row['CKD_ACR'], errors='coerce')
+    ACR = pd.to_numeric(row['ACR'], errors='coerce')
     risk_5yr = pd.to_numeric(row['risk_5yr'], errors='coerce')
     BP_Flag = row['BP_Flag']
 
@@ -173,12 +173,12 @@ def review_message(row):
 
         # NICE guideline checks based on CKD stage and ACR
         if row['CKD_Stage'] in ["Stage 1", "Stage 2"]:
-            if days_since_eGFR > 365 or CKD_ACR >= 3 or BP_Flag == "Above Target":
+            if days_since_eGFR > 365 or ACR >= 3 or BP_Flag == "Above Target":
                 return "Review Required (CKD Stage 1-2 with >1 year since last eGFR or ACR >3)"
             else:
                 return "No immediate review required"
         elif row['CKD_Stage'] in ["Stage 3", "Stage 3A", "Stage 3B", "Stage 4", "Stage 5"]:
-            if CKD_ACR >= 30 or risk_5yr > 5 or days_since_eGFR > 180:
+            if ACR >= 30 or risk_5yr > 5 or days_since_eGFR > 180:
                 return "Review Required (CKD Stage 3-5 with >6 months since last eGFR, ACR >30, or high-risk)"
             elif days_since_eGFR > 90:
                 return "Review Required (CKD Stage 3-5 with >3 months since last eGFR)"

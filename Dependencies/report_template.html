@@ -373,7 +373,7 @@
 
 {% set show_recommendations = (
   patient.review_message.startswith("Review Required") or 
-  patient.Nephrology_Referral not in ["No Referral Needed", "N/A", "Missing", None] or
+  patient.Nephrology_Referral not in ["Not Indicated", "N/A", "Missing", None] or
   patient.dose_adjustment_prescribed not in ["No adjustments needed", "N/A", "Missing", None] or
   patient.Statin_Recommendation not in ["On Statin", "Not Indicated", "N/A", "Missing", None] or
   patient.BP_Flag not in ["On Target", "N/A", "Missing", None]
@@ -387,7 +387,7 @@
   <li><strong>Review Needed:</strong> Yes</li>
   {% endif %}
   
-  {% if patient.Nephrology_Referral not in ["No Referral Needed", "N/A", "Missing", "Not Indicated", None] %}
+  {% if patient.Nephrology_Referral not in [""Not Indicated", "N/A", "Missing", "Not Indicated", None] %}
   <li><strong>Nephrology Referral:</strong> {{ patient.Nephrology_Referral }}</li>
   {% endif %}
   
