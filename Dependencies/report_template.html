@@ -368,9 +368,6 @@
 <p><strong>No specific recommendations available for this CKD stage.</strong></p>
 {% endif %}
 
-<hr>
-</div>
-
 {% set show_recommendations = (
   patient.review_message.startswith("Review Required") or 
   patient.Nephrology_Referral not in ["Not Indicated", "N/A", "Missing", None] or
@@ -381,30 +378,31 @@
 
 {% if show_recommendations %}
 <div class="boxed">
-<h3>Final Clinical Recommendations</h3>
-<ul>
-  {% if patient.review_message.startswith("Review Required") %}
-  <li><strong>Review Needed:</strong> Yes</li>
-  {% endif %}
-  
-  {% if patient.Nephrology_Referral not in ["Not Indicated", "N/A", "Missing", "Not Indicated", None] %}
-  <li><strong>Nephrology Referral:</strong> {{ patient.Nephrology_Referral }}</li>
-  {% endif %}
-  
-  {% if patient.dose_adjustment_prescribed not in ["No adjustments needed", "N/A", "Missing", None] %}
-  <li><strong>Medication Adjustments Required:</strong> Yes</li>
-  {% endif %}
-  
-  {% if patient.Statin_Recommendation not in ["Not Indicated", "On Statin", "N/A", "Missing", None] %}
-  <li><strong>Consider Statin Therapy:</strong> {{ patient.Statin_Recommendation }}</li>
-  {% endif %}
-  
-  {% if patient.BP_Flag not in ["On Target", "N/A", "Missing", None] %}
-  <li><strong>Blood Pressure Management:</strong> {{ patient.BP_Target }}</li>
-  {% endif %}
-</ul>
+  <h3>Final Clinical Recommendations</h3>
+  <ul>
+    {% if patient.review_message.startswith("Review Required") %}
+      <li><strong>Review Needed:</strong> Yes</li>
+    {% endif %}
+    
+    {% if patient.Nephrology_Referral not in ["Not Indicated", "N/A", "Missing", None] %}
+      <li><strong>Nephrology Referral:</strong> {{ patient.Nephrology_Referral }}</li>
+    {% endif %}
+    
+    {% if patient.dose_adjustment_prescribed not in ["No adjustments needed", "N/A", "Missing", None] %}
+      <li><strong>Medication Adjustments Required:</strong> Yes</li>
+    {% endif %}
+    
+    {% if patient.Statin_Recommendation not in ["On Statin", "Not Indicated", "N/A", "Missing", None] %}
+      <li><strong>Consider Statin Therapy:</strong> {{ patient.Statin_Recommendation }}</li>
+    {% endif %}
+    
+    {% if patient.BP_Flag not in ["On Target", "N/A", "Missing", None] %}
+      <li><strong>Blood Pressure Management:</strong> {{ patient.BP_Target }}</li>
+    {% endif %}
+  </ul>
 </div>
 {% endif %}
+
 
 <h2>More Information on Chronic Kidney Disease</h2>
 <div class="center" style="margin: 20px 0;">
