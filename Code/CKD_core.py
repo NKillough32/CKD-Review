@@ -49,10 +49,44 @@ def preprocess_data(df):
         df['HC Number'] = df['HC Number'].replace("", np.nan).ffill()
     
     return df
+def overwrite_missing_with_recent_value2(row, days_threshold=90):
+    """
+    If 'Value' is missing, overwrite it with 'Value.2' only if 'Date.2' is recent (within 'days_threshold' days from today).
+    Ensures 'Value.2' is paired with its corresponding 'Date.2'.
+    """
+    today = datetime.today().date()
+
+    # If 'Value.2' or 'Date.2' is missing, return row unchanged
+    if 'Value.2' not in row or 'Date.2' not in row or pd.isna(row['Value.2']) or pd.isna(row['Date.2']):
+        return row
+
+    # Convert Date.2 to date format if it's not already
+    date_2 = pd.to_datetime(row['Date.2']).date()
+
+    # Check if Date.2 is within the last 'days_threshold' days
+    if (today - date_2).days <= days_threshold:
+        # Overwrite Value if it's missing
+        if pd.isna(row.get('Value')):
+            row['Value'] = row['Value.2']
+        # Overwrite Date if it's missing or older than Date.2
+        if pd.isna(row.get('Date')) or row['Date'] < row['Date.2']:
+            row['Date'] = row['Date.2']
+
+    return row
 def select_closest_3m_prior_creatinine(row):
+    """
+    Selects 'Value.2' and 'Date.2' as the preferred 3-month prior creatinine measurement.
+    If 'Value.2' is missing, it finds the closest prior measurement to 90 days before the current date.
+    If no prior measurements exist, it returns NaN.
+    """
     three_month_threshold = timedelta(days=90)
     
-    # Dynamically identify all available 'Date.X' and 'Value.X' columns
+    # ✅ Explicitly prioritize 'Value.2' and 'Date.2' if they exist
+    if 'Date.2' in row and 'Value.2' in row and pd.notna(row['Date.2']) and pd.notna(row['Value.2']):
+        return pd.Series([row['Value.2'], row['Date.2']], index=['Creatinine_3m_prior', 'Date_3m_prior'])
+    
+    # 🔽 If 'Value.2' is missing, find the closest prior measurement 🔽 #
+    
     prior_dates = []
     prior_values = []
     
@@ -63,41 +97,23 @@ def select_closest_3m_prior_creatinine(row):
                 prior_dates.append(row[col])
                 prior_values.append(row[value_col])
     
-    # If no valid prior creatinine data, return NaN
+    # ❌ If no valid prior creatinine data, return NaN
     if not pd.notna(row.get('Date')) or not prior_dates or not prior_values:
         return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
 
-    # Compute the absolute difference from the ideal 90-day prior date
+    # 🔍 Compute the absolute difference from the ideal 90-day prior date
     target_date = row['Date'] - three_month_threshold
     differences = [abs(date - target_date) for date in prior_dates]
 
-    # Find the index of the prior date closest to 90 days before the current date
+    # ✅ Find the closest prior measurement to 90 days ago
     min_diff_index = differences.index(min(differences)) if differences else None
 
-    # Ensure we do not try to access an index if there are no valid entries
+    # ❌ Ensure we do not try to access an index if there are no valid entries
     if min_diff_index is None or min_diff_index >= len(prior_values):
         return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
 
     return pd.Series([prior_values[min_diff_index], prior_dates[min_diff_index]], 
                      index=['Creatinine_3m_prior', 'Date_3m_prior'])
-
-
-def old_select_closest_3m_prior_creatinine(row):
-    three_month_threshold = timedelta(days=90)
-    
-    prior_dates = [row.get('Date.2')]
-    prior_values = [row.get('Value.2')]
-    
-    valid_prior_dates = [date for date in prior_dates if pd.notna(date)]
-    valid_prior_values = [prior_values[i] for i, date in enumerate(prior_dates) if pd.notna(date)]
-    
-    if not pd.notna(row.get('Date')) or not valid_prior_dates:
-        return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
-
-    differences = [abs((row['Date'] - date) - three_month_threshold) for date in valid_prior_dates]
-    min_diff_index = differences.index(min(differences))
-    
-    return pd.Series([valid_prior_values[min_diff_index], valid_prior_dates[min_diff_index]], index=['Creatinine_3m_prior', 'Date_3m_prior'])
 def summarize_medications(df):
     return (
         df.groupby('HC Number')['Name, Dosage and Quantity']
@@ -380,6 +396,12 @@ if not creatinine.empty:
     creatinine = preprocess_data(creatinine)
 if not CKD_check.empty:
     CKD_check = preprocess_data(CKD_check)
+
+# Apply the function to both datasets if needed
+if not creatinine.empty:
+    creatinine = creatinine.apply(overwrite_missing_with_recent_value2, axis=1)
+if not CKD_check.empty:
+    CKD_check = CKD_check.apply(overwrite_missing_with_recent_value2, axis=1)
 
 # Apply the function to both datasets if needed
 if not creatinine.empty:
