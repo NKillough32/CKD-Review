@@ -50,105 +50,94 @@ def preprocess_data(df):
         df['HC Number'] = df['HC Number'].replace("", np.nan).ffill()
     
     return df
-def is_missing(val):
-
-    if pd.isna(val):
-        return True
-
-    if isinstance(val, str):
-        stripped_val = val.strip()
-        if not stripped_val:
-            return True
-        if stripped_val.lower() in {"na", "n/a", "null", "none"}:
-            return True
-
-    if isinstance(val, (list, tuple, set, dict)) and len(val) == 0:
-        return True
-
-    return False
-def update_df_with_newest_value2(df, group_col="HC Number", days_threshold=90):
-    # Ensure that Date.2 is parsed as datetime (any errors become NaT)
+def update_df_with_newest_value2(df, group_col="HC Number"):
+    # Convert date columns to datetime
+    df['Date']   = pd.to_datetime(df['Date'],   errors='coerce')
     df['Date.2'] = pd.to_datetime(df['Date.2'], errors='coerce')
 
-    # For each group, select the row with the maximum (i.e. most recent) Date.2.
-    # We create a mapping from group to the row (as a Series) that has the newest Date.2.
+    # Treat empty or non-numeric 'Value' as missing
+    df['Value'] = df['Value'].replace("", np.nan)
+    df['Value'] = pd.to_numeric(df['Value'], errors='coerce')
+    
+    # Group by the specified column and identify the row with the newest Date.2 for each group
     newest_rows = {}
     for group, grp in df.groupby(group_col):
-        # Filter out rows with missing Date.2
+        # Filter to rows that have a valid Date.2
         grp_valid = grp[~grp['Date.2'].isna()]
         if grp_valid.empty:
             continue
-        # Get the row with the maximum Date.2
-        newest_rows[group] = grp_valid.loc[grp_valid['Date.2'].idxmax()]
+        # Identify the row whose Date.2 is the most recent
+        idx_newest = grp_valid['Date.2'].idxmax()
+        newest_rows[group] = grp_valid.loc[idx_newest]
 
-    # Today's date for the recency check.
-    today = datetime.today().date()
+    # Helper to check "missing" in multiple senses
+    def is_missing(val):
+        if pd.isna(val):
+            return True
+        if isinstance(val, str):
+            val = val.strip().lower()
+            if not val or val in {'na', 'n/a', 'null', 'none'}:
+                return True
+        return False
 
+    # Function to update a row if the original Date/Value is missing
     def update_row(row):
         group = row.get(group_col)
-        # If we don't have a newest row for this group, skip updating.
         if group not in newest_rows:
-            return row
-
-        # Get the alternate (newest) row for this group.
+            return row  # No newest Date.2/Value.2 to pull from
+        
+        # The row we identified as having the most recent Date.2
         nr = newest_rows[group]
-
-        # Check recency of the alternate date.
-        date2 = nr['Date.2']
-        if pd.isna(date2):
-            return row
-        # Use date() to compare only the date component.
-        if (today - date2.date()).days > days_threshold:
-            # Alternate date is not recent enough; do not update.
-            return row
-
-        # If the primary fields are missing, update them with alternate values.
-        if is_missing(row.get('Value')):
+        
+        # Only update if the original row's Value is missing
+        if is_missing(row['Value']):
             row['Value'] = nr['Value.2']
-        if is_missing(row.get('Date')):
-            # Optionally, format the date as needed (here as a string in dd/mm/YYYY)
-            row['Date'] = nr['Date.2'].strftime('%d/%m/%Y') if not pd.isna(nr['Date.2']) else row.get('Date')
+        
+        # Only update if the original row's Date is missing
+        if is_missing(row['Date']):
+            # Convert to a desired string format (dd/mm/YYYY) or leave it as datetime
+            if pd.notna(nr['Date.2']):
+                row['Date'] = nr['Date.2'].strftime('%d/%m/%Y')
+
         return row
 
-    # Apply the update_row function to each row.
+    # Apply the row-level update
     df = df.apply(update_row, axis=1)
     return df
 def select_closest_3m_prior_creatinine(row):
-    three_month_threshold = timedelta(days=90)
-    
-    # ✅ Explicitly prioritize 'Value.2' and 'Date.2' if they exist
-    if 'Date.2' in row and 'Value.2' in row and pd.notna(row['Date.2']) and pd.notna(row['Value.2']):
-        return pd.Series([row['Value.2'], row['Date.2']], index=['Creatinine_3m_prior', 'Date_3m_prior'])
-    
-    # 🔽 If 'Value.2' is missing, find the closest prior measurement 🔽 #
-    
-    prior_dates = []
-    prior_values = []
-    
+    # Must have a valid 'Date' in the row to compare
+    if 'Date' not in row or pd.isna(row['Date']):
+        return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
+
+    # The ideal "target date" is exactly 90 days before row['Date']
+    target_date = row['Date'] - timedelta(days=90)
+
+    # Collect all possible date/value pairs from columns that start with 'Date.'
+    # e.g., "Date.2", "Date.5", "Date.10", etc.
+    valid_pairs = []
     for col in row.index:
-        if col.startswith("Date.") and pd.notna(row[col]):  # Collect all valid dates
-            value_col = col.replace("Date", "Value")  # Match 'Value.X' to 'Date.X'
-            if value_col in row and pd.notna(row[value_col]):  # Ensure matching value exists
-                prior_dates.append(row[col])
-                prior_values.append(row[value_col])
-    
-    # ❌ If no valid prior creatinine data, return NaN
-    if not pd.notna(row.get('Date')) or not prior_dates or not prior_values:
+        if col.startswith("Date.") and pd.notna(row[col]):
+            value_col = col.replace("Date", "Value")
+            if value_col in row and pd.notna(row[value_col]):
+                date_val = row[col]
+                # Optional: If you only want truly "prior" data, skip if date_val >= row['Date']:
+                # if date_val >= row['Date']:
+                #     continue
+                valid_pairs.append((date_val, row[value_col]))
+
+    # If no date/value pairs exist, return NaN
+    if not valid_pairs:
         return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
 
-    # 🔍 Compute the absolute difference from the ideal 90-day prior date
-    target_date = row['Date'] - three_month_threshold
-    differences = [abs(date - target_date) for date in prior_dates]
+    # Among valid pairs, choose whichever has the minimum absolute difference from target_date
+    def day_diff(pair):
+        return abs(pair[0] - target_date)
 
-    # ✅ Find the closest prior measurement to 90 days ago
-    min_diff_index = differences.index(min(differences)) if differences else None
+    closest_date_value = min(valid_pairs, key=day_diff)
+    best_value = closest_date_value[1]
+    best_date = closest_date_value[0]
 
-    # ❌ Ensure we do not try to access an index if there are no valid entries
-    if min_diff_index is None or min_diff_index >= len(prior_values):
-        return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
-
-    return pd.Series([prior_values[min_diff_index], prior_dates[min_diff_index]], 
-                     index=['Creatinine_3m_prior', 'Date_3m_prior'])
+    return pd.Series([best_value, best_date], index=['Creatinine_3m_prior', 'Date_3m_prior'])
 def summarize_medications(df):
     return (
         df.groupby('HC Number')['Name, Dosage and Quantity']
