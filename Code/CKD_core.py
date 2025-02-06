@@ -130,7 +130,6 @@ def select_closest_3m_prior_creatinine(row):
     # Among valid pairs, choose the closest date to 90 days prior
     closest_date_value = min(valid_pairs, key=lambda x: abs(x[0] - target_date))
     return pd.Series([closest_date_value[1], closest_date_value[0]], index=['Creatinine_3m_prior', 'Date_3m_prior'])
-
 def summarize_medications(df):
     return (
         df.groupby('HC Number')['Name, Dosage and Quantity']
@@ -451,11 +450,6 @@ if not creatinine.empty:
     creatinine = preprocess_data(creatinine)
 if not CKD_check.empty:
     CKD_check = preprocess_data(CKD_check)
-
-print(creatinine[['Date']].head())  # Check first few rows
-print(creatinine.dtypes)  # Confirm data types of all columns
-
-
 
 # Apply the function to both datasets if needed
 if not creatinine.empty:
