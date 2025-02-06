@@ -423,10 +423,10 @@ creatinine['HC Number'] = creatinine['HC Number'].replace("", np.nan).ffill()
 CKD_check['HC Number'] = CKD_check['HC Number'].replace("", np.nan).ffill()
 
 # Replace empty strings with NaN
-creatinine['Date'] = creatinine['Date'].replace('', np.nan)
+#creatinine['Date'] = creatinine['Date'].replace('', np.nan)
 # Convert 'Date' column to datetime
-creatinine['Date'] = pd.to_datetime(creatinine['Date'], format='%d-%b-%y', errors='coerce')
-creatinine['Date'] = creatinine['Date'].apply(parse_any_date)
+#creatinine['Date'] = pd.to_datetime(creatinine['Date'], format='%d-%b-%y', errors='coerce')
+#creatinine['Date'] = creatinine['Date'].apply(parse_any_date)
 
 # Convert all Date columns to datetime
 date_columns = [col for col in creatinine.columns if 'Date' in col]
@@ -439,17 +439,17 @@ for col in date_columns:
     CKD_check[col] = pd.to_datetime(CKD_check[col], format='%d-%b-%y', errors='coerce')
 
 # Convert all date columns in each DataFrame
-if not creatinine.empty:
-    creatinine = convert_all_date_columns(creatinine)
+#if not creatinine.empty:
+#    creatinine = convert_all_date_columns(creatinine)
 
-if not CKD_check.empty:
-    CKD_check = convert_all_date_columns(CKD_check)
+#if not CKD_check.empty:
+#    CKD_check = convert_all_date_columns(CKD_check)
 
 # Apply preprocessing to both datasets
-if not creatinine.empty:
-    creatinine = preprocess_data(creatinine)
-if not CKD_check.empty:
-    CKD_check = preprocess_data(CKD_check)
+#if not creatinine.empty:
+#    creatinine = preprocess_data(creatinine)
+#if not CKD_check.empty:
+#    CKD_check = preprocess_data(CKD_check)
 
 # Apply the function to both datasets if needed
 if not creatinine.empty:
