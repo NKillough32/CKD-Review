@@ -50,28 +50,54 @@ def preprocess_data(df):
         df['HC Number'] = df['HC Number'].replace("", np.nan).ffill()
     
     return df
-def overwrite_missing_with_recent_value2(row, days_threshold=90):
+def is_missing(val):
     """
-    If 'Value' is missing, overwrite it with 'Value.2' only if 'Date.2' is recent (within 'days_threshold' days from today).
-    Ensures 'Value.2' is paired with its corresponding 'Date.2'.
+    Check if a value is considered missing.
+    Covers np.nan, pd.NA, None, and the empty string "".
+    """
+    if pd.isna(val):
+        return True
+    if val == "":
+        return True
+    return False
+def overwrite_empty_with_recent_value2(row, days_threshold=90):
+    """
+    If 'Value' or 'Date' is empty (i.e. equals "", None, pd.NA, or np.nan),
+    then replace it with the corresponding 'Value.2' or 'Date.2', provided that
+    'Date.2' is recent (within 'days_threshold' days from today).
+
+    Parameters:
+      row: A Pandas Series (or dictionary-like object) representing a data row.
+      days_threshold: Maximum age in days for 'Date.2' to be considered recent.
+      
+    Returns:
+      The updated row with 'Value' and/or 'Date' overwritten if they were empty.
     """
     today = datetime.today().date()
 
-    # If 'Value.2' or 'Date.2' is missing, return row unchanged
-    if 'Value.2' not in row or 'Date.2' not in row or pd.isna(row['Value.2']) or pd.isna(row['Date.2']):
+    # Verify that both 'Value.2' and 'Date.2' exist and are not empty.
+    if ('Value.2' not in row or 'Date.2' not in row or 
+        is_missing(row['Value.2']) or is_missing(row['Date.2'])):
         return row
 
-    # Convert Date.2 to date format if it's not already
-    date_2 = pd.to_datetime(row['Date.2']).date()
+    # Convert 'Date.2' to a date object.
+    try:
+        date_2 = pd.to_datetime(row['Date.2']).date()
+    except Exception:
+        # If conversion fails, return the row unchanged.
+        return row
 
-    # Check if Date.2 is within the last 'days_threshold' days
-    if (today - date_2).days <= days_threshold:
-        # Overwrite Value if it's missing
-        if pd.isna(row.get('Value')):
-            row['Value'] = row['Value.2']
-        # Overwrite Date if it's missing or older than Date.2
-        if pd.isna(row.get('Date')) or row['Date'] < row['Date.2']:
-            row['Date'] = row['Date.2']
+    # Check if 'Date.2' is recent.
+    if (today - date_2).days > days_threshold:
+        return row
+
+    # Replace 'Value' with 'Value.2' if 'Value' is empty.
+    if is_missing(row.get('Value')):
+        row['Value'] = row['Value.2']
+
+    # Replace 'Date' with 'Date.2' if 'Date' is empty.
+    if is_missing(row.get('Date')):
+        row['Date'] = row['Date.2']
 
     return row
 def select_closest_3m_prior_creatinine(row):
@@ -400,9 +426,9 @@ if not CKD_check.empty:
 
 # Apply the function to both datasets if needed
 if not creatinine.empty:
-    creatinine = creatinine.apply(overwrite_missing_with_recent_value2, axis=1)
+    creatinine = creatinine.apply(overwrite_empty_with_recent_value2, axis=1)
 if not CKD_check.empty:
-    CKD_check = CKD_check.apply(overwrite_missing_with_recent_value2, axis=1)
+    CKD_check = CKD_check.apply(overwrite_empty_with_recent_value2, axis=1)
 
 # Apply the function to both datasets if needed
 if not creatinine.empty:
