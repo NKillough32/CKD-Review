@@ -625,9 +625,16 @@ CKD_review_complete['risk_2yr'] = (CKD_review_complete['risk_2yr'] * 100).round(
 CKD_review_complete['risk_5yr'] = (CKD_review_complete['risk_5yr'] * 100).round(2)
 
 # Step 4: Add Error Messages for Missing KFRE Calculations in missing_data_df
-missing_data_df.loc[:, 'risk_5yr'] = "Error: Missing required values"
-missing_data_df.loc[:, 'risk_2yr'] = "Error: Missing required values"
-missing_data_df.loc[:, 'CKD_Stage'] = "Error: Insufficient data"
+if not missing_data_df.empty:
+    missing_data_df.loc[:, 'risk_5yr'] = "Error: Missing required values"
+    missing_data_df.loc[:, 'risk_2yr'] = "Error: Missing required values"
+    missing_data_df.loc[:, 'CKD_Stage'] = "Error: Insufficient data"
+else:
+    print("Warning: missing_data_df is empty, skipping error message assignments.")
+
+# Ensure missing_data_df exists and is a valid DataFrame
+if 'missing_data_df' not in locals() or 'missing_data_df' not in globals():
+    missing_data_df = pd.DataFrame()  # Create an empty DataFrame if not defined
 
 # Step 5: Combine Complete and Missing DataFrames
 final_CKD_review = pd.concat([CKD_review_complete, missing_data_df], ignore_index=True)
