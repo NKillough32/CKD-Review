@@ -106,28 +106,29 @@ def update_df_with_newest_value2(df, group_col="HC Number"):
     return df
 def select_closest_3m_prior_creatinine(row):
     # Ensure 'Date' is valid
-    if pd.isna(row['Date']):
-        return pd.Series([row.get('Value.2', np.nan), row.get('Date.2', np.nan)], 
-                         index=['Creatinine_3m_prior', 'Date_3m_prior'])
+    if pd.isna(row['Date']) or not isinstance(row['Date'], pd.Timestamp):
+        return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
 
-    # Ensure 'Date' is a valid datetime before subtracting timedelta
-    if not isinstance(row['Date'], pd.Timestamp):
-        return pd.Series([row.get('Value.2', np.nan), row.get('Date.2', np.nan)], 
-                         index=['Creatinine_3m_prior', 'Date_3m_prior'])
+    target_date = row['Date'] - timedelta(days=90)  # Ideal prior date
 
-    target_date = row['Date'] - timedelta(days=90)
-
-    # If Date.2 and Value.2 exist, calculate the time difference
-    if pd.notna(row['Date.2']) and pd.notna(row['Value.2']):
-        date_diff = abs(row['Date.2'] - target_date)
+    # Extract all Date.2 and Value.2 pairs
+    valid_pairs = []
+    for i in range(2, 10):  # Adjust the range if necessary to match the max number of Value/Date pairs
+        date_col = f'Date.{i}'
+        value_col = f'Value.{i}'
         
-        # If Date.2 is within ±30 days of the target, it's the best match
-        if date_diff <= timedelta(days=30):
-            return pd.Series([row['Value.2'], row['Date.2']], 
-                             index=['Creatinine_3m_prior', 'Date_3m_prior'])
+        if date_col in row and value_col in row:
+            if pd.notna(row[date_col]) and pd.notna(row[value_col]):
+                valid_pairs.append((row[date_col], row[value_col]))
 
-    # If no good match is found, return whatever is available in Date.2 and Value.2
-    return pd.Series([row.get('Value.2', np.nan), row.get('Date.2', np.nan)], 
+    # If no valid dates/values, return NaN
+    if not valid_pairs:
+        return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
+
+    # Find the closest date to 90 days before current Date
+    closest_date_value = min(valid_pairs, key=lambda x: abs(x[0] - target_date))
+
+    return pd.Series([closest_date_value[1], closest_date_value[0]], 
                      index=['Creatinine_3m_prior', 'Date_3m_prior'])
 def summarize_medications(df):
     return (
