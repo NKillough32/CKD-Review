@@ -109,8 +109,11 @@ def select_closest_3m_prior_creatinine(row):
     if pd.isna(row['Date']):
         return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
 
-    # The ideal "target date" is exactly 90 days before row['Date']
-    target_date = row['Date'] - timedelta(days=90)
+    # Ensure 'Date' is a valid datetime before subtracting timedelta
+    if isinstance(row['Date'], pd.Timestamp):
+        target_date = row['Date'] - timedelta(days=90)
+    else:
+        return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
 
     # Collect all possible date/value pairs from columns that start with 'Date.'
     valid_pairs = []
@@ -118,22 +121,16 @@ def select_closest_3m_prior_creatinine(row):
         if col.startswith("Date.") and pd.notna(row[col]):
             value_col = col.replace("Date", "Value")
             if value_col in row and pd.notna(row[value_col]):
-                date_val = row[col]
-                valid_pairs.append((date_val, row[value_col]))
+                valid_pairs.append((row[col], row[value_col]))
 
     # If no date/value pairs exist, return NaN
     if not valid_pairs:
         return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
 
-    # Among valid pairs, choose whichever has the minimum absolute difference from target_date
-    def day_diff(pair):
-        return abs(pair[0] - target_date)
+    # Among valid pairs, choose the closest date to 90 days prior
+    closest_date_value = min(valid_pairs, key=lambda x: abs(x[0] - target_date))
+    return pd.Series([closest_date_value[1], closest_date_value[0]], index=['Creatinine_3m_prior', 'Date_3m_prior'])
 
-    closest_date_value = min(valid_pairs, key=day_diff)
-    best_value = closest_date_value[1]
-    best_date = closest_date_value[0]
-
-    return pd.Series([best_value, best_date], index=['Creatinine_3m_prior', 'Date_3m_prior'])
 def summarize_medications(df):
     return (
         df.groupby('HC Number')['Name, Dosage and Quantity']
@@ -454,6 +451,11 @@ if not creatinine.empty:
     creatinine = preprocess_data(creatinine)
 if not CKD_check.empty:
     CKD_check = preprocess_data(CKD_check)
+
+print(creatinine[['Date']].head())  # Check first few rows
+print(creatinine.dtypes)  # Confirm data types of all columns
+
+
 
 # Apply the function to both datasets if needed
 if not creatinine.empty:
