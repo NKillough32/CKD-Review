@@ -52,6 +52,39 @@ def preprocess_data(df):
 def select_closest_3m_prior_creatinine(row):
     three_month_threshold = timedelta(days=90)
     
+    # Dynamically identify all available 'Date.X' and 'Value.X' columns
+    prior_dates = []
+    prior_values = []
+    
+    for col in row.index:
+        if col.startswith("Date.") and pd.notna(row[col]):  # Collect all valid dates
+            value_col = col.replace("Date", "Value")  # Match 'Value.X' to 'Date.X'
+            if value_col in row and pd.notna(row[value_col]):  # Ensure matching value exists
+                prior_dates.append(row[col])
+                prior_values.append(row[value_col])
+    
+    # If no valid prior creatinine data, return NaN
+    if not pd.notna(row.get('Date')) or not prior_dates or not prior_values:
+        return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
+
+    # Compute the absolute difference from the ideal 90-day prior date
+    target_date = row['Date'] - three_month_threshold
+    differences = [abs(date - target_date) for date in prior_dates]
+
+    # Find the index of the prior date closest to 90 days before the current date
+    min_diff_index = differences.index(min(differences)) if differences else None
+
+    # Ensure we do not try to access an index if there are no valid entries
+    if min_diff_index is None or min_diff_index >= len(prior_values):
+        return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
+
+    return pd.Series([prior_values[min_diff_index], prior_dates[min_diff_index]], 
+                     index=['Creatinine_3m_prior', 'Date_3m_prior'])
+
+
+def old_select_closest_3m_prior_creatinine(row):
+    three_month_threshold = timedelta(days=90)
+    
     prior_dates = [row.get('Date.2')]
     prior_values = [row.get('Value.2')]
     
