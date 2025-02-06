@@ -109,6 +109,33 @@ def select_closest_3m_prior_creatinine(row, df):
     if pd.isna(row['Date']) or not isinstance(row['Date'], pd.Timestamp):
         return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
 
+    target_date = row['Date'] - timedelta(days=90)
+
+    hc_data = df[df['HC Number'] == row['HC Number']].copy()
+
+    # Extract valid (Date.2, Value.2) pairs
+    valid_pairs = hc_data[['Date.2', 'Value.2']].dropna().values.tolist()
+
+    if not valid_pairs:
+        return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
+
+    closest_date = None
+    closest_value = None
+    min_diff = timedelta.max  # Initialize with the largest possible Timedelta
+
+    for date, value in valid_pairs:
+        diff = abs(date - target_date)
+        if diff < min_diff:  # Now comparing Timedelta with Timedelta
+            min_diff = diff
+            closest_date = date
+            closest_value = value
+
+    return pd.Series([closest_value, closest_date], index=['Creatinine_3m_prior', 'Date_3m_prior'])
+def oldselect_closest_3m_prior_creatinine(row, df):
+    # Ensure 'Date' is valid
+    if pd.isna(row['Date']) or not isinstance(row['Date'], pd.Timestamp):
+        return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
+
     target_date = row['Date'] - timedelta(days=90)  # Target date is 90 days before
 
     # Get all previous creatinine values for the same HC Number
@@ -423,10 +450,8 @@ creatinine['HC Number'] = creatinine['HC Number'].replace("", np.nan).ffill()
 CKD_check['HC Number'] = CKD_check['HC Number'].replace("", np.nan).ffill()
 
 # Replace empty strings with NaN
-#creatinine['Date'] = creatinine['Date'].replace('', np.nan)
-# Convert 'Date' column to datetime
-#creatinine['Date'] = pd.to_datetime(creatinine['Date'], format='%d-%b-%y', errors='coerce')
-#creatinine['Date'] = creatinine['Date'].apply(parse_any_date)
+creatinine['Date'] = creatinine['Date'].replace('', np.nan)
+CKD_check['Date'] = CKD_check['Date'].replace('', np.nan)
 
 # Convert all Date columns to datetime
 date_columns = [col for col in creatinine.columns if 'Date' in col]
