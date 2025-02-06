@@ -104,28 +104,24 @@ def update_df_with_newest_value2(df, group_col="HC Number"):
     # Apply the row-level update
     df = df.apply(update_row, axis=1)
     return df
-def select_closest_3m_prior_creatinine(row):
+def select_closest_3m_prior_creatinine(row, df):
     # Ensure 'Date' is valid
     if pd.isna(row['Date']) or not isinstance(row['Date'], pd.Timestamp):
         return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
 
-    target_date = row['Date'] - timedelta(days=90)  # Ideal prior date
+    target_date = row['Date'] - timedelta(days=90)  # Target date is 90 days before
 
-    # Extract all Date.2 and Value.2 pairs
-    valid_pairs = []
-    for i in range(2, 10):  # Adjust the range if necessary to match the max number of Value/Date pairs
-        date_col = f'Date.{i}'
-        value_col = f'Value.{i}'
-        
-        if date_col in row and value_col in row:
-            if pd.notna(row[date_col]) and pd.notna(row[value_col]):
-                valid_pairs.append((row[date_col], row[value_col]))
+    # Get all previous creatinine values for the same HC Number
+    hc_data = df[df['HC Number'] == row['HC Number']].copy()
 
-    # If no valid dates/values, return NaN
+    # Extract valid (Date.2, Value.2) pairs
+    valid_pairs = hc_data[['Date.2', 'Value.2']].dropna().values.tolist()
+
+    # If no valid prior creatinine measurements exist, return NaN
     if not valid_pairs:
         return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
 
-    # Find the closest date to 90 days before current Date
+    # Find the closest date to the 90-day prior date
     closest_date_value = min(valid_pairs, key=lambda x: abs(x[0] - target_date))
 
     return pd.Series([closest_date_value[1], closest_date_value[0]], 
@@ -422,6 +418,10 @@ print("Starting CKD Data Analysis Pipeline....")
 creatinine = pd.read_csv(creatinine_file) if os.path.exists(creatinine_file) else pd.DataFrame()
 CKD_check = pd.read_csv(CKD_check_file) if os.path.exists(CKD_check_file) else pd.DataFrame()
 
+# Ensure 'HC Number' is properly forward-filled BEFORE applying the function
+creatinine['HC Number'] = creatinine['HC Number'].replace("", np.nan).ffill()
+CKD_check['HC Number'] = CKD_check['HC Number'].replace("", np.nan).ffill()
+
 # Replace empty strings with NaN
 creatinine['Date'] = creatinine['Date'].replace('', np.nan)
 # Convert 'Date' column to datetime
@@ -457,11 +457,15 @@ if not creatinine.empty:
 if not CKD_check.empty:
     CKD_check = update_df_with_newest_value2(CKD_check)
 
-# Apply the function to both datasets if needed
+# Apply function correctly by using a lambda function to pass 'df' explicitly
 if not creatinine.empty:
-    creatinine[['Creatinine_3m_prior', 'Date_3m_prior']] = creatinine.apply(select_closest_3m_prior_creatinine, axis=1)
+    creatinine[['Creatinine_3m_prior', 'Date_3m_prior']] = creatinine.apply(
+    lambda row: select_closest_3m_prior_creatinine(row, creatinine), axis=1
+)
 if not CKD_check.empty:
-    CKD_check[['Creatinine_3m_prior', 'Date_3m_prior']] = CKD_check.apply(select_closest_3m_prior_creatinine, axis=1)
+    CKD_check[['Creatinine_3m_prior', 'Date_3m_prior']] = CKD_check.apply(
+    lambda row: select_closest_3m_prior_creatinine(row, CKD_check), axis=1
+)
 
 # Merge the aggregated lists back into the main datasets
 if not creatinine.empty:
