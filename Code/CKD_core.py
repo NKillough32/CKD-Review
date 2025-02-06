@@ -106,23 +106,19 @@ def update_df_with_newest_value2(df, group_col="HC Number"):
     return df
 def select_closest_3m_prior_creatinine(row):
     # Must have a valid 'Date' in the row to compare
-    if 'Date' not in row or pd.isna(row['Date']):
+    if pd.isna(row['Date']):
         return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
 
     # The ideal "target date" is exactly 90 days before row['Date']
     target_date = row['Date'] - timedelta(days=90)
 
     # Collect all possible date/value pairs from columns that start with 'Date.'
-    # e.g., "Date.2", "Date.5", "Date.10", etc.
     valid_pairs = []
     for col in row.index:
         if col.startswith("Date.") and pd.notna(row[col]):
             value_col = col.replace("Date", "Value")
             if value_col in row and pd.notna(row[value_col]):
                 date_val = row[col]
-                # Optional: If you only want truly "prior" data, skip if date_val >= row['Date']:
-                # if date_val >= row['Date']:
-                #     continue
                 valid_pairs.append((date_val, row[value_col]))
 
     # If no date/value pairs exist, return NaN
@@ -393,6 +389,21 @@ def check_all_contraindications(medications, eGFR):
     contraindicated = get_contraindicated_drugs(eGFR)
     contraindicated_in_meds = [drug for drug in contraindicated if drug in medications]
     return ", ".join(contraindicated_in_meds) if contraindicated_in_meds else "No contraindications"
+def parse_any_date(date_str):
+    if pd.isna(date_str):
+        return pd.NaT
+    for fmt in ("%d-%b-%y", "%Y-%m-%d", "%d/%m/%Y", "%d-%b-%Y"):
+        try:
+            return pd.to_datetime(date_str, format=fmt)
+        except ValueError:
+            continue
+    return pd.NaT  # Return NaT if all formats fail
+def convert_all_date_columns(df):
+    """Convert any column with 'Date' in its name to a Pandas datetime."""
+    for col in df.columns:
+        if 'Date' in col:
+            df[col] = df[col].apply(parse_any_date)
+    return df
 
 # Get the current working directory
 current_dir = os.getcwd()
@@ -414,6 +425,29 @@ print("Starting CKD Data Analysis Pipeline....")
 # Load the data
 creatinine = pd.read_csv(creatinine_file) if os.path.exists(creatinine_file) else pd.DataFrame()
 CKD_check = pd.read_csv(CKD_check_file) if os.path.exists(CKD_check_file) else pd.DataFrame()
+
+# Replace empty strings with NaN
+creatinine['Date'] = creatinine['Date'].replace('', np.nan)
+# Convert 'Date' column to datetime
+creatinine['Date'] = pd.to_datetime(creatinine['Date'], format='%d-%b-%y', errors='coerce')
+creatinine['Date'] = creatinine['Date'].apply(parse_any_date)
+
+# Convert all Date columns to datetime
+date_columns = [col for col in creatinine.columns if 'Date' in col]
+for col in date_columns:
+    creatinine[col] = pd.to_datetime(creatinine[col], format='%d-%b-%y', errors='coerce')
+
+# Convert all Date columns to datetime
+date_columns = [col for col in CKD_check.columns if 'Date' in col]
+for col in date_columns:
+    CKD_check[col] = pd.to_datetime(CKD_check[col], format='%d-%b-%y', errors='coerce')
+
+# Convert all date columns in each DataFrame
+if not creatinine.empty:
+    creatinine = convert_all_date_columns(creatinine)
+
+if not CKD_check.empty:
+    CKD_check = convert_all_date_columns(CKD_check)
 
 # Apply preprocessing to both datasets
 if not creatinine.empty:
