@@ -381,7 +381,7 @@
   patient.Nephrology_Referral not in ["Not Indicated", "N/A", "Missing", None] or
   patient.dose_adjustment_prescribed not in ["No adjustments needed", "N/A", "Missing", None] or
   patient.Statin_Recommendation not in ["On Statin", "Not Indicated", "N/A", "Missing", None] or
-  patient.Proteinuria_Flag no in ["No Referral Needed", "N/A", "Missing", None] or
+  patient.Proteinuria_Flag not in ["No Referral Needed", "N/A", "Missing", None] or
   patient.BP_Flag not in ["On Target", "N/A", "Missing", None]
 ) %}
 
