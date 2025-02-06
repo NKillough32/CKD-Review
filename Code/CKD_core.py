@@ -6,6 +6,7 @@ import csv
 import warnings
 from datetime import datetime, timedelta
 warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # Defined functions
 def check_files_exist(*file_paths):
