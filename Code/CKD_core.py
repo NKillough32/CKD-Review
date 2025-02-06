@@ -51,61 +51,69 @@ def preprocess_data(df):
     
     return df
 def is_missing(val):
-    """
-    Check if a value is considered missing.
-    Covers np.nan, pd.NA, None, and the empty string "".
-    """
+
     if pd.isna(val):
         return True
-    if val == "":
-        return True
-    return False
-def overwrite_empty_with_recent_value2(row, days_threshold=90):
-    """
-    If 'Value' or 'Date' is empty (i.e. equals "", None, pd.NA, or np.nan),
-    then replace it with the corresponding 'Value.2' or 'Date.2', provided that
-    'Date.2' is recent (within 'days_threshold' days from today).
 
-    Parameters:
-      row: A Pandas Series (or dictionary-like object) representing a data row.
-      days_threshold: Maximum age in days for 'Date.2' to be considered recent.
-      
-    Returns:
-      The updated row with 'Value' and/or 'Date' overwritten if they were empty.
-    """
+    if isinstance(val, str):
+        stripped_val = val.strip()
+        if not stripped_val:
+            return True
+        if stripped_val.lower() in {"na", "n/a", "null", "none"}:
+            return True
+
+    if isinstance(val, (list, tuple, set, dict)) and len(val) == 0:
+        return True
+
+    return False
+def update_df_with_newest_value2(df, group_col="HC Number", days_threshold=90):
+    # Ensure that Date.2 is parsed as datetime (any errors become NaT)
+    df['Date.2'] = pd.to_datetime(df['Date.2'], errors='coerce')
+
+    # For each group, select the row with the maximum (i.e. most recent) Date.2.
+    # We create a mapping from group to the row (as a Series) that has the newest Date.2.
+    newest_rows = {}
+    for group, grp in df.groupby(group_col):
+        # Filter out rows with missing Date.2
+        grp_valid = grp[~grp['Date.2'].isna()]
+        if grp_valid.empty:
+            continue
+        # Get the row with the maximum Date.2
+        newest_rows[group] = grp_valid.loc[grp_valid['Date.2'].idxmax()]
+
+    # Today's date for the recency check.
     today = datetime.today().date()
 
-    # Verify that both 'Value.2' and 'Date.2' exist and are not empty.
-    if ('Value.2' not in row or 'Date.2' not in row or 
-        is_missing(row['Value.2']) or is_missing(row['Date.2'])):
+    def update_row(row):
+        group = row.get(group_col)
+        # If we don't have a newest row for this group, skip updating.
+        if group not in newest_rows:
+            return row
+
+        # Get the alternate (newest) row for this group.
+        nr = newest_rows[group]
+
+        # Check recency of the alternate date.
+        date2 = nr['Date.2']
+        if pd.isna(date2):
+            return row
+        # Use date() to compare only the date component.
+        if (today - date2.date()).days > days_threshold:
+            # Alternate date is not recent enough; do not update.
+            return row
+
+        # If the primary fields are missing, update them with alternate values.
+        if is_missing(row.get('Value')):
+            row['Value'] = nr['Value.2']
+        if is_missing(row.get('Date')):
+            # Optionally, format the date as needed (here as a string in dd/mm/YYYY)
+            row['Date'] = nr['Date.2'].strftime('%d/%m/%Y') if not pd.isna(nr['Date.2']) else row.get('Date')
         return row
 
-    # Convert 'Date.2' to a date object.
-    try:
-        date_2 = pd.to_datetime(row['Date.2']).date()
-    except Exception:
-        # If conversion fails, return the row unchanged.
-        return row
-
-    # Check if 'Date.2' is recent.
-    if (today - date_2).days > days_threshold:
-        return row
-
-    # Replace 'Value' with 'Value.2' if 'Value' is empty.
-    if is_missing(row.get('Value')):
-        row['Value'] = row['Value.2']
-
-    # Replace 'Date' with 'Date.2' if 'Date' is empty.
-    if is_missing(row.get('Date')):
-        row['Date'] = row['Date.2']
-
-    return row
+    # Apply the update_row function to each row.
+    df = df.apply(update_row, axis=1)
+    return df
 def select_closest_3m_prior_creatinine(row):
-    """
-    Selects 'Value.2' and 'Date.2' as the preferred 3-month prior creatinine measurement.
-    If 'Value.2' is missing, it finds the closest prior measurement to 90 days before the current date.
-    If no prior measurements exist, it returns NaN.
-    """
     three_month_threshold = timedelta(days=90)
     
     # ✅ Explicitly prioritize 'Value.2' and 'Date.2' if they exist
@@ -426,9 +434,9 @@ if not CKD_check.empty:
 
 # Apply the function to both datasets if needed
 if not creatinine.empty:
-    creatinine = creatinine.apply(overwrite_empty_with_recent_value2, axis=1)
+    creatinine = update_df_with_newest_value2(creatinine)
 if not CKD_check.empty:
-    CKD_check = CKD_check.apply(overwrite_empty_with_recent_value2, axis=1)
+    CKD_check = update_df_with_newest_value2(CKD_check)
 
 # Apply the function to both datasets if needed
 if not creatinine.empty:
