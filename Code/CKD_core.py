@@ -424,22 +424,28 @@ creatinine = pd.read_csv(creatinine_file) if os.path.exists(creatinine_file) els
 CKD_check = pd.read_csv(CKD_check_file) if os.path.exists(CKD_check_file) else pd.DataFrame()
 
 # Ensure 'HC Number' is properly forward-filled BEFORE applying the function
-creatinine['HC Number'] = creatinine['HC Number'].replace("", np.nan).ffill()
-CKD_check['HC Number'] = CKD_check['HC Number'].replace("", np.nan).ffill()
+if not creatinine.empty:
+    creatinine['HC Number'] = creatinine['HC Number'].replace("", np.nan).ffill()
+if not CKD_check.empty:
+    CKD_check['HC Number'] = CKD_check['HC Number'].replace("", np.nan).ffill()
 
 # Replace empty strings with NaN
-creatinine['Date'] = creatinine['Date'].replace('', np.nan)
-CKD_check['Date'] = CKD_check['Date'].replace('', np.nan)
+if not creatinine.empty:
+    creatinine['Date'] = creatinine['Date'].replace('', np.nan)
+if not CKD_check.empty:
+    CKD_check['Date'] = CKD_check['Date'].replace('', np.nan)
 
 # Convert all Date columns to datetime
-date_columns = [col for col in creatinine.columns if 'Date' in col]
-for col in date_columns:
-    creatinine[col] = pd.to_datetime(creatinine[col], format='%d-%b-%y', errors='coerce')
+if not creatinine.empty:
+    date_columns = [col for col in creatinine.columns if 'Date' in col]
+    for col in date_columns:
+        creatinine[col] = pd.to_datetime(creatinine[col], format='%d-%b-%y', errors='coerce')
 
 # Convert all Date columns to datetime
-date_columns = [col for col in CKD_check.columns if 'Date' in col]
-for col in date_columns:
-    CKD_check[col] = pd.to_datetime(CKD_check[col], format='%d-%b-%y', errors='coerce')
+if not CKD_check.empty:
+    date_columns = [col for col in CKD_check.columns if 'Date' in col]
+    for col in date_columns:
+        CKD_check[col] = pd.to_datetime(CKD_check[col], format='%d-%b-%y', errors='coerce')
 
 # Apply the function to both datasets if needed
 if not creatinine.empty:
