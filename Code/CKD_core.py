@@ -439,13 +439,13 @@ if not CKD_check.empty:
 if not creatinine.empty:
     date_columns = [col for col in creatinine.columns if 'Date' in col]
     for col in date_columns:
-        creatinine[col] = pd.to_datetime(creatinine[col], format='%d-%b-%y', errors='coerce')
+        creatinine[col] = pd.to_datetime(creatinine[col], format='%d-%b-%Y', errors='coerce')
 
 # Convert all Date columns to datetime
 if not CKD_check.empty:
     date_columns = [col for col in CKD_check.columns if 'Date' in col]
     for col in date_columns:
-        CKD_check[col] = pd.to_datetime(CKD_check[col], format='%d-%b-%y', errors='coerce')
+        CKD_check[col] = pd.to_datetime(CKD_check[col], format='%d-%b-%Y', errors='coerce')
 
 # Apply the function to both datasets if needed
 if not creatinine.empty:
