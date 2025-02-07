@@ -131,28 +131,6 @@ def select_closest_3m_prior_creatinine(row, df):
             closest_value = value
 
     return pd.Series([closest_value, closest_date], index=['Creatinine_3m_prior', 'Date_3m_prior'])
-def oldselect_closest_3m_prior_creatinine(row, df):
-    # Ensure 'Date' is valid
-    if pd.isna(row['Date']) or not isinstance(row['Date'], pd.Timestamp):
-        return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
-
-    target_date = row['Date'] - timedelta(days=90)  # Target date is 90 days before
-
-    # Get all previous creatinine values for the same HC Number
-    hc_data = df[df['HC Number'] == row['HC Number']].copy()
-
-    # Extract valid (Date.2, Value.2) pairs
-    valid_pairs = hc_data[['Date.2', 'Value.2']].dropna().values.tolist()
-
-    # If no valid prior creatinine measurements exist, return NaN
-    if not valid_pairs:
-        return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
-
-    # Find the closest date to the 90-day prior date
-    closest_date_value = min(valid_pairs, key=lambda x: abs(x[0] - target_date))
-
-    return pd.Series([closest_date_value[1], closest_date_value[0]], 
-                     index=['Creatinine_3m_prior', 'Date_3m_prior'])
 def summarize_medications(df):
     return (
         df.groupby('HC Number')['Name, Dosage and Quantity']
@@ -462,19 +440,6 @@ for col in date_columns:
 date_columns = [col for col in CKD_check.columns if 'Date' in col]
 for col in date_columns:
     CKD_check[col] = pd.to_datetime(CKD_check[col], format='%d-%b-%y', errors='coerce')
-
-# Convert all date columns in each DataFrame
-#if not creatinine.empty:
-#    creatinine = convert_all_date_columns(creatinine)
-
-#if not CKD_check.empty:
-#    CKD_check = convert_all_date_columns(CKD_check)
-
-# Apply preprocessing to both datasets
-#if not creatinine.empty:
-#    creatinine = preprocess_data(creatinine)
-#if not CKD_check.empty:
-#    CKD_check = preprocess_data(CKD_check)
 
 # Apply the function to both datasets if needed
 if not creatinine.empty:
