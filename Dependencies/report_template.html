@@ -190,7 +190,7 @@
   <ul>
     <li>
       <strong>HbA1c Level:</strong> 
-      <span class="{{ 'missing' if patient.HbA1c == 'Missing' else 'critical' if patient.HbA1c > 75 else 'caution' if 53 <= patient.HbA1c <= 75 else 'low' if 48 <= patient.HbA1c < 53 else 'safe' }}" title="HbA1c thresholds: >75 mmol/mol = Critical; 53–75 mmol/mol = Caution; 48–53 mmol/mol = Low; <48 mmol/mol = Safe">
+      <span class="{{ 'missing' if patient.HbA1c == 'Missing' else 'critical' if patient.HbA1c > 75 else 'caution' if 53 <= patient.HbA1c <= 75 else 'warning' if 48 <= patient.HbA1c < 53 else 'safe' }}" title="HbA1c thresholds: >75 mmol/mol = Critical; 53–75 mmol/mol = Caution; 48–53 mmol/mol = Low; <48 mmol/mol = Safe">
         {{ patient.HbA1c if patient.HbA1c != 'Missing' else 'N/A' }} mmol/mol
       </span> 
       | <strong>Date:</strong> {{ patient.Sample_Date6 }}
