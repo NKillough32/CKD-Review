@@ -438,7 +438,6 @@ if not CKD_check.empty:
 # Use the function on each DataFrame
 if not creatinine.empty:
     creatinine = convert_date_columns(creatinine)
-
 if not CKD_check.empty:
     CKD_check = convert_date_columns(CKD_check)
 
@@ -463,7 +462,6 @@ if not creatinine.empty:
     medications_summary_creatinine = summarize_medications(creatinine)
     creatinine = creatinine.merge(medications_summary_creatinine, on="HC Number", how="left")
     creatinine["Code Term"] = "No EMIS CKD entry"
-
 if not CKD_check.empty:
     medications_summary_ckd = summarize_medications(CKD_check)
     CKD_check = CKD_check.merge(medications_summary_ckd, on="HC Number", how="left")
