@@ -395,7 +395,7 @@ def parse_any_date(date_str):
         except ValueError:
             continue
     return pd.NaT  # Return NaT if all formats fail
-def convert_all_date_columns(df):
+def convert_date_columns(df):
     """Convert any column with 'Date' in its name to a Pandas datetime."""
     for col in df.columns:
         if 'Date' in col:
@@ -435,17 +435,12 @@ if not creatinine.empty:
 if not CKD_check.empty:
     CKD_check['Date'] = CKD_check['Date'].replace('', np.nan)
 
-# Convert all Date columns to datetime
+# Use the function on each DataFrame
 if not creatinine.empty:
-    date_columns = [col for col in creatinine.columns if 'Date' in col]
-    for col in date_columns:
-        creatinine[col] = pd.to_datetime(creatinine[col], format='%d-%b-%Y', errors='coerce')
+    creatinine = convert_date_columns(creatinine)
 
-# Convert all Date columns to datetime
 if not CKD_check.empty:
-    date_columns = [col for col in CKD_check.columns if 'Date' in col]
-    for col in date_columns:
-        CKD_check[col] = pd.to_datetime(CKD_check[col], format='%d-%b-%Y', errors='coerce')
+    CKD_check = convert_date_columns(CKD_check)
 
 # Apply the function to both datasets if needed
 if not creatinine.empty:
