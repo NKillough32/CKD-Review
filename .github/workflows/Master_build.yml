@@ -1,4 +1,4 @@
-name: Build NephroPath for Windows and macOS
+name: Build NephroPath for Windows and macOS 
 
 on:
   push:
