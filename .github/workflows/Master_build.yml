@@ -1,4 +1,4 @@
-name: Build NephroPath for Windows and macOS 
+name: Build NephroPath for Windows and macOS
 
 on:
   push:
@@ -25,10 +25,10 @@ jobs:
       matrix:
         include:
           - name: NephroPath
-            script: Code\CDK_Master_pdf.py
+            script: Code/CDK_Master_pdf.py
             output: NephroPath.exe
           - name: NephroPath_html
-            script: Code\CDK_Master_html.py
+            script: Code/CDK_Master_html.py
             output: NephroPath_html.exe
     steps:
       - name: Checkout code
@@ -71,7 +71,7 @@ jobs:
           git commit -m "Update built ${{ matrix.output }}" || echo "No changes to commit"
           # Fetch latest changes and rebase
           git fetch origin main
-          git rebase origin/main
+          git pull --rebase origin main || (git rebase --abort && echo "Rebase failed, aborting" && exit 1)
           # Push changes to remote repository
           git push origin main
 
@@ -87,10 +87,10 @@ jobs:
       matrix:
         include:
           - name: NephroPath_mac
-            script: Code//CDK_Master_pdf.py
+            script: Code/CDK_Master_pdf.py
             output: NephroPath_mac
           - name: NephroPath_mac_html
-            script: Code//CDK_Master_html.py
+            script: Code/CDK_Master_html.py
             output: NephroPath_mac_html
     steps:
       - name: Checkout code
@@ -132,7 +132,7 @@ jobs:
           git commit -m "Update built ${{ matrix.output }}" || echo "No changes to commit"
           # Fetch latest changes and rebase
           git fetch origin main
-          git rebase origin/main
+          git pull --rebase origin main || (git rebase --abort && echo "Rebase failed, aborting" && exit 1)
           # Push changes to remote repository
           git push origin main
 
