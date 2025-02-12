@@ -33,18 +33,24 @@ if not os.path.exists(path_to_wkhtmltopdf):
     if not os.path.exists(installer_path):
         download_wkhtmltopdf(installer_path, url)
 
-    # Attempt a silent installation
+try:
+    print("Attempting silent installation...")
+    subprocess.run(f'"{installer_path}" /S', check=True, shell=True)
+    print("Silent installation completed successfully.")
+except subprocess.CalledProcessError as e:
+    print(f"Silent installation failed with error code {e.returncode}.")
+    print("\nThe wkhtmltopdf installer has been downloaded.")
+    print("Attempting to open the installer manually...")
+
     try:
-        print("Attempting silent installation...")
-        subprocess.run([installer_path, "/S"], check=True)
-        print("Silent installation completed successfully.")
-    except subprocess.CalledProcessError as e:
-        print(f"Silent installation failed: {e}")
-        print("\nThe wkhtmltopdf installer has been downloaded.")
-        print(f"Please run the installer manually: {os.path.abspath(installer_path)}")
-        print("Make sure to run the installer as Administrator.")
+        # Open the installer interactively
+        subprocess.run(f'"{installer_path}"', check=True, shell=True)
+        print("Installer opened successfully. Please complete the installation.")
+    except Exception as manual_install_error:
+        print(f"Failed to open the installer: {manual_install_error}")
+        print(f"Please locate and run the installer manually: {os.path.abspath(installer_path)}")
         input("After completing the installation, press Enter to continue...")
-    
+
     # Re-check if wkhtmltopdf is installed
     if not os.path.exists(path_to_wkhtmltopdf):
         print("Installation not detected. Please ensure wkhtmltopdf is installed correctly.")
