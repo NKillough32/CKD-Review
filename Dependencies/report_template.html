@@ -107,12 +107,12 @@
                          'critical' if patient.eGFR < 30 else 
                          'caution' if 30 <= patient.eGFR < 60 else 
                          'low' if 60 <= patient.eGFR < 90 else 'safe' }}">
-            {{ patient.eGFR if patient.eGFR != 'Missing' else 'Missing' }} ml/min/1.73m<sup>2</sup>
+                         {{ (patient.eGFR | default(0, true)) if patient.eGFR != 'Missing' else 0 }} ml/min/1.73m<sup>2</sup>
           </span> 
           | <strong>Date:</strong> {{ patient.Sample_Date }}
         </li>
         <li><strong>3 Months Prior:</strong> 
-          {{ patient.eGFR_3m_prior if patient.eGFR_3m_prior != 'Missing' else 'Missing' }} ml/min/1.73m<sup>2</sup> 
+          {{ (patient.eGFR_3m_prior | default(0, true)) if patient.eGFR_3m_prior != 'Missing' else 0 }} ml/min/1.73m<sup>2</sup> 
           | Date: {{ patient.Sample_Date2 }}
         </li>
         <li><strong>eGFR Trend:</strong> 
