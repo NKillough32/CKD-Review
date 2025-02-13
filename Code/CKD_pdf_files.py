@@ -90,8 +90,8 @@ def ckd_review(row):
     EMIS = row['EMIS_CKD_Code']
 
     # Check for incorrect EMIS coding
-    if EMIS != "EMIS CKD entry missing" and row['CKD_Stage'] == "Normal":
-        return "Incorrect EMIS CODING"
+    if EMIS not in ["EMIS CKD entry missing", "No EMIS CKD entry"] and row['CKD_Stage'] == "Normal Function":
+        return "Incorrect EMIS Coding"
     
     # Check if 'eGFR_date' is valid and calculate days since eGFR
     if eGFR_date:
