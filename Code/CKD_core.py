@@ -323,6 +323,9 @@ def check_contraindications(medications, contraindicated_list):
     ]
     return ", ".join(prescribed_contraindicated) if prescribed_contraindicated else "No contraindications"
 def recommended_medications(eGFR):
+    if pd.isna(eGFR):
+        return ["Unable to determine recommendations (Missing eGFR)"]
+    
     if eGFR < 15:
         return [
             "Erythropoiesis-stimulating agents for anaemia (e.g., Epoetin alfa, Darbepoetin alfa, Methoxy polyethylene glycol-epoetin beta)",
