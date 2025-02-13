@@ -101,21 +101,39 @@
     </li>
   
     <li><strong>eGFR:</strong>
-     <ul>
-      <li><strong>Current:</strong> <span class="{{ 'missing' if patient.eGFR == 'Missing' else 'critical' if patient.eGFR < 30 else 'caution' if 30 <= patient.eGFR <= 59 else 'low' if 60 <= patient.eGFR <= 89 else 'safe' }}">{{ patient.eGFR | default(0, true) | int }} ml/min/1.73m<sup>2</sup></span>
-         | <strong>Date:</strong> {{ patient.Sample_Date }}
-       </li>
-       <li><strong>3 Months Prior:</strong> 
-         {{ patient.eGFR_3m_prior | default(0, true) | int }} ml/min/1.73m<sup>2</sup> | Date: {{ patient.Sample_Date2 }}
-       </li>
-       <li><strong>eGFR Trend:</strong> <span class="{{ 'missing' if patient.eGFR_Trend == 'No Data' else 'critical' if patient.eGFR_Trend == 'Rapid decline' else 'safe' if patient.eGFR_Trend == 'Stable' else 'safe' }}">{{ patient.eGFR_Trend }}</span>
-        The eGFR trend is assessed by comparing the most recent value with the reading from three months prior. The change is adjusted to an annualized rate based on the time interval between measurements.
-        <br><strong>Rapid Decline:</strong> A decrease of more than 5 mL/min/1.73m² per year or a relative drop of 25% or more.
-        <br><strong>Stable:</strong> No significant decline.
-        <br>A rapid decline may indicate progressive CKD, requiring closer monitoring or intervention.
-    </li>
+      <ul>
+        <li><strong>Current:</strong> 
+          <span class="{{ 'missing' if patient.eGFR == 'Missing' else 
+                         'critical' if patient.eGFR < 30 else 
+                         'caution' if 30 <= patient.eGFR < 60 else 
+                         'low' if 60 <= patient.eGFR < 90 else 'safe' }}">
+            {{ patient.eGFR if patient.eGFR != 'Missing' else 'Missing' }} ml/min/1.73m<sup>2</sup>
+          </span> 
+          | <strong>Date:</strong> {{ patient.Sample_Date }}
+        </li>
+        <li><strong>3 Months Prior:</strong> 
+          {{ patient.eGFR_3m_prior if patient.eGFR_3m_prior != 'Missing' else 'Missing' }} ml/min/1.73m<sup>2</sup> 
+          | Date: {{ patient.Sample_Date2 }}
+        </li>
+        <li><strong>eGFR Trend:</strong> 
+          <span class="{{ 'missing' if patient.eGFR_Trend == 'No Data' else 
+                         'critical' if patient.eGFR_Trend == 'Rapid decline' else 
+                         'stable' if patient.eGFR_Trend == 'Stable' else 'caution' }}">
+            {{ patient.eGFR_Trend }}
+          </span>
+          <br><em>
+            The eGFR trend is assessed by comparing the most recent value with the reading from three months prior. 
+            The change is adjusted to an annualized rate based on the time interval between measurements.
+          </em>
+          <ul>
+            <li><strong class="critical">Rapid Decline:</strong> A decrease of more than 5 mL/min/1.73m² per year or a relative drop of 25% or more.</li>
+            <li><strong class="stable">Stable:</strong> No significant decline.</li>
+          </ul>
+          <br>A rapid decline may indicate progressive CKD, requiring closer monitoring or intervention.
+        </li>
       </ul>
-</div> 
+    </li>
+    
 
 <div class="boxed">
   <h3>Anaemia Overview</h3>
