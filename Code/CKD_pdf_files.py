@@ -80,21 +80,23 @@ def load_surgery_info(csv_path=surgery_info_file):
 
 # Define review message based on NICE guideline criteria
 def ckd_review(row):
+    # Parse 'Sample_Date' to ensure it's in datetime format if not already
+    eGFR_date = pd.to_datetime(row['Sample_Date'], errors='coerce').date() if pd.notna(row['Sample_Date']) else None
+
     # Convert CKD_ACR and risk_5yr to numeric values, handling non-numeric entries
     ACR = pd.to_numeric(row['ACR'], errors='coerce')
     risk_5yr = pd.to_numeric(row['risk_5yr'], errors='coerce')
     BP_Flag = row['BP_Flag']
     EMIS = row['EMIS_CKD_Code']
-    eGFR_date = row['eGFR_date']
 
     # Check for incorrect EMIS coding
     if EMIS != "EMIS CKD entry missing" and row['CKD_Stage'] == "Normal":
         return "Incorrect EMIS CODING"
-
+    
     # Check if 'eGFR_date' is valid and calculate days since eGFR
-    if pd.notna(eGFR_date):
+    if eGFR_date:
         days_since_eGFR = (datetime.now().date() - eGFR_date).days
-
+        
         # NICE guideline checks based on CKD stage and ACR
         if row['CKD_Stage'] in ["Stage 1", "Stage 2"]:
             if days_since_eGFR > 365 or ACR >= 3 or BP_Flag == "Above Target":
