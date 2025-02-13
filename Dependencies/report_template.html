@@ -122,15 +122,16 @@
             {{ patient.eGFR_Trend }}
           </span>
           <br>
-          <em>
+          <br>
+          <em style="font-size: smaller;">
             The eGFR trend is assessed by comparing the most recent value with the reading from three months prior. 
             The change is adjusted to an annualized rate based on the time interval between measurements.
           </em>
-          <ul>
+          <ul style="font-size: smaller;">
             <li><strong>Rapid Decline:</strong> A decrease of more than 5 mL/min/1.73m² per year or a relative drop of 25% or more.</li>
             <li><strong>Stable:</strong> No significant decline.</li>
           </ul>
-            A rapid decline may indicate progressive CKD, requiring closer monitoring or intervention.
+          <span style="font-size: smaller;">A rapid decline may indicate progressive CKD, requiring closer monitoring or intervention.</span>       
         </li>
       </ul>
     </li>
@@ -284,13 +285,13 @@
     <li>
       <strong>Review Medications:</strong> 
       <span class="{{ 'critical' if patient.dose_adjustment_prescribed and patient.dose_adjustment_prescribed != 'No adjustments needed' else 'missing' if patient.dose_adjustment_prescribed == 'Missing' else 'safe' }}" title="Dose Adjustments: 'Critical' indicates adjustments are required; 'Missing' indicates data is not available; 'Safe' indicates no adjustments needed">
-        {{ patient.dose_adjustment_prescribed or "None" }}
+        {{ patient.dose_adjustment_prescribed|safe }}
       </span>
     </li>    
     <li>
       <strong>Contraindicated Medications:</strong> 
       <span class="{{ 'critical' if patient.contraindicated_prescribed and patient.contraindicated_prescribed != 'No contraindications' else 'missing' if patient.contraindicated_prescribed == 'Missing' else 'safe' }}" title="Contraindicated Medications: 'Critical' indicates contraindicated medications are present; 'Missing' means data is not available; 'Safe' indicates no contraindications">
-        {{ patient.contraindicated_prescribed or "None" }}
+        {{ patient.contraindicated_prescribed|safe }}
       </span>
     </li>    
     <li><strong>Suggested Medications:</strong> 
