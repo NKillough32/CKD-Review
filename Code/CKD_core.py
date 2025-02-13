@@ -302,7 +302,7 @@ def get_contraindicated_drugs(eGFR):
         for row in reader:
             if float(row['eGFR']) >= eGFR:
                 drug_name = row['contraindicated_drugs']
-                bnf_link = row.get('BNF_Links', '')  # Get BNF link if available
+                bnf_link = row.get('BNF_Link', '')  # Get BNF link if available
                 contraindicated.append((drug_name, bnf_link))  # Store as tuple
     return contraindicated
 def check_contraindications(medications, contraindicated_list):
@@ -388,7 +388,7 @@ def drug_adjustment(eGFR):
         for row in reader:
             if float(row['eGFR']) >= eGFR:
                 drug_name = row['drug_adjustment']
-                bnf_link = row.get('BNF_Links', '')  # Get BNF link if available
+                bnf_link = row.get('BNF_Link', '')  # Get BNF link if available
                 adjustments.append((drug_name, bnf_link))  # Store as tuple
     return adjustments
 def check_dose_adjustments(medications, adjustment_list):
