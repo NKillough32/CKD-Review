@@ -297,13 +297,23 @@ def classify_ckd_mbd(calcium_flag, phosphate_flag, parathyroid_flag):
     return "Check CKD-MBD" if calcium_flag != "Normal" or phosphate_flag != "Normal" or parathyroid_flag != "Normal" else "Normal"
 def get_contraindicated_drugs(eGFR):
     contraindicated = []
+    
+    # Ensure eGFR is a valid number
+    if pd.isna(eGFR):
+        return contraindicated  # Return an empty list if eGFR is missing
+
     with open(contraindicated_drugs_file, 'r') as file:
         reader = csv.DictReader(file)
         for row in reader:
-            if float(row['eGFR']) >= eGFR:
-                drug_name = row['contraindicated_drugs']
-                bnf_link = row.get('BNF_Link', '')  # Get BNF link if available
-                contraindicated.append((drug_name, bnf_link))  # Store as tuple
+            try:
+                drug_threshold = float(row['eGFR'])
+                if eGFR <= drug_threshold:  # Safe comparison now
+                    drug_name = row['contraindicated_drugs']
+                    bnf_link = row.get('BNF_Link', '')  # Get BNF link if available
+                    contraindicated.append((drug_name, bnf_link))  # Store as tuple
+            except (ValueError, TypeError):
+                continue  # Skip rows with invalid eGFR values
+
     return contraindicated
 def check_contraindications(medications, contraindicated_list):
     prescribed_contraindicated = [
