@@ -398,10 +398,13 @@ def check_dose_adjustments(medications, adjustment_list):
         if re.search(r'\b' + re.escape(drug) + r'\b', medications, re.IGNORECASE)
     ]
     return ", ".join(prescribed_adjustments) if prescribed_adjustments else "No adjustments needed"
-def check_all_contraindications(medications, eGFR):
-    contraindicated = get_contraindicated_drugs(eGFR)
-    contraindicated_in_meds = [drug for drug in contraindicated if drug in medications]
-    return ", ".join(contraindicated_in_meds) if contraindicated_in_meds else "No contraindications"
+def check_all_contraindications(medications, contraindicated_list):
+    prescribed_contraindicated = [
+        f"{drug} ({link})" if link else drug  # Add BNF link if available
+        for drug, link in contraindicated_list  # Extract drug name from tuple
+        if re.search(r'\b' + re.escape(drug) + r'\b', medications, re.IGNORECASE)
+    ]
+    return ", ".join(prescribed_contraindicated) if prescribed_contraindicated else "No contraindications"
 def parse_any_date(date_str):
     if pd.isna(date_str):
         return pd.NaT
@@ -776,7 +779,7 @@ CKD_review.loc[:,'Anaemia_Flag'] = CKD_review['haemoglobin'].apply(
 
 # All Contraindications
 CKD_review.loc[:,'All_Contraindications'] = CKD_review.apply(
-    lambda row: check_all_contraindications(row['Medications'], row['eGFR']), 
+    lambda row: check_all_contraindications(row['Medications'], get_contraindicated_drugs(row['eGFR'])), 
     axis=1
 )
 
