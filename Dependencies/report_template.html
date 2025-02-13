@@ -121,19 +121,20 @@
                          'stable' if patient.eGFR_Trend == 'Stable' else 'caution' }}">
             {{ patient.eGFR_Trend }}
           </span>
-          <ul> 
-          <br><em>
+          <br>
+          <em>
             The eGFR trend is assessed by comparing the most recent value with the reading from three months prior. 
             The change is adjusted to an annualized rate based on the time interval between measurements.
-            <ul>
+          </em>
+          <ul>
             <li><strong>Rapid Decline:</strong> A decrease of more than 5 mL/min/1.73m² per year or a relative drop of 25% or more.</li>
             <li><strong>Stable:</strong> No significant decline.</li>
-            <br>A rapid decline may indicate progressive CKD, requiring closer monitoring or intervention.
-          </em>
-          </li>
+          </ul>
+          <br>A rapid decline may indicate progressive CKD, requiring closer monitoring or intervention.
+        </li>
       </ul>
     </li>
-</div>
+    
 
 <div class="boxed">
   <h3>Anaemia Overview</h3>
