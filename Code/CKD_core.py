@@ -665,13 +665,17 @@ CKD_review.loc[:,'BP_Classification'] = CKD_review.apply(lambda row: classify_BP
 CKD_review.loc[:,'CKD_ACR'] = CKD_review['ACR'].apply(classify_CKD_ACR_grade)
 
 # Adjust CKD Stage based on conditions
-CKD_review.loc[:,'CKD_Stage'] = CKD_review.apply(
-    lambda row: "Normal Function" if row['ACR'] < 3 and row['eGFR'] > 60 and row['Date'] != "" else row['CKD_Stage'], 
+CKD_review.loc[:, 'CKD_Stage'] = CKD_review.apply(
+    lambda row: "Normal Function" if pd.notna(row['ACR']) and pd.notna(row['eGFR']) and pd.notna(row['Date'])
+                and row['ACR'] < 3 and row['eGFR'] > 60 
+                else row['CKD_Stage'], 
     axis=1
 )
 
-CKD_review.loc[:,'CKD_Stage_3m'] = CKD_review.apply(
-    lambda row: "Normal Function" if row['ACR'] < 3 and row['eGFR'] > 60 and row['Date'] != "" else row['CKD_Stage_3m'], 
+CKD_review.loc[:, 'CKD_Stage_3m'] = CKD_review.apply(
+    lambda row: "Normal Function" if pd.notna(row['ACR']) and pd.notna(row['eGFR']) and pd.notna(row['Date'])
+                and row['ACR'] < 3 and row['eGFR'] > 60 
+                else row['CKD_Stage_3m'], 
     axis=1
 )
 
