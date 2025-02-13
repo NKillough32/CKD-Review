@@ -1,111 +1,111 @@
-contraindicated_drugs,eGFR
-Acamprosate calcium,30
-Acarbose,25
-Acetazolamide,10
-Alendronic acid,35
-Alimemazine tartrate,10
-Allopurinol,30
-Amiloride,30
-Amiloride Hydrochloride,30
-Apixaban,15
-Baricitinib,30
-Bendroflumethiazide,30
-Benzbromarone,20
-Bezafibrate,15
-Bivalirudin,30
-Canagliflozin,45
-Capecitabine,30
-Carboplatin,20
-Chloral hydrate,10
-Chlorothiazide,30
-Chlortalidone,30
-Ciclosporin,30
-Cilostazol,25
-Ciprofibrate,10
-Cisplatin,40
-Clozapine,10
-Colecalciferol,10
-Cycloserine,10
-Dabigatran,30
-Dabigatran etexilate,30
-Dacarbazine,10
-Danaparoid sodium,10
-Dapagliflozin,60
-Deferasirox,40
-Disulfiram,10
-Dronedarone,10
-Duloxetine,30
-Empagliflozin,45
-Enoxaparin sodium,10
-Eptifibatide,30
-Exenatide,30
-Famotidine,10
-Fenofibrate,15
-Fosfomycin,10
-Gemfibrozil,10
-Glibenclamide,10
-Glimepiride,10
-Hydrochlorothiazide,30
-Idarubicin hydrochloride,10
-Indapamide,30
-Indomethacin,30
-Interferon alfa-2A,10
-Interferon alfa-2B,10
-Itraconazole,30
-Ivacaftor,10
-Ketoprofen,50
-Ketorolac,20
-Ketorolac trometamol,20
-Leflunomide,20
-Levofloxacin,30
-Lithium carbonate,10
-Lofepramine,10
-Lomustine,30
-Lymecycline,10
-Magnesium hydroxide,15
-Magnesium trisilicate,15
-Mesalazine,20
-Metformin,30
-Metformin hydrochloride,30
-Methenamine hippurate,10
-Methotrexate,10
-Methyclothiazide,30
-Metolazone,30
-Mitotane,10
-Nalidixic acid,10
-Nalmefene Hydrochloride,30
-Nalmefene hydrochloride dihydrate,30
-Naratriptan,15
-Nitrofurantoin,45
-Noqdirna,50
-Oxaliplatin,30
-Paliperidone,10
-Penicillamine,50
-Pentostatin,60
-Phenindione,10
-Phenobarbital,10
-Piracetam,20
-Procarbazine,10
-Quinagolide,50
-Raloxifene hydrochloride,10
-Ranolazine,30
-Reteplase,10
-Rizatriptan,10
-Rosuvastatin,10
-Ruxolitinib,15
-Sodium aurothiomalate,50
-Sodium clodronate,10
-Sodium stibogluconate,50
-Spironolactone,30
-Sulfinpyrazone,10
-Telavancin,30
-Teriparatide,10
-Tolbutamide,10
-Tolfenamic acid,10
-Trabectedin,30
-Triamterene,20
-Trimethoprim,30
-Varenicline,10
-Xipamide,30
-Zoledronic acid,29
-Zolmitriptan,15
+contraindicated_drugs,eGFR,BNF_Link
+Acamprosate calcium,30,https://bnf.nice.org.uk/drugs/Acamprosate-calcium/
+Acarbose,25,https://bnf.nice.org.uk/drugs/Acarbose/
+Acetazolamide,10,https://bnf.nice.org.uk/drugs/Acetazolamide/
+Alendronic acid,35,https://bnf.nice.org.uk/drugs/Alendronic-acid/
+Alimemazine tartrate,10,https://bnf.nice.org.uk/drugs/Alimemazine-tartrate/
+Allopurinol,30,https://bnf.nice.org.uk/drugs/Allopurinol/
+Amiloride,30,https://bnf.nice.org.uk/drugs/Amiloride-hydrochloride/
+Amiloride Hydrochloride,30,https://bnf.nice.org.uk/drugs/Amiloride-Hydrochloride/
+Apixaban,15,https://bnf.nice.org.uk/drugs/Apixaban/
+Baricitinib,30,https://bnf.nice.org.uk/drugs/Baricitinib/
+Bendroflumethiazide,30,https://bnf.nice.org.uk/drugs/Bendroflumethiazide/
+Benzbromarone,20,https://bnf.nice.org.uk/drugs/Benzbromarone/
+Bezafibrate,15,https://bnf.nice.org.uk/drugs/Bezafibrate/
+Bivalirudin,30,https://bnf.nice.org.uk/drugs/Bivalirudin/
+Canagliflozin,45,https://bnf.nice.org.uk/drugs/Canagliflozin/
+Capecitabine,30,https://bnf.nice.org.uk/drugs/Capecitabine/
+Carboplatin,20,https://bnf.nice.org.uk/drugs/Carboplatin/
+Chloral hydrate,10,https://bnf.nice.org.uk/drugs/Chloral-hydrate/
+Chlorothiazide,30,https://bnf.nice.org.uk/drugs/Chlorothiazide/
+Chlortalidone,30,https://bnf.nice.org.uk/drugs/Chlortalidone/
+Ciclosporin,30,https://bnf.nice.org.uk/drugs/Ciclosporin/
+Cilostazol,25,https://bnf.nice.org.uk/drugs/Cilostazol/
+Ciprofibrate,10,https://bnf.nice.org.uk/drugs/Ciprofibrate/
+Cisplatin,40,https://bnf.nice.org.uk/drugs/Cisplatin/
+Clozapine,10,https://bnf.nice.org.uk/drugs/Clozapine/
+Colecalciferol,10,https://bnf.nice.org.uk/drugs/Colecalciferol/
+Cycloserine,10,https://bnf.nice.org.uk/drugs/Cycloserine/
+Dabigatran,30,https://bnf.nice.org.uk/drugs/Dabigatran/
+Dabigatran etexilate,30,https://bnf.nice.org.uk/drugs/Dabigatran-etexilate/
+Dacarbazine,10,https://bnf.nice.org.uk/drugs/Dacarbazine/
+Danaparoid sodium,10,https://bnf.nice.org.uk/drugs/Danaparoid-sodium/
+Dapagliflozin,60,https://bnf.nice.org.uk/drugs/Dapagliflozin/
+Deferasirox,40,https://bnf.nice.org.uk/drugs/Deferasirox/
+Disulfiram,10,https://bnf.nice.org.uk/drugs/Disulfiram/
+Dronedarone,10,https://bnf.nice.org.uk/drugs/Dronedarone/
+Duloxetine,30,https://bnf.nice.org.uk/drugs/Duloxetine/
+Empagliflozin,45,https://bnf.nice.org.uk/drugs/Empagliflozin/
+Enoxaparin sodium,10,https://bnf.nice.org.uk/drugs/Enoxaparin-sodium/
+Eptifibatide,30,https://bnf.nice.org.uk/drugs/Eptifibatide/
+Exenatide,30,https://bnf.nice.org.uk/drugs/Exenatide/
+Famotidine,10,https://bnf.nice.org.uk/drugs/Famotidine/
+Fenofibrate,15,https://bnf.nice.org.uk/drugs/Fenofibrate/
+Fosfomycin,10,https://bnf.nice.org.uk/drugs/Fosfomycin/
+Gemfibrozil,10,https://bnf.nice.org.uk/drugs/Gemfibrozil/
+Glibenclamide,10,https://bnf.nice.org.uk/drugs/Glibenclamide/
+Glimepiride,10,https://bnf.nice.org.uk/drugs/Glimepiride/
+Hydrochlorothiazide,30,https://bnf.nice.org.uk/drugs/Hydrochlorothiazide/
+Idarubicin hydrochloride,10,https://bnf.nice.org.uk/drugs/Idarubicin-hydrochloride/
+Indapamide,30,https://bnf.nice.org.uk/drugs/Indapamide/
+Indomethacin,30,https://bnf.nice.org.uk/drugs/Indomethacin/
+Interferon alfa-2A,10,https://bnf.nice.org.uk/drugs/Interferon-alfa-2A/
+Interferon alfa-2B,10,https://bnf.nice.org.uk/drugs/Interferon-alfa-2B/
+Itraconazole,30,https://bnf.nice.org.uk/drugs/Itraconazole/
+Ivacaftor,10,https://bnf.nice.org.uk/drugs/Ivacaftor/
+Ketoprofen,50,https://bnf.nice.org.uk/drugs/Ketoprofen/
+Ketorolac,20,https://bnf.nice.org.uk/drugs/Ketorolac/
+Ketorolac trometamol,20,https://bnf.nice.org.uk/drugs/Ketorolac-trometamol/
+Leflunomide,20,https://bnf.nice.org.uk/drugs/Leflunomide/
+Levofloxacin,30,https://bnf.nice.org.uk/drugs/Levofloxacin/
+Lithium carbonate,10,https://bnf.nice.org.uk/drugs/Lithium-carbonate/
+Lofepramine,10,https://bnf.nice.org.uk/drugs/Lofepramine/
+Lomustine,30,https://bnf.nice.org.uk/drugs/Lomustine/
+Lymecycline,10,https://bnf.nice.org.uk/drugs/Lymecycline/
+Magnesium hydroxide,15,https://bnf.nice.org.uk/drugs/Magnesium-hydroxide/
+Magnesium trisilicate,15,https://bnf.nice.org.uk/drugs/Magnesium-trisilicate/
+Mesalazine,20,https://bnf.nice.org.uk/drugs/Mesalazine/
+Metformin,30,https://bnf.nice.org.uk/drugs/Metformin/
+Metformin hydrochloride,30,https://bnf.nice.org.uk/drugs/Metformin-hydrochloride/
+Methenamine hippurate,10,https://bnf.nice.org.uk/drugs/Methenamine-hippurate/
+Methotrexate,10,https://bnf.nice.org.uk/drugs/Methotrexate/
+Methyclothiazide,30,https://bnf.nice.org.uk/drugs/Methyclothiazide/
+Metolazone,30,https://bnf.nice.org.uk/drugs/Metolazone/
+Mitotane,10,https://bnf.nice.org.uk/drugs/Mitotane/
+Nalidixic acid,10,https://bnf.nice.org.uk/drugs/Nalidixic-acid/
+Nalmefene Hydrochloride,30,https://bnf.nice.org.uk/drugs/Nalmefene/
+Nalmefene hydrochloride dihydrate,30,https://bnf.nice.org.uk/drugs/Nalmefene/
+Naratriptan,15,https://bnf.nice.org.uk/drugs/Naratriptan/
+Nitrofurantoin,45,https://bnf.nice.org.uk/drugs/Nitrofurantoin/
+Noqdirna,50,https://bnf.nice.org.uk/drugs/desmopressin/
+Oxaliplatin,30,https://bnf.nice.org.uk/drugs/Oxaliplatin/
+Paliperidone,10,https://bnf.nice.org.uk/drugs/Paliperidone/
+Penicillamine,50,https://bnf.nice.org.uk/drugs/Penicillamine/
+Pentostatin,60,https://bnf.nice.org.uk/drugs/Pentostatin/
+Phenindione,10,https://bnf.nice.org.uk/drugs/Phenindione/
+Phenobarbital,10,https://bnf.nice.org.uk/drugs/Phenobarbital/
+Piracetam,20,https://bnf.nice.org.uk/drugs/Piracetam/
+Procarbazine,10,https://bnf.nice.org.uk/drugs/Procarbazine/
+Quinagolide,50,https://bnf.nice.org.uk/drugs/Quinagolide/
+Raloxifene hydrochloride,10,https://bnf.nice.org.uk/drugs/Raloxifene-hydrochloride/
+Ranolazine,30,https://bnf.nice.org.uk/drugs/Ranolazine/
+Reteplase,10,https://bnf.nice.org.uk/drugs/Reteplase/
+Rizatriptan,10,https://bnf.nice.org.uk/drugs/Rizatriptan/
+Rosuvastatin,10,https://bnf.nice.org.uk/drugs/Rosuvastatin/
+Ruxolitinib,15,https://bnf.nice.org.uk/drugs/Ruxolitinib/
+Sodium aurothiomalate,50,https://bnf.nice.org.uk/drugs/Sodium-aurothiomalate/
+Sodium clodronate,10,https://bnf.nice.org.uk/drugs/Sodium-clodronate/
+Sodium stibogluconate,50,https://bnf.nice.org.uk/drugs/Sodium-stibogluconate/
+Spironolactone,30,https://bnf.nice.org.uk/drugs/Spironolactone/
+Sulfinpyrazone,10,https://bnf.nice.org.uk/drugs/Sulfinpyrazone/
+Telavancin,30,https://bnf.nice.org.uk/drugs/Telavancin/
+Teriparatide,10,https://bnf.nice.org.uk/drugs/Teriparatide/
+Tolbutamide,10,https://bnf.nice.org.uk/drugs/Tolbutamide/
+Tolfenamic acid,10,https://bnf.nice.org.uk/drugs/Tolfenamic-acid/
+Trabectedin,30,https://bnf.nice.org.uk/drugs/Trabectedin/
+Triamterene,20,https://bnf.nice.org.uk/drugs/Triamterene/
+Trimethoprim,30,https://bnf.nice.org.uk/drugs/Trimethoprim/
+Varenicline,10,https://bnf.nice.org.uk/drugs/Varenicline/
+Xipamide,30,https://bnf.nice.org.uk/drugs/Xipamide/
+Zoledronic acid,29,https://bnf.nice.org.uk/drugs/Zoledronic-acid/
+Zolmitriptan,15,https://bnf.nice.org.uk/drugs/Zolmitriptan/
