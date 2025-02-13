@@ -156,21 +156,27 @@ data = pd.read_csv(file_path)
 data['risk_2yr'] = pd.to_numeric(data['risk_2yr'], errors='coerce')
 data['risk_5yr'] = pd.to_numeric(data['risk_5yr'], errors='coerce')
 
+data['EMIS_CKD_Code'] = data['EMIS_CKD_Code'].replace(['', None], 'EMIS CKD entry missing')
+
 # Define review message based on NICE guideline criteria
-def review_message(row):
+def ckd_review(row):
     # Parse 'Sample_Date' to ensure it's in datetime format if not already
     eGFR_date = pd.to_datetime(row['Sample_Date'], errors='coerce').date() if pd.notna(row['Sample_Date']) else None
 
-    # Convert CKD_ACR and risk_5yr to numeric values, setting errors='coerce' to handle non-numeric entries
+    # Convert CKD_ACR and risk_5yr to numeric values, handling non-numeric entries
     ACR = pd.to_numeric(row['ACR'], errors='coerce')
     risk_5yr = pd.to_numeric(row['risk_5yr'], errors='coerce')
     BP_Flag = row['BP_Flag']
+    EMIS = row['EMIS_CKD_Code']
 
+    # Check for incorrect EMIS coding
+    if EMIS not in ["EMIS CKD entry missing", "No EMIS CKD entry"] and row['CKD_Stage'] == "Normal Function":
+        return "Incorrect EMIS Coding"
+    
     # Check if 'eGFR_date' is valid and calculate days since eGFR
     if eGFR_date:
         days_since_eGFR = (datetime.now().date() - eGFR_date).days
-       # print(f"Patient HC_Number {row['HC_Number']} - eGFR Date: {eGFR_date}, Days since eGFR: {days_since_eGFR}")
-
+        
         # NICE guideline checks based on CKD stage and ACR
         if row['CKD_Stage'] in ["Stage 1", "Stage 2"]:
             if days_since_eGFR > 365 or ACR >= 3 or BP_Flag == "Above Target":
@@ -187,11 +193,11 @@ def review_message(row):
         else:
             return "Normal Renal Function"
     else:
-        # Handle case where 'Sample_Date' is missing or invalid
+        # Handle case where 'eGFR_date' is missing or invalid
         return "Review Required (eGFR date unavailable)"
 
 # Apply review message function to add 'review_message' column
-data['review_message'] = data.apply(review_message, axis=1)
+data['review_message'] = data.apply(ckd_review, axis=1)
 
 print("Generating reports...")
 
