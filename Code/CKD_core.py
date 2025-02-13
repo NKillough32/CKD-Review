@@ -560,6 +560,11 @@ CKD_review['eGFR'] = CKD_review.apply(
 CKD_review['eGFR_3m_prior'] = CKD_review.apply(
     lambda row: calculate_eGFR(row['Age'], row['Gender'], row['Creatinine_3m_prior'], row.get('Height', None)), axis=1
 )
+
+# Ensure eGFR values are rounded to whole numbers
+CKD_review['eGFR'] = CKD_review['eGFR'].round(0).astype('Int64')
+CKD_review['eGFR_3m_prior'] = CKD_review['eGFR_3m_prior'].round(0).astype('Int64')
+
 # Classify CKD Stages
 CKD_review['CKD_Stage'] = CKD_review['eGFR'].apply(classify_CKD_stage)
 CKD_review['CKD_Stage_3m'] = CKD_review['eGFR_3m_prior'].apply(classify_CKD_stage)
