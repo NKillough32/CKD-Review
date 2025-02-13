@@ -393,13 +393,23 @@ def lifestyle_advice(ckd_stage):
         )
 def drug_adjustment(eGFR):
     adjustments = []
+    
+    # Ensure eGFR is a valid number
+    if pd.isna(eGFR):
+        return adjustments  # Return an empty list if eGFR is missing
+
     with open(drug_adjustment_file, 'r') as file:
         reader = csv.DictReader(file)
         for row in reader:
-            if float(row['eGFR']) >= eGFR:
-                drug_name = row['drug_adjustment']
-                bnf_link = row.get('BNF_Link', '')  # Get BNF link if available
-                adjustments.append((drug_name, bnf_link))  # Store as tuple
+            try:
+                drug_threshold = float(row['eGFR'])
+                if eGFR <= drug_threshold:  # Safe comparison now
+                    drug_name = row['drug_adjustment']
+                    bnf_link = row.get('BNF_Link', '')  # Get BNF link if available
+                    adjustments.append((drug_name, bnf_link))  # Store as tuple
+            except (ValueError, TypeError):
+                continue  # Skip rows with invalid eGFR values
+
     return adjustments
 def check_dose_adjustments(medications, adjustment_list):
     prescribed_adjustments = [
