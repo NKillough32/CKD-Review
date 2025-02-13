@@ -301,10 +301,16 @@ def get_contraindicated_drugs(eGFR):
         reader = csv.DictReader(file)
         for row in reader:
             if float(row['eGFR']) >= eGFR:
-                contraindicated.append(row['contraindicated_drugs'])
+                drug_name = row['contraindicated_drugs']
+                bnf_link = row.get('BNF_Links', '')  # Get BNF link if available
+                contraindicated.append((drug_name, bnf_link))  # Store as tuple
     return contraindicated
-def check_contraindications(medications, contraindicated):
-    prescribed_contraindicated = [drug for drug in contraindicated if re.search(r'\b' + re.escape(drug) + r'\b', medications, re.IGNORECASE)]
+def check_contraindications(medications, contraindicated_list):
+    prescribed_contraindicated = [
+        f"{drug} ({link})" if link else drug  # Add link if available
+        for drug, link in contraindicated_list 
+        if re.search(r'\b' + re.escape(drug) + r'\b', medications, re.IGNORECASE)
+    ]
     return ", ".join(prescribed_contraindicated) if prescribed_contraindicated else "No contraindications"
 def recommended_medications(eGFR):
     if eGFR < 15:
@@ -381,10 +387,16 @@ def drug_adjustment(eGFR):
         reader = csv.DictReader(file)
         for row in reader:
             if float(row['eGFR']) >= eGFR:
-                adjustments.append(row['drug_adjustment'])
+                drug_name = row['drug_adjustment']
+                bnf_link = row.get('BNF_Links', '')  # Get BNF link if available
+                adjustments.append((drug_name, bnf_link))  # Store as tuple
     return adjustments
 def check_dose_adjustments(medications, adjustment_list):
-    prescribed_adjustments = [drug for drug in adjustment_list if drug in medications]
+    prescribed_adjustments = [
+        f"{drug} ({link})" if link else drug  # Add link if available
+        for drug, link in adjustment_list 
+        if re.search(r'\b' + re.escape(drug) + r'\b', medications, re.IGNORECASE)
+    ]
     return ", ".join(prescribed_adjustments) if prescribed_adjustments else "No adjustments needed"
 def check_all_contraindications(medications, eGFR):
     contraindicated = get_contraindicated_drugs(eGFR)
@@ -722,6 +734,11 @@ CKD_review.loc[:,'contraindicated_prescribed'] = CKD_review.apply(
     lambda row: check_contraindications(row['Medications'], get_contraindicated_drugs(row['eGFR'])), 
     axis=1
 )
+# Dose Adjustments
+CKD_review.loc[:,'dose_adjustment_prescribed'] = CKD_review.apply(
+    lambda row: check_dose_adjustments(row['Medications'], drug_adjustment(row['eGFR'])), 
+    axis=1
+)
 
 # Statin Recommendation
 # Read statins from the file and store them in a list
@@ -750,11 +767,6 @@ CKD_review.loc[:,'HbA1c_Target'] = CKD_review['HbA1c'].apply(
 # Lifestyle Advice
 CKD_review.loc[:,'Lifestyle_Advice'] = CKD_review['CKD_Stage'].apply(lifestyle_advice)
 
-# Dose Adjustments
-CKD_review.loc[:,'dose_adjustment_prescribed'] = CKD_review.apply(
-    lambda row: check_dose_adjustments(row['Medications'], drug_adjustment(row['eGFR'])), 
-    axis=1
-)
 
 # Anaemia Flag
 CKD_review.loc[:,'Anaemia_Flag'] = CKD_review['haemoglobin'].apply(
