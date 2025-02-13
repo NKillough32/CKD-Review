@@ -179,19 +179,23 @@ def classify_CKD_stage(eGFR):
 def calculate_egfr_trend(row):
     if pd.isna(row['eGFR']) or pd.isna(row['eGFR_3m_prior']):
         return "No Data"
-    
-    # Calculate the annualized eGFR change
+
+    # Ensure dates are in datetime format
+    if not isinstance(row['Date'], pd.Timestamp) or not isinstance(row['Date.2'], pd.Timestamp):
+        return "Invalid Date"
+
     days_between = (row['Date'] - row['Date.2']).days
-    if days_between == 0:
+
+    if days_between <= 0:  # Prevent division by zero or future dates issue
         return "No Data"
-    
+
     annualized_change = (row['eGFR'] - row['eGFR_3m_prior']) * (365 / days_between)
-    
-    # Check for rapid decline criteria
-    if annualized_change < -5 or (row['eGFR_3m_prior'] - row['eGFR']) / row['eGFR_3m_prior'] >= 0.25:
+
+    if annualized_change < -5 or (row['eGFR_3m_prior'] > 0 and 
+                                  (row['eGFR_3m_prior'] - row['eGFR']) / row['eGFR_3m_prior'] >= 0.25):
         return "Rapid Decline"
-    else:
-        return "Stable"
+    
+    return "Stable"
 def classify_BP(systolic, diastolic):
     if pd.isna(systolic) or pd.isna(diastolic):
         return None
