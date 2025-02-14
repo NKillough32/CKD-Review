@@ -83,6 +83,7 @@
   <div class="top-right-box"> 
     <strong>KDGIO 2024 Classification</strong> <br> <span class="{{ 'safe' if patient.CKD_Group in ['Normal Function','Stage 1 A1', 'Stage 2 A1'] else 'warning' if patient.CKD_Group in ['Stage 1 A2', 'Stage 2 A2', 'Stage 3A A1'] else 'caution' if patient.CKD_Group in ['Stage 1 A3', 'Stage 2 A3', 'Stage 3A A2', 'Stage 3B A1', 'Stage 4 A1'] else 'critical' }}"> {{ patient.CKD_Group }} </span>
   </div>
+
   <h3>CKD Overview</h3>
   <ul>
     <li><strong>Stage:</strong> {{ patient.CKD_Stage }} | <strong>ACR criteria:</strong> {{ patient.CKD_ACR }}</li>
@@ -119,26 +120,31 @@
           {% endif %}
           | <strong>Date:</strong> {{ patient.Sample_Date2 | default("N/A", true) }}
       </li>
-        <li><strong>eGFR Trend:</strong> 
-          <span class="{{ 'missing' if patient.eGFR_Trend == 'No Data' else 
-                         'critical' if patient.eGFR_Trend == 'Rapid decline' else 
-                         'stable' if patient.eGFR_Trend == 'Stable' else 'caution' }}">
-            {{ patient.eGFR_Trend }}
-          </span>
-          <br>
-<br>
-<em style="font-size: smaller;">
+      <li>
+        <strong>eGFR Trend:</strong> 
+        <span class="{{ 'missing' if patient.eGFR_Trend == 'No Data' else 
+                       'critical' if patient.eGFR_Trend == 'Rapid decline' else 
+                       'stable' if patient.eGFR_Trend == 'Stable' else 'caution' }}">
+          {{ patient.eGFR_Trend }}
+        </span>
+        
+        
+<div style="text-align: left; margin-top: 5px;">
+<em style="font-size: smaller; display: block;">
 The eGFR trend is assessed by comparing the most recent value with the reading from three months prior. 
 The change is adjusted to an annualized rate based on the time interval between measurements.
 </em>
-  <ul style="font-size: smaller;">
+        
+<ul style="font-size: smaller;">
   <li><strong>Rapid Decline:</strong> A decrease of more than 5 mL/min/1.73m² per year or a relative drop of 25% or more.</li>
   <li><strong>Stable:</strong> No significant decline.</li>
-  </ul>
-<span style="font-size: smaller;">A rapid decline may indicate progressive CKD, requiring closer monitoring or intervention.</span>       
+</ul>
+      
+<span style="font-size: smaller; display: block;">
+A rapid decline may indicate progressive CKD, requiring closer monitoring or intervention.
+</span>       
+</div>
 </li>
-      </ul>
-    </li>
 </div>    
   
 <div class="boxed">
