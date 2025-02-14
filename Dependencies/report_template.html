@@ -90,8 +90,8 @@
 <div class="boxed">
   <h3>Patient Information</h3>
   <ul>
-    <li><strong>NHS Number:</strong> {{ patient.HC_Number if patient.HC_Number else "N/A" }}</li>
-    <li><strong>Age:</strong> {{ patient.Age if patient.Age else "N/A" }} | <strong>Gender:</strong> {{ patient.Gender if patient.Gender else "N/A" }}</li>
+    <li><strong>NHS Number:</strong> {{ patient.HC_Number | int if patient.HC_Number else "N/A" }}</li>
+    <li><strong>Age:</strong> {{ patient.Age | int if patient.Age else "N/A" }} | <strong>Gender:</strong> {{ patient.Gender if patient.Gender else "N/A" }}</li>
   </ul>
 </div>
 
@@ -198,7 +198,7 @@
                      'caution' if 140 <= patient.Systolic_BP < 180 else 
                      'low' if patient.Systolic_BP < 90 else 'safe' }}" 
             title="Systolic BP: Critical ≥180; Caution 140–179; Low <90; otherwise Safe">
-        {{ patient.Systolic_BP if patient.Systolic_BP not in ['Missing', None] else 'N/A' }}
+        {{ patient.Systolic_BP| int if patient.Systolic_BP not in ['Missing', None] else 'N/A' }}
       </span> 
       / 
       <span class="{{ 'missing' if patient.Diastolic_BP in ['Missing', None] else 
@@ -206,7 +206,7 @@
                      'caution' if 90 <= patient.Diastolic_BP < 120 else 
                      'low' if patient.Diastolic_BP < 60 else 'safe' }}" 
             title="Diastolic BP: Critical ≥120; Caution 90–119; Low <60; otherwise Safe">
-        {{ patient.Diastolic_BP if patient.Diastolic_BP not in ['Missing', None] else 'N/A' }}
+        {{ patient.Diastolic_BP| int if patient.Diastolic_BP not in ['Missing', None] else 'N/A' }}
       </span> mmHg
     </li>
 
@@ -230,7 +230,7 @@
       <li><strong>Haemoglobin:</strong> 
         <span class="{{ 'missing' if patient.haemoglobin == 'Missing' else 'critical' if patient.haemoglobin < 80 else 'caution' if 80 <= patient.haemoglobin <= 110 else 'safe' }}"
               title="Haemoglobin level: < 80 g/L = Critical; 80–110 g/L = Caution; > 110 g/L = Safe">
-          {{ patient.haemoglobin if patient.haemoglobin != 'Missing' else 'N/A' }} g/L
+          {{ patient.haemoglobin| int if patient.haemoglobin != 'Missing' else 'N/A' }} g/L
         </span> 
         | <strong>Date:</strong> {{ patient.Sample_Date5 if patient.Sample_Date5 else "N/A" }}
       </li>
