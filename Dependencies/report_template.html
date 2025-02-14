@@ -112,9 +112,13 @@
           | <strong>Date:</strong> {{ patient.Sample_Date }}
         </li>
         <li><strong>3 Months Prior:</strong> 
-          {{ (patient.eGFR_3m_prior | default(0, true)) if patient.eGFR_3m_prior != 'Missing' else 0 }} ml/min/1.73m<sup>2</sup> 
-          | Date: {{ patient.Sample_Date2 }}
-        </li>
+          {% if patient.eGFR_3m_prior is none or patient.eGFR_3m_prior == '' or patient.eGFR_3m_prior == 'Missing' %}
+              N/A
+          {% else %}
+              {{ patient.eGFR_3m_prior | int }} ml/min/1.73m<sup>2</sup>
+          {% endif %}
+          | <strong>Date:</strong> {{ patient.Sample_Date2 | default("N/A", true) }}
+      </li>
         <li><strong>eGFR Trend:</strong> 
           <span class="{{ 'missing' if patient.eGFR_Trend == 'No Data' else 
                          'critical' if patient.eGFR_Trend == 'Rapid decline' else 
