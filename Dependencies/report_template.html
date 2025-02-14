@@ -126,21 +126,45 @@
             {{ patient.eGFR_Trend }}
           </span>
           <br>
-          <br>
-          <em style="font-size: smaller;">
-            The eGFR trend is assessed by comparing the most recent value with the reading from three months prior. 
-            The change is adjusted to an annualized rate based on the time interval between measurements.
-          </em>
-          <ul style="font-size: smaller;">
-            <li><strong>Rapid Decline:</strong> A decrease of more than 5 mL/min/1.73m² per year or a relative drop of 25% or more.</li>
-            <li><strong>Stable:</strong> No significant decline.</li>
-          </ul>
-          <span style="font-size: smaller;">A rapid decline may indicate progressive CKD, requiring closer monitoring or intervention.</span>       
-        </li>
+<br>
+<em style="font-size: smaller;">
+The eGFR trend is assessed by comparing the most recent value with the reading from three months prior. 
+The change is adjusted to an annualized rate based on the time interval between measurements.
+</em>
+  <ul style="font-size: smaller;">
+  <li><strong>Rapid Decline:</strong> A decrease of more than 5 mL/min/1.73m² per year or a relative drop of 25% or more.</li>
+  <li><strong>Stable:</strong> No significant decline.</li>
+  </ul>
+<span style="font-size: smaller;">A rapid decline may indicate progressive CKD, requiring closer monitoring or intervention.</span>       
+</li>
       </ul>
     </li>
 </div>    
-
+  
+<div class="boxed">
+  <h3>Blood Pressure</h3>
+  <ul>
+    <li><strong>Classification:</strong> {{ patient.BP_Classification }} | <strong>Date:</strong> {{ patient.Sample_Date3 }}</li>
+    <li>
+      <strong>Systolic / Diastolic:</strong>
+      <span class="{{ 'missing' if patient.Systolic_BP == 'Missing' else 'critical' if patient.Systolic_BP >= 180 else 'caution' if 140 <= patient.Systolic_BP < 180 else 'low' if patient.Systolic_BP < 90 else 'safe' }}" title="Systolic BP: Critical ≥180; Caution 140–179; Low <90; otherwise Safe">
+        {{ patient.Systolic_BP | default(0, true) | int }}
+      </span>
+      /
+      <span class="{{ 'missing' if patient.Diastolic_BP == 'Missing' else 'critical' if patient.Diastolic_BP >= 120 else 'caution' if 90 <= patient.Diastolic_BP < 120 else 'low' if patient.Diastolic_BP < 60 else 'safe' }}" title="Diastolic BP: Critical ≥120; Caution 90–119; Low <60; otherwise Safe">
+        {{ patient.Diastolic_BP | default(0, true) | int }}
+      </span> mmHg
+    </li> 
+    <li>
+      <strong>Target BP:</strong> {{ patient.BP_Target }} | 
+      <strong>BP Status:</strong> 
+      <span class="{{ 'critical' if patient.BP_Flag == 'Above Target' else 'caution' if patient.BP_Flag == 'Below Target' else 'missing' if patient.BP_Flag == 'Missing' else 'safe' }}" title="BP Status: 'Above Target' indicates high blood pressure; 'Below Target' indicates low blood pressure; 'Missing' if no data is available; 'Safe' if within the desired range">
+        {{ patient.BP_Flag }}
+      </span>
+    </li>    
+  </ul>
+</div>
+  
 <div class="boxed">
   <h3>Anaemia Overview</h3>
   <ul>
@@ -156,7 +180,7 @@
     <li><strong>Anaemia Management:</strong> {{ patient.Anaemia_Flag }}</li>
      </ul>
 </div>
-
+   
 <div class="boxed">
   <h3>Electrolyte and Mineral Bone Disorder (MBD) Management</h3>
   <ul>
@@ -183,32 +207,7 @@
     <div class="center-box">
       <strong>MBD Status</strong> <br> {{ patient.CKD_MBD_Flag }}
     </div>
-  </div>
-   
-</div>
-
-<div class="boxed">
-  <h3>Blood Pressure</h3>
-  <ul>
-    <li><strong>Classification:</strong> {{ patient.BP_Classification }} | <strong>Date:</strong> {{ patient.Sample_Date3 }}</li>
-    <li>
-      <strong>Systolic / Diastolic:</strong>
-      <span class="{{ 'missing' if patient.Systolic_BP == 'Missing' else 'critical' if patient.Systolic_BP >= 180 else 'caution' if 140 <= patient.Systolic_BP < 180 else 'low' if patient.Systolic_BP < 90 else 'safe' }}" title="Systolic BP: Critical ≥180; Caution 140–179; Low <90; otherwise Safe">
-        {{ patient.Systolic_BP | default(0, true) | int }}
-      </span>
-      /
-      <span class="{{ 'missing' if patient.Diastolic_BP == 'Missing' else 'critical' if patient.Diastolic_BP >= 120 else 'caution' if 90 <= patient.Diastolic_BP < 120 else 'low' if patient.Diastolic_BP < 60 else 'safe' }}" title="Diastolic BP: Critical ≥120; Caution 90–119; Low <60; otherwise Safe">
-        {{ patient.Diastolic_BP | default(0, true) | int }}
-      </span> mmHg
-    </li> 
-    <li>
-      <strong>Target BP:</strong> {{ patient.BP_Target }} | 
-      <strong>BP Status:</strong> 
-      <span class="{{ 'critical' if patient.BP_Flag == 'Above Target' else 'caution' if patient.BP_Flag == 'Below Target' else 'missing' if patient.BP_Flag == 'Missing' else 'safe' }}" title="BP Status: 'Above Target' indicates high blood pressure; 'Below Target' indicates low blood pressure; 'Missing' if no data is available; 'Safe' if within the desired range">
-        {{ patient.BP_Flag }}
-      </span>
-    </li>    
-  </ul>
+  </div>   
 </div>
 
 <div class="boxed">
@@ -247,9 +246,9 @@
     </li>
   </ul>
 
-  <ul>
-    <i style="font-size: smaller;">The patient's 2- and 5-year kidney failure risk scores estimate the likelihood that their kidney disease will progress to kidney failure within the next 2 or 5 years. These scores are calculated based on the patient's current kidney function and other risk factors such as age, blood pressure, and existing health conditions. Understanding these risk scores helps in predicting disease progression and planning appropriate treatment strategies.</i>
-  </ul>
+<ul>
+<i style="font-size: smaller;">The patient's 2- and 5-year kidney failure risk scores estimate the likelihood that their kidney disease will progress to kidney failure within the next 2 or 5 years. These scores are calculated based on the patient's current kidney function and other risk factors such as age, blood pressure, and existing health conditions. Understanding these risk scores helps in predicting disease progression and planning appropriate treatment strategies.</i>
+</ul>
 </div>
 
 <div class="boxed">
@@ -303,7 +302,7 @@
     </li>
     <li>
       <strong>Statin Recommendation:</strong> 
-      <span class="{{ 'critical' if patient.Statin_Recommendation == 'Consider Statin' else 'missing' if patient.Statin_Recommendation == 'Missing' else 'safe' }}" title="Statin Recommendation: 'Consider Statin' indicates a recommendation to consider statin therapy; 'Missing' means the data is unavailable; 'Safe' indicates no statin is recommended.">
+      <span class="{{ 'critical' if patient.Statin_Recommendation == 'Not on Statin' else 'missing' if patient.Statin_Recommendation == 'Missing' else 'safe' }}" title="Statin Recommendation: 'Consider Statin' indicates a recommendation to consider statin therapy; 'Missing' means the data is unavailable; 'Safe' indicates no statin is recommended.">
         {{ patient.Statin_Recommendation }}
       </span>
     </li>    
