@@ -10,7 +10,9 @@
     h3 { text-align: left; page-break-after: avoid;}
     table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
     th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
-    .center { text-align: center; }
+    .center { text-align: center; 
+      page-break-inside: avoid; /* Prevents the div from breaking across pages */
+      break-inside: avoid; /* Ensures compatibility with modern browsers */}
     .boxed {
       position: relative;
       border: 2px solid #ccc; /* Light grey border */
@@ -562,18 +564,20 @@
     </div>
     {% endif %}
 
-    <h2>More Information on Chronic Kidney Disease</h2>
-<div class="center" style="margin: 20px 0;">
-  {% if patient.qr_code_path %}
-      <img src="{{ patient.qr_code_path }}" alt="CKD Info QR Code" width="150">
-  {% else %}
-      <p style="color: #555;">QR code unavailable</p>
-  {% endif %}
-  <p style="margin-top: 10px; font-size: 14px; color: #555;">
-    Scan this QR code with your phone to access trusted resources on <strong>Chronic Kidney Disease (CKD)</strong>, including <br>
-    guidance on managing your condition, lifestyle recommendations, and when to seek medical advice.
-  </p>
-</div>
+    <div style="display: inline-block; width: 100%;">
+      <h2>More Information on Chronic Kidney Disease</h2>
+      <div class="center" style="margin: 20px 0; page-break-inside: avoid;">
+        {% if patient.qr_code_path %}
+            <img src="{{ patient.qr_code_path }}" alt="CKD Info QR Code" width="150">
+        {% else %}
+            <p style="color: #555;">QR code unavailable</p>
+        {% endif %}
+        <p style="margin-top: 10px; font-size: 14px; color: #555;">
+          Scan this QR code with your phone to access trusted resources on <strong>Chronic Kidney Disease (CKD)</strong>, including <br>
+          guidance on managing your condition, lifestyle recommendations, and when to seek medical advice.
+        </p>
+      </div>
+    </div>
 
 <div class="container" style="text-align: center;">
   <div class="center-box">
