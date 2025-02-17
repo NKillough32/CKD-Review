@@ -369,10 +369,28 @@ def move_ckd_files(date_folder):
     except Exception as e:
         print(f"Failed to move EMIS Clinical Code Batch Files: {e}")
 
+# Function to delete specific CKD files after moving
+def delete_ckd_files(date_folder):
+    files_to_delete = [
+        os.path.join(date_folder, f"eGFR_check_{pd.Timestamp.today().date()}.csv"),
+        os.path.join(date_folder, "CKD_review.csv")
+    ]
+
+    for file_path in files_to_delete:
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                print(f"Deleted {file_path}")
+            else:
+                print(f"File not found for deletion: {file_path}")
+        except Exception as e:
+            print(f"Error deleting {file_path}: {e}")
+            
 # Run the functions in sequence
 date_folder = generate_patient_html(data)  # Generate PDFs and capture the returned date folder path
 rename_folders(date_folder)               # Rename folders within the date-stamped directory
 move_ckd_files(date_folder)  # Moves both eGFR and CKD_review files to the date-stamped folder
+delete_ckd_files(date_folder)             # Delete eGFR_check and CKD_review files
 print("\nCKD Analysis and Reporting Completed ")
 print(f"All reports and data saved in the folder: {date_folder}")
 print("Please review missing file alerts above if applicable.\n")
