@@ -17,10 +17,10 @@ def download_wkhtmltopdf(installer_path, url):
     """Download the wkhtmltopdf installer."""
     print("Downloading wkhtmltopdf installer...")
     try:
-        response = requests.get(url, stream=True)
+        response = requests.get(url, stream=True, timeout=30)
         response.raise_for_status()
         with open(installer_path, "wb") as file:
-            for chunk in response.iter_content(chunk_size=1024):
+            for chunk in response.iter_content(chunk_size=8192):
                 file.write(chunk)
         print("Download completed successfully.")
     except requests.RequestException as e:
