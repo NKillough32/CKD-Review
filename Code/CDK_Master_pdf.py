@@ -14,6 +14,7 @@ current_dir = os.getcwd()
 # Import the main CKD processing logic
 from CKD_core import *
 
+# check admin status
 def is_admin():
     try:
         return ctypes.windll.shell32.IsUserAnAdmin()
