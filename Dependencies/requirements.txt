@@ -5,3 +5,4 @@ pdfkit
 jinja2
 qrcode
 Pillow
+tqdm

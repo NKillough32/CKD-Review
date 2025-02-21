@@ -7,6 +7,7 @@ import pdfkit  # type: ignore
 import tempfile
 import logging
 import ctypes, sys
+from tqdm import tqdm
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -24,21 +25,24 @@ def is_admin():
     except:
         return False
 
+import requests
+from tqdm import tqdm
+
 def download_wkhtmltopdf(installer_path, url):
-    """Download the wkhtmltopdf installer."""
+    """Download the wkhtmltopdf installer with a progress bar."""
     logging.info("Starting download of wkhtmltopdf installer from %s", url)
     try:
         response = requests.get(url, stream=True, timeout=30)
         response.raise_for_status()
-        logging.info("Response Status: %s", response.status_code)
-        logging.info("Response Headers: %s", response.headers)
-        total_size = 0
+        total_size = int(response.headers.get('content-length', 0))
+        block_size = 8192  # 8 KB
+        progress_bar = tqdm(total=total_size, unit='iB', unit_scale=True)
         with open(installer_path, "wb") as file:
-            for chunk in response.iter_content(chunk_size=8192):
+            for chunk in response.iter_content(chunk_size=block_size):
                 if chunk:
                     file.write(chunk)
-                    total_size += len(chunk)
-                    logging.info("Downloaded %d bytes", total_size)
+                    progress_bar.update(len(chunk))
+        progress_bar.close()
         logging.info("Download completed successfully. Total size: %d bytes", total_size)
     except requests.ConnectionError as e:
         logging.error("Connection error: %s", e)
@@ -46,7 +50,7 @@ def download_wkhtmltopdf(installer_path, url):
         logging.error("Timeout error: %s", e)
     except requests.RequestException as e:
         logging.error("Error downloading the installer: %s", e)
-        
+
 if __name__ == "__main__":
     if not is_admin():
         # Re-run the script with elevation
