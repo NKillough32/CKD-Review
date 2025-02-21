@@ -5,7 +5,11 @@ import requests  # type: ignore
 import warnings
 import pdfkit  # type: ignore
 import tempfile
+import logging
 
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# Supress warnings
 warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
 
 # Define path to wkhtmltopdf executable and installer
@@ -15,18 +19,27 @@ url = "https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6-1/wkhtm
 
 def download_wkhtmltopdf(installer_path, url):
     """Download the wkhtmltopdf installer."""
-    print("Downloading wkhtmltopdf installer...")
+    logging.info("Starting download of wkhtmltopdf installer from %s", url)
     try:
         response = requests.get(url, stream=True, timeout=30)
         response.raise_for_status()
+        logging.info("Response Status: %s", response.status_code)
+        logging.info("Response Headers: %s", response.headers)
+        total_size = 0
         with open(installer_path, "wb") as file:
             for chunk in response.iter_content(chunk_size=8192):
-                file.write(chunk)
-        print("Download completed successfully.")
+                if chunk:
+                    file.write(chunk)
+                    total_size += len(chunk)
+                    logging.info("Downloaded %d bytes", total_size)
+        logging.info("Download completed successfully. Total size: %d bytes", total_size)
+    except requests.ConnectionError as e:
+        logging.error("Connection error: %s", e)
+    except requests.Timeout as e:
+        logging.error("Timeout error: %s", e)
     except requests.RequestException as e:
-        print(f"Error downloading the installer: {e}")
-        exit(1)
-
+        logging.error("Error downloading the installer: %s", e)
+        
 # Check if wkhtmltopdf is installed; if not, download and install
 if not os.path.exists(path_to_wkhtmltopdf):
     print("wkhtmltopdf executable not found.")
