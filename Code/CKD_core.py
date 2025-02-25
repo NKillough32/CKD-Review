@@ -839,9 +839,45 @@ CKD_review.rename(columns={
 # Convert HC_Number to integer safely
 CKD_review['HC_Number'] = pd.to_numeric(CKD_review['HC_Number'], errors='coerce').astype('Int64')
 
+def flag_aki(row):
+    if pd.isna(row['Creatinine']) or pd.isna(row['Creatinine_3m_prior']) or pd.isna(row['Date']) or pd.isna(row['Date.2']):
+        return "Insufficient Data"
+    delta_creat = row['Creatinine'] - row['Creatinine_3m_prior']
+    days = (row['Date'] - row['Date.2']).days
+    if days <= 0 or days > 90:
+        return "Invalid Timeframe"
+    if delta_creat >= 26.5 or (row['Creatinine'] / row['Creatinine_3m_prior']) >= 1.5:
+        return "Possible AKI - Urgent Review"
+    return "No AKI"
+CKD_review['AKI_Flag'] = CKD_review.apply(flag_aki, axis=1)
+
+def simple_cv_risk(age, gender, systolic_bp, hba1c, smoking=None):
+    if any(pd.isna(x) for x in [age, gender, systolic_bp, hba1c]):
+        return "Missing Data"
+    score = 0
+    score += 1 if age > 65 else 0
+    score += 1 if systolic_bp > 140 else 0
+    score += 1 if hba1c > 53 else 0
+    score += 1 if smoking == "Yes" else 0
+    return "High Risk" if score >= 3 else "Moderate Risk" if score >= 1 else "Low Risk"
+CKD_review['CV_Risk'] = CKD_review.apply(
+    lambda row: simple_cv_risk(row['Age'], row['Gender'], row['Systolic_BP'], row['HbA1c']), axis=1
+)
+
+def prioritize_patient(row):
+    score = 0
+    score += 2 if row['eGFR_Trend'] == "Rapid Decline" else 0
+    score += 1 if row['risk_2yr'] > 20 else 0
+    score += 1 if row['Proteinuria_Flag'].startswith("Immediate") else 0
+    return "High" if score >= 3 else "Medium" if score >= 1 else "Low"
+CKD_review['Priority'] = CKD_review.apply(prioritize_patient, axis=1)
+
+
 print("Data preprocessing and metrics calculation complete.")
 print("Writing Output Data ...")
-
+print("Summary Statistics:")
+print(f"Patients with CKD Stage 3+: {len(CKD_review[CKD_review['CKD_Stage'].isin(['Stage 3A', 'Stage 3B', 'Stage 4', 'Stage 5'])])}")
+print(f"Patients with Contraindications: {len(CKD_review[CKD_review['contraindicated_prescribed'] != 'No contraindications'])}")
 # Save output to CSV
 output_file_name = f"eGFR_check_{pd.Timestamp.today().date()}.csv"
 CKD_review.to_csv(output_file_name, index=False)
