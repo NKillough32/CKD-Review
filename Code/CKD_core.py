@@ -816,10 +816,10 @@ CKD_review.loc[:,'All_Contraindications'] = CKD_review.apply(
 )
 
 def flag_aki(row):
-    if pd.isna(row['Creatinine']) or pd.isna(row['Creatinine_3m_prior']) or pd.isna(row['Date']) or pd.isna(row['Date.2']):
+    if pd.isna(row['Creatinine']) or pd.isna(row['Creatinine_3m_prior']) or pd.isna(row['Date']) or pd.isna(row['Date_3m_prior']):
         return "Insufficient Data"
     delta_creat = row['Creatinine'] - row['Creatinine_3m_prior']
-    days = (row['Date'] - row['Date.2']).days
+    days = (row['Date'] - row['Date_3m_prior']).days
     if days <= 0 or days > 90:
         return "Invalid Timeframe"
     if delta_creat >= 26.5 or (row['Creatinine'] / row['Creatinine_3m_prior']) >= 1.5:
