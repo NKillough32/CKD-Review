@@ -815,30 +815,6 @@ CKD_review.loc[:,'All_Contraindications'] = CKD_review.apply(
     axis=1
 )
 
-# Rename columns for clarity
-CKD_review.rename(columns={
-    'HC Number': 'HC_Number',
-    'Date': 'Sample_Date',
-    'Date.1': 'Sample_Date1',
-    'Date_3m_prior': 'Sample_Date2',
-    'Date.3': 'Sample_Date3',
-    'Date.4': 'Sample_Date4',
-    'Date.5': 'Sample_Date5',
-    'Date.6': 'Sample_Date6',
-    'Date.7': 'Sample_Date7',
-    'Date.8': 'Sample_Date8',
-    'Date.9': 'Sample_Date9',
-    'Date.10': 'Sample_Date10',
-    'Date.11': 'Sample_Date11',
-    'Date.12': 'Sample_Date12',
-    'Date.13': 'Sample_Date13',
-    'Date.14': 'Sample_Date14',
-    'Date.15': 'Sample_Date15',
-}, inplace=True)
-
-# Convert HC_Number to integer safely
-CKD_review['HC_Number'] = pd.to_numeric(CKD_review['HC_Number'], errors='coerce').astype('Int64')
-
 def flag_aki(row):
     if pd.isna(row['Creatinine']) or pd.isna(row['Creatinine_3m_prior']) or pd.isna(row['Date']) or pd.isna(row['Date.2']):
         return "Insufficient Data"
@@ -866,12 +842,45 @@ CKD_review['CV_Risk'] = CKD_review.apply(
 
 def prioritize_patient(row):
     score = 0
+    
+    # Ensure risk_2yr is numeric, or default to NaN
+    try:
+        risk_2yr = float(row['risk_2yr'])  # Convert to float
+    except ValueError:
+        return "Unknown"  # If conversion fails, return 'Unknown'
+
     score += 2 if row['eGFR_Trend'] == "Rapid Decline" else 0
-    score += 1 if row['risk_2yr'] > 20 else 0
+    score += 1 if risk_2yr > 20 else 0
     score += 1 if row['Proteinuria_Flag'].startswith("Immediate") else 0
+
     return "High" if score >= 3 else "Medium" if score >= 1 else "Low"
+
+# Apply the function safely
 CKD_review['Priority'] = CKD_review.apply(prioritize_patient, axis=1)
 
+# Rename columns for clarity
+CKD_review.rename(columns={
+    'HC Number': 'HC_Number',
+    'Date': 'Sample_Date',
+    'Date.1': 'Sample_Date1',
+    'Date_3m_prior': 'Sample_Date2',
+    'Date.3': 'Sample_Date3',
+    'Date.4': 'Sample_Date4',
+    'Date.5': 'Sample_Date5',
+    'Date.6': 'Sample_Date6',
+    'Date.7': 'Sample_Date7',
+    'Date.8': 'Sample_Date8',
+    'Date.9': 'Sample_Date9',
+    'Date.10': 'Sample_Date10',
+    'Date.11': 'Sample_Date11',
+    'Date.12': 'Sample_Date12',
+    'Date.13': 'Sample_Date13',
+    'Date.14': 'Sample_Date14',
+    'Date.15': 'Sample_Date15',
+}, inplace=True)
+
+# Convert HC_Number to integer safely
+CKD_review['HC_Number'] = pd.to_numeric(CKD_review['HC_Number'], errors='coerce').astype('Int64')
 
 print("Data preprocessing and metrics calculation complete.")
 print("Writing Output Data ...")
