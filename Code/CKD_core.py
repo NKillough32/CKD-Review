@@ -435,14 +435,19 @@ def convert_date_columns(df):
             df[col] = df[col].apply(parse_any_date)
     return df
 def flag_aki(row):
-    if pd.isna(row['Creatinine']) or pd.isna(row['Creatinine_3m_prior']) or pd.isna(row['Date']) or pd.isna(row['Date_3m_prior']):
+    if any(pd.isna(x) for x in [row['Creatinine'], row['Creatinine_3m_prior'], row['Date'], row['Date_3m_prior']]):
         return "Insufficient Data"
     delta_creat = row['Creatinine'] - row['Creatinine_3m_prior']
+    ratio = row['Creatinine'] / row['Creatinine_3m_prior']
     days = (row['Date'] - row['Date_3m_prior']).days
     if days <= 0 or days > 90:
         return "Invalid Timeframe"
-    if delta_creat >= 26.5 or (row['Creatinine'] / row['Creatinine_3m_prior']) >= 1.5:
-        return "Possible AKI - Urgent Review"
+    if ratio >= 3 or delta_creat >= 354:  # Stage 3
+        return "AKI Stage 3 - Urgent"
+    elif ratio >= 2:  # Stage 2
+        return "AKI Stage 2 - Urgent"
+    elif ratio >= 1.5 or delta_creat >= 26.5:  # Stage 1
+        return "AKI Stage 1 - Review"
     return "No AKI"
 def simple_cv_risk(age, gender, systolic_bp, hba1c, smoking=None):
     if any(pd.isna(x) for x in [age, gender, systolic_bp, hba1c]):
