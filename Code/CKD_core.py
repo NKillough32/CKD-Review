@@ -434,6 +434,39 @@ def convert_date_columns(df):
         if 'Date' in col:
             df[col] = df[col].apply(parse_any_date)
     return df
+def flag_aki(row):
+    if pd.isna(row['Creatinine']) or pd.isna(row['Creatinine_3m_prior']) or pd.isna(row['Date']) or pd.isna(row['Date_3m_prior']):
+        return "Insufficient Data"
+    delta_creat = row['Creatinine'] - row['Creatinine_3m_prior']
+    days = (row['Date'] - row['Date_3m_prior']).days
+    if days <= 0 or days > 90:
+        return "Invalid Timeframe"
+    if delta_creat >= 26.5 or (row['Creatinine'] / row['Creatinine_3m_prior']) >= 1.5:
+        return "Possible AKI - Urgent Review"
+    return "No AKI"
+def simple_cv_risk(age, gender, systolic_bp, hba1c, smoking=None):
+    if any(pd.isna(x) for x in [age, gender, systolic_bp, hba1c]):
+        return "Missing Data"
+    score = 0
+    score += 1 if age > 65 else 0
+    score += 1 if systolic_bp > 140 else 0
+    score += 1 if hba1c > 53 else 0
+    score += 1 if smoking == "Yes" else 0
+    return "High Risk" if score >= 3 else "Moderate Risk" if score >= 1 else "Low Risk"
+def prioritize_patient(row):
+    score = 0
+    
+    # Ensure risk_2yr is numeric, or default to NaN
+    try:
+        risk_2yr = float(row['risk_2yr'])  # Convert to float
+    except ValueError:
+        return "Unknown"  # If conversion fails, return 'Unknown'
+
+    score += 2 if row['eGFR_Trend'] == "Rapid Decline" else 0
+    score += 1 if risk_2yr > 20 else 0
+    score += 1 if row['Proteinuria_Flag'].startswith("Immediate") else 0
+
+    return "High" if score >= 3 else "Medium" if score >= 1 else "Low"
 
 # Get the current working directory
 current_dir = os.getcwd()
@@ -723,7 +756,6 @@ CKD_review.loc[:, 'BP_Target'] = CKD_review.apply(
     else "<140/90", axis=1
 )
 
-
 CKD_review.loc[:,'BP_Flag'] = CKD_review.apply(
     lambda row: "Above Target" if (
         ((row['Systolic_BP'] >= 140 or row['Diastolic_BP'] >= 90) and row['BP_Target'] == "<140/90") or 
@@ -793,12 +825,10 @@ CKD_review.loc[:,'HbA1c_Target'] = CKD_review['HbA1c'].apply(
 # Lifestyle Advice
 CKD_review.loc[:,'Lifestyle_Advice'] = CKD_review['CKD_Stage'].apply(lifestyle_advice)
 
-
 # Anaemia Flag
 CKD_review.loc[:,'Anaemia_Flag'] = CKD_review['haemoglobin'].apply(
     lambda x: "Consider ESA/Iron" if pd.notna(x) and x < 110 else "No Action Needed"
 )
-
 
 # All Contraindications
 CKD_review.loc[:,'All_Contraindications'] = CKD_review.apply(
@@ -806,45 +836,13 @@ CKD_review.loc[:,'All_Contraindications'] = CKD_review.apply(
     axis=1
 )
 
-def flag_aki(row):
-    if pd.isna(row['Creatinine']) or pd.isna(row['Creatinine_3m_prior']) or pd.isna(row['Date']) or pd.isna(row['Date_3m_prior']):
-        return "Insufficient Data"
-    delta_creat = row['Creatinine'] - row['Creatinine_3m_prior']
-    days = (row['Date'] - row['Date_3m_prior']).days
-    if days <= 0 or days > 90:
-        return "Invalid Timeframe"
-    if delta_creat >= 26.5 or (row['Creatinine'] / row['Creatinine_3m_prior']) >= 1.5:
-        return "Possible AKI - Urgent Review"
-    return "No AKI"
+# AKI Flag
 CKD_review['AKI_Flag'] = CKD_review.apply(flag_aki, axis=1)
 
-def simple_cv_risk(age, gender, systolic_bp, hba1c, smoking=None):
-    if any(pd.isna(x) for x in [age, gender, systolic_bp, hba1c]):
-        return "Missing Data"
-    score = 0
-    score += 1 if age > 65 else 0
-    score += 1 if systolic_bp > 140 else 0
-    score += 1 if hba1c > 53 else 0
-    score += 1 if smoking == "Yes" else 0
-    return "High Risk" if score >= 3 else "Moderate Risk" if score >= 1 else "Low Risk"
+# Calculate CV Risk
 CKD_review['CV_Risk'] = CKD_review.apply(
     lambda row: simple_cv_risk(row['Age'], row['Gender'], row['Systolic_BP'], row['HbA1c']), axis=1
 )
-
-def prioritize_patient(row):
-    score = 0
-    
-    # Ensure risk_2yr is numeric, or default to NaN
-    try:
-        risk_2yr = float(row['risk_2yr'])  # Convert to float
-    except ValueError:
-        return "Unknown"  # If conversion fails, return 'Unknown'
-
-    score += 2 if row['eGFR_Trend'] == "Rapid Decline" else 0
-    score += 1 if risk_2yr > 20 else 0
-    score += 1 if row['Proteinuria_Flag'].startswith("Immediate") else 0
-
-    return "High" if score >= 3 else "Medium" if score >= 1 else "Low"
 
 # Apply the function safely
 CKD_review['Priority'] = CKD_review.apply(prioritize_patient, axis=1)
