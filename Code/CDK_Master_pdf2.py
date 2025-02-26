@@ -6,6 +6,14 @@ import ctypes
 import sys
 import tempfile
 import pdfkit  # type: ignore
+import logging
+
+# Setup logging to match CKD_windows_core2
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler()]
+)
 
 warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
 
@@ -20,7 +28,7 @@ def is_admin():
 
 # Request elevation if needed and exit
 if not is_admin():
-    print("Admin privileges required. Requesting elevation...")
+    logging.info("Admin privileges required. Requesting elevation...")
     if platform.system() == "Windows":
         ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, 1)
     sys.exit()
@@ -54,16 +62,23 @@ try:
 
         # Setup wkhtmltopdf with config and installer_path
         config = Config.WINDOWS
+        logging.info(f"Setting up wkhtmltopdf with config={config}, installer_path={installer_path}")
+        
+        # Ensure installer_path is empty or valid before proceeding
+        if os.path.exists(installer_path) and os.path.getsize(installer_path) == 0:
+            logging.info(f"Removing empty installer file at {installer_path}")
+            os.remove(installer_path)
+
         setup_wkhtmltopdf(config, installer_path)  # Call matches CKD_windows_core2 definition
         pdfkit_config = pdfkit.configuration(wkhtmltopdf=config["WKHTMLTOPDF_PATH"])
-        print("wkhtmltopdf and pdfkit configured successfully.")
+        logging.info("wkhtmltopdf and pdfkit configured successfully.")
 
     elif platform.system() == "Darwin":  # macOS
         from CKD_mac_core import *  # macOS-specific setup
         config = Config.MACOS
         # Assuming CKD_mac_core defines path_to_wkhtmltopdf or a setup function
         pdfkit_config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
-        print("wkhtmltopdf and pdfkit configured successfully.")
+        logging.info("wkhtmltopdf and pdfkit configured successfully.")
     else:
         raise EnvironmentError("Unsupported operating system. This script only supports Windows and macOS.")
 
@@ -71,13 +86,13 @@ try:
     from CKD_pdf_files import *
 
 except Exception as e:
-    print(f"Failed to setup wkhtmltopdf: {e}")
+    logging.error(f"Failed to setup wkhtmltopdf: {e}")
     sys.exit(1)
 finally:
     # Cleanup temporary installer file if it exists
     if installer_path and os.path.exists(installer_path):
         try:
             os.remove(installer_path)
-            print("Temporary installer file removed.")
+            logging.info("Temporary installer file removed.")
         except OSError as e:
-            print(f"Failed to remove temporary installer file: {e}")
+            logging.warning(f"Failed to remove temporary installer file: {e}")
