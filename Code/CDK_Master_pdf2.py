@@ -74,7 +74,7 @@ try:
         logging.info("wkhtmltopdf and pdfkit configured successfully.")
 
     elif platform.system() == "Darwin":  # macOS
-        from CKD_mac_core import *  # macOS-specific setup
+        from CKD_mac_core2 import *  # macOS-specific setup
         config = Config.MACOS
         # Assuming CKD_mac_core defines path_to_wkhtmltopdf or a setup function
         pdfkit_config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
