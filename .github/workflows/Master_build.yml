@@ -25,7 +25,7 @@ jobs:
       matrix:
         include:
           - name: NephroPath
-            script: Code/CDK_Master_pdf.py
+            script: Code/CDK_Master_pdf2.py
             output: NephroPath.exe
           - name: NephroPath_html
             script: Code/CDK_Master_html.py
@@ -91,7 +91,7 @@ jobs:
       matrix:
         include:
           - name: NephroPath_mac
-            script: Code/CDK_Master_pdf.py
+            script: Code/CDK_Master_pdf2.py
             output: NephroPath_mac
           - name: NephroPath_mac_html
             script: Code/CDK_Master_html.py
