@@ -177,9 +177,9 @@ def classify_CKD_stage(eGFR):
     else:
         return "No Data"
 def calculate_egfr_trend(row):
-    if pd.isna(row['eGFR']) or pd.isna(row['eGFR_3m_prior']) or pd.isna(row['Date']) or pd.isna(row['Date.2']):
+    if pd.isna(row['eGFR']) or pd.isna(row['eGFR_3m_prior']) or pd.isna(row['Date']) or pd.isna(row['Date_3m_prior']):
         return "No Data"
-    days_between = (row['Date'] - row['Date.2']).days
+    days_between = (row['Date'] - row['Date_3m_prior']).days
     if days_between == 0:
         return "No Data"
     annualized_change = (row['eGFR'] - row['eGFR_3m_prior']) * (365 / abs(days_between))
