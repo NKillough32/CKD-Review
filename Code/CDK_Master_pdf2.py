@@ -4,6 +4,7 @@ import warnings
 import platform
 import ctypes
 import sys
+import tempfile
 import pdfkit  # type: ignore
 
 warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
@@ -30,7 +31,7 @@ current_dir = os.getcwd()
 # Import the main CKD processing logic
 from CKD_core import *
 
-# Define configuration for wkhtmltopdf setup
+# Define configuration for wkhtmltopdf setup (matching CKD_windows_core2)
 class Config:
     WINDOWS = {
         "WKHTMLTOPDF_PATH": "C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe",
@@ -42,33 +43,41 @@ class Config:
     }
 
 # Detect the operating system and import the appropriate wkhtmltopdf setup file
-if platform.system() == "Windows":
-    from CKD_windows_core2 import *  # Updated to CKD_windows_core2
+installer_path = None
+try:
+    if platform.system() == "Windows":
+        from CKD_windows_core2 import *  # Import setup_wkhtmltopdf from CKD_windows_core2
 
-    # Setup wkhtmltopdf with config
-    try:
-        config = Config.WINDOWS  # Provide the config dictionary
-        setup_wkhtmltopdf(config)  # Call the function with the required argument
+        # Create a temporary file for the installer
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".exe") as tmp:
+            installer_path = tmp.name
+
+        # Setup wkhtmltopdf with config and installer_path
+        config = Config.WINDOWS
+        setup_wkhtmltopdf(config, installer_path)  # Call matches CKD_windows_core2 definition
         pdfkit_config = pdfkit.configuration(wkhtmltopdf=config["WKHTMLTOPDF_PATH"])
         print("wkhtmltopdf and pdfkit configured successfully.")
-    except Exception as e:
-        print(f"Failed to setup wkhtmltopdf: {e}")
-        sys.exit(1)
 
-elif platform.system() == "Darwin":  # macOS
-    from CKD_mac_core import *  # macOS-specific setup
-    # Assuming CKD_mac_core defines its own setup logic or variables
-    try:
+    elif platform.system() == "Darwin":  # macOS
+        from CKD_mac_core import *  # macOS-specific setup
         config = Config.MACOS
-        # If CKD_mac_core has a similar setup function, call it here
-        # Otherwise, assume it defines path_to_wkhtmltopdf
+        # Assuming CKD_mac_core defines path_to_wkhtmltopdf or a setup function
         pdfkit_config = pdfkit.configuration(wkhtmltopdf=path_to_wkhtmltopdf)
         print("wkhtmltopdf and pdfkit configured successfully.")
-    except Exception as e:
-        print(f"Failed to setup wkhtmltopdf on macOS: {e}")
-        sys.exit(1)
-else:
-    raise EnvironmentError("Unsupported operating system. This script only supports Windows and macOS.")
+    else:
+        raise EnvironmentError("Unsupported operating system. This script only supports Windows and macOS.")
 
-# Import the PDF module
-from CKD_pdf_files import *
+    # Import the PDF module
+    from CKD_pdf_files import *
+
+except Exception as e:
+    print(f"Failed to setup wkhtmltopdf: {e}")
+    sys.exit(1)
+finally:
+    # Cleanup temporary installer file if it exists
+    if installer_path and os.path.exists(installer_path):
+        try:
+            os.remove(installer_path)
+            print("Temporary installer file removed.")
+        except OSError as e:
+            print(f"Failed to remove temporary installer file: {e}")
