@@ -39,7 +39,7 @@ jobs:
 
       - name: Build with PyInstaller (Windows)
         run: |
-          python -m PyInstaller --onefile --name=NephroPath_win_pdf --icon=Dependencies/NephroPath_installer_icon.ico Code/CKD_Master_pdf2.py
+          python -m PyInstaller --onefile --name=NephroPath_win_pdf --icon=Dependencies/NephroPath_installer_icon.ico Code/CKD_Master_pdf_exefree.py
 
       - name: Move release
         run: |
@@ -96,7 +96,7 @@ jobs:
 
       - name: Build with PyInstaller (macOS)
         run: |
-          python -m PyInstaller --onefile --name=NephroPath_mac_pdf --icon=Dependencies/NephroPath_installer_icon.icns Code/CKD_Master_pdf2.py
+          python -m PyInstaller --onefile --name=NephroPath_mac_pdf --icon=Dependencies/NephroPath_installer_icon.icns Code/CKD_Master_pdf_exefree.py
 
       - name: Move release
         run: |
