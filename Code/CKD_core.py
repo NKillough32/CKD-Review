@@ -473,19 +473,22 @@ def prioritize_patient(row):
 
     return "High" if score >= 3 else "Medium" if score >= 1 else "Low"
 
-# Get the current working directory
-current_dir = os.getcwd()
-# Set up relative paths for data and output files
-creatinine_file = os.path.join(current_dir,"EMIS_Files", "Creatinine.csv")
-CKD_check_file = os.path.join(current_dir,"EMIS_Files", "CKD_check.csv") 
-CKD_review_file = os.path.join(current_dir, "CKD_review.csv") 
-contraindicated_drugs_file = os.path.join(current_dir,"Dependencies", "contraindicated_drugs.csv") # File containing contraindicated drugs
-drug_adjustment_file = os.path.join(current_dir,"Dependencies", "drug_adjustment.csv") # File containing drug adjustments
-statins_file = os.path.join(current_dir,"Dependencies", "statins.csv") # File containing statin drugs
-template_dir = os.path.join(current_dir, "Dependencies") # Directory containing HTML templates
-output_dir = os.path.join(current_dir, "Patient_Summaries")  # Output directory for PDFs
-surgery_info_file = os.path.join(current_dir,"Dependencies", "surgery_information.csv")
+# Get the base path
+if getattr(sys, 'frozen', False):
+    base_path = sys._MEIPASS
+else:
+    base_path = os.getcwd()
 
+# File paths
+creatinine_file = os.path.join(base_path, "EMIS_Files", "Creatinine.csv")
+CKD_check_file = os.path.join(base_path, "EMIS_Files", "CKD_check.csv")
+CKD_review_file = os.path.join(base_path, "CKD_review.csv")
+contraindicated_drugs_file = os.path.join(base_path, "Dependencies", "contraindicated_drugs.csv")
+drug_adjustment_file = os.path.join(base_path, "Dependencies", "drug_adjustment.csv")
+statins_file = os.path.join(base_path, "Dependencies", "statins.csv")
+template_dir = os.path.join(base_path, "Dependencies")
+output_dir = os.path.join(base_path, "Patient_Summaries")
+surgery_info_file = os.path.join(base_path, "Dependencies", "surgery_information.csv")
 check_files_exist(creatinine_file, CKD_check_file, contraindicated_drugs_file, drug_adjustment_file)
 
 print("Starting CKD Data Analysis Pipeline....")

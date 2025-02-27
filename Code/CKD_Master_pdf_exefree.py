@@ -21,7 +21,7 @@ if getattr(sys, 'frozen', False):
 else:
     base_path = os.getcwd()
 
-# Execute the main CKD processing logic once
+# Execute the main CKD processing logic
 print("Starting CKD Data Analysis Pipeline....")
 try:
     exec(open(os.path.join(base_path, "CKD_core.py")).read())
