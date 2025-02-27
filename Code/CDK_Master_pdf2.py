@@ -91,66 +91,64 @@ try:
                 pdfkit_config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
                 logging.info(f"wkhtmltopdf found at {wkhtmltopdf_path}. Configured successfully without elevation.")
             else:
-                # Attempt silent installation first
-                try:
-                    logging.info("Attempting silent installation of wkhtmltopdf...")
+                if admin_status:
+                    # Attempt silent installation only if admin rights are present
+                    logging.info("Admin rights detected. Attempting silent installation of wkhtmltopdf...")
                     setup_wkhtmltopdf(config, installer_path)  # Call matches CKD_windows_core2 definition
                     pdfkit_config = pdfkit.configuration(wkhtmltopdf=config["WKHTMLTOPDF_PATH"])
                     logging.info("wkhtmltopdf installed and configured successfully.")
-                except PermissionError as pe:
-                    if pe.winerror == 740:  # Specifically handle "requires elevation"
-                        logging.warning(f"Silent installation failed due to permissions (WinError 740): {pe}. Falling back to manual installation...")
+                else:
+                    # Fall back to manual installation if no admin rights
+                    logging.warning("No admin privileges detected. Downloading installer for manual installation...")
+                    
+                    # Download the installer
+                    try:
+                        urllib.request.urlretrieve(config["DOWNLOAD_URL"], installer_path)
+                        logging.info(f"Installer downloaded to {installer_path}. Please run it to install wkhtmltopdf.")
                         
-                        # Download the installer
-                        try:
-                            urllib.request.urlretrieve(config["DOWNLOAD_URL"], installer_path)
-                            logging.info(f"Installer downloaded to {installer_path}. Please run it to install wkhtmltopdf.")
-                            
-                            # Open the installer for the user to run manually
-                            os.startfile(installer_path)  # This opens the .exe in Windows
-                            logging.info("Installer opened. Please install wkhtmltopdf with admin privileges.")
+                        # Open the installer for the user to run manually
+                        os.startfile(installer_path)  # This opens the .exe in Windows
+                        logging.info("Installer opened. Please install wkhtmltopdf with admin privileges.")
 
-                            # Wait a moment for the user to potentially install
-                            time.sleep(5)  # Give the user a few seconds to start the installation
+                        # Wait a moment for the user to potentially install
+                        time.sleep(5)  # Give the user a few seconds to start the installation
 
-                            # Check if installation succeeded, allow up to 3 attempts
-                            attempt = 0
-                            max_attempts = 3
-                            while attempt < max_attempts:
-                                user_input = input(f"Has wkhtmltopdf been installed successfully? (yes/no) [Attempt {attempt + 1}/{max_attempts}]: ").lower().strip()
-                                if user_input == 'yes':
-                                    if check_wkhtmltopdf_installed(config["WKHTMLTOPDF_PATH"]):
-                                        pdfkit_config = pdfkit.configuration(wkhtmltopdf=config["WKHTMLTOPDF_PATH"])
-                                        logging.info("wkhtmltopdf confirmed installed and configured successfully.")
-                                        break
-                                    else:
-                                        logging.warning("wkhtmltopdf not found at the expected path. Please verify installation.")
-                                        attempt += 1
-                                        if attempt < max_attempts:
-                                            print(f"Attempt {attempt + 1}/{max_attempts}. Please ensure wkhtmltopdf is installed correctly.")
-                                        continue
-                                elif user_input == 'no':
+                        # Check if installation succeeded, allow up to 3 attempts
+                        attempt = 0
+                        max_attempts = 3
+                        while attempt < max_attempts:
+                            user_input = input(f"Has wkhtmltopdf been installed successfully? (yes/no) [Attempt {attempt + 1}/{max_attempts}]: ").lower().strip()
+                            if user_input == 'yes':
+                                if check_wkhtmltopdf_installed(config["WKHTMLTOPDF_PATH"]):
+                                    pdfkit_config = pdfkit.configuration(wkhtmltopdf=config["WKHTMLTOPDF_PATH"])
+                                    logging.info("wkhtmltopdf confirmed installed and configured successfully.")
+                                    break
+                                else:
+                                    logging.warning("wkhtmltopdf not found at the expected path. Please verify installation.")
                                     attempt += 1
                                     if attempt < max_attempts:
-                                        print(f"Attempt {attempt + 1}/{max_attempts}. Please install wkhtmltopdf and try again.")
+                                        print(f"Attempt {attempt + 1}/{max_attempts}. Please ensure wkhtmltopdf is installed correctly.")
                                     continue
-                                else:
-                                    print("Please enter 'yes' or 'no'.")
-                                    continue
+                            elif user_input == 'no':
+                                attempt += 1
+                                if attempt < max_attempts:
+                                    print(f"Attempt {attempt + 1}/{max_attempts}. Please install wkhtmltopdf and try again.")
+                                continue
+                            else:
+                                print("Please enter 'yes' or 'no'.")
+                                continue
 
-                            if attempt >= max_attempts:
-                                logging.error("Failed to confirm wkhtmltopdf installation after 3 attempts. Exiting script.")
-                                sys.exit(1)
+                        if attempt >= max_attempts:
+                            logging.error("Failed to confirm wkhtmltopdf installation after 3 attempts. Exiting script.")
+                            sys.exit(1)
 
-                            # If we reach here, installation is confirmed—proceed
-                            logging.info("Continuing with script execution after successful installation confirmation.")
+                        # If we reach here, installation is confirmed—proceed
+                        logging.info("Continuing with script execution after successful installation confirmation.")
 
-                        except Exception as e:
-                            logging.error(f"Failed to download or open installer: {e}")
-                            pdfkit_config = None  # Proceed without PDF functionality
-                            logging.warning("Continuing without PDF functionality. Please install wkhtmltopdf and restart the script.")
-                    else:
-                        raise  # Re-raise other PermissionErrors for debugging
+                    except Exception as e:
+                        logging.error(f"Failed to download or open installer: {e}")
+                        pdfkit_config = None  # Proceed without PDF functionality
+                        logging.warning("Continuing without PDF functionality. Please install wkhtmltopdf and restart the script.")
 
         except PermissionError as pe:
             if not admin_status:
