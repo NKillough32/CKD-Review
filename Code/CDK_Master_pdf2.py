@@ -20,7 +20,7 @@ logging.basicConfig(
 
 warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
 
-# Check admin status at the beginning
+# Check admin status at the beginning (no elevation request anymore)
 def is_admin():
     if platform.system() == "Windows":
         try:
@@ -29,7 +29,7 @@ def is_admin():
             return False
     return True
 
-# Log admin status but don't exit yet
+# Log admin status but don't attempt elevation—proceed without it if not present
 admin_status = is_admin()
 logging.info(f"Running with admin privileges: {admin_status}. Proceeding to test functionality...")
 
@@ -98,7 +98,7 @@ try:
                     pdfkit_config = pdfkit.configuration(wkhtmltopdf=config["WKHTMLTOPDF_PATH"])
                     logging.info("wkhtmltopdf installed and configured successfully.")
                 else:
-                    # Fall back to manual installation if no admin rights
+                    # Fall back to manual installation if no admin rights (no elevation attempt)
                     logging.warning("No admin privileges detected. Downloading installer for manual installation...")
                     
                     # Download the installer
