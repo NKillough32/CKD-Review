@@ -98,8 +98,11 @@ try:
                     pdfkit_config = pdfkit.configuration(wkhtmltopdf=config["WKHTMLTOPDF_PATH"])
                     logging.info("wkhtmltopdf installed and configured successfully.")
                 except PermissionError as pe:
-                    logging.warning(f"Silent installation failed due to permissions: {pe}. Downloading installer for manual installation...")
-                    
+                    if pe.winerror == 740:  # Specifically handle "requires elevation"
+                        logging.warning(f"Silent installation failed due to permissions (WinError 740): {pe}. Downloading installer for manual installation...")
+                    else:
+                        raise  # Re-raise other PermissionErrors for debugging
+                        
                     # Download the installer
                     try:
                         urllib.request.urlretrieve(config["DOWNLOAD_URL"], installer_path)
