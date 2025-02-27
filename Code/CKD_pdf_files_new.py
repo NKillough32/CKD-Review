@@ -87,17 +87,14 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
     date_folder = os.path.join(output_dir, datetime.now().strftime("%Y-%m-%d"))
     os.makedirs(date_folder, exist_ok=True)
 
-    # Replace empty cells with "Missing" in all columns
-    columns_to_replace = CKD_review.columns
-    CKD_review[columns_to_replace] = CKD_review[columns_to_replace].replace({
-        "": "Missing",
-        None: "Missing",
-        pd.NA: "Missing",
-        np.nan: "Missing"
-    })
+    # Replace empty cells with pd.NA in all columns
+    CKD_review = CKD_review.replace({"": pd.NA, None: pd.NA, pd.NA: pd.NA, np.nan: pd.NA})
 
-    # Convert numeric columns while preserving "Missing"
-    numeric_columns = ['Phosphate', 'Calcium', 'Vitamin_D', 'Parathyroid', 'Bicarbonate']
+    # Convert numeric columns while preserving pd.NA
+    numeric_columns = ['Phosphate', 'Calcium', 'Vitamin_D', 'Parathyroid', 'Bicarbonate', 'eGFR', 'Creatinine', 'Systolic_BP', 'Diastolic_BP', 'haemoglobin']
+    for col in numeric_columns:
+            if col in CKD_review.columns:
+                CKD_review[col] = pd.to_numeric(CKD_review[col], errors='coerce')  # Converts to Float64, keeps pd.NA
     
     def convert_to_numeric(value):
         return float(value) if value != "Missing" else "Missing"

@@ -86,6 +86,10 @@ def move_ckd_files(date_folder):
     def get_ckd_stage_acr_group(row):
         eGFR = row['eGFR']
         ACR = row['ACR']
+
+        if pd.isna(eGFR) or pd.isna(ACR):
+            return "No Data"
+
         if eGFR >= 90:
             if ACR < 3: return "Normal Function"
             elif ACR <= 30: return "Stage 1 A2"
