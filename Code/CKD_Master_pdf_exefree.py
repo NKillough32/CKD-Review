@@ -22,7 +22,7 @@ current_dir = os.getcwd()
 from CKD_core import *
 
 # Import the PDF generation logic
-from CKD_pdf_files import generate_patient_pdf
+from CKD_pdf_files_new import generate_patient_pdf
 
 print("Starting CKD Data Analysis Pipeline....")
 
