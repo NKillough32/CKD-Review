@@ -1,0 +1,131 @@
+name: Build NephroPath PDF for Windows and macOS
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'NephroPath_win_pdf.exe'
+      - 'NephroPath_mac_pdf'
+
+# Prevent multiple simultaneous runs
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r Dependencies/requirements.txt
+          pip install reportlab pyinstaller
+
+      - name: Build with PyInstaller (Windows)
+        run: |
+          python -m PyInstaller --onefile --name=NephroPath_win_pdf --icon=Dependencies/NephroPath_installer_icon.ico Code/CKD_Master_pdf2.py
+
+      - name: Move release
+        run: |
+          Move-Item dist\NephroPath_win_pdf.exe .\NephroPath_win_pdf.exe -Force
+
+      - name: Test NephroPath_win_pdf.exe
+        shell: pwsh
+        run: |
+          .\NephroPath_win_pdf.exe
+          if (!$?) { exit 1 }
+
+      - name: Commit and push changes
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          # Stage and commit unstaged changes
+          git add -f NephroPath_win_pdf.exe
+          git commit -m "Update built NephroPath_win_pdf.exe" || echo "No changes to commit"
+          # Stash any unstaged changes
+          git stash
+          # Fetch latest changes and rebase
+          git fetch origin main
+          git pull --rebase origin main || (git rebase --abort && echo "Rebase failed, aborting" && exit 1)
+          # Apply stashed changes
+          git stash pop || echo "No changes to apply"
+          # Push changes to remote repository
+          git push origin main
+
+      - name: Upload Windows executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: NephroPath_win_pdf-Windows
+          path: NephroPath_win_pdf.exe
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r Dependencies/requirements.txt
+          pip install reportlab pyinstaller
+
+      - name: Build with PyInstaller (macOS)
+        run: |
+          python -m PyInstaller --onefile --name=NephroPath_mac_pdf --icon=Dependencies/NephroPath_installer_icon.icns Code/CKD_Master_pdf2.py
+
+      - name: Move release
+        run: |
+          mv dist/NephroPath_mac_pdf ./NephroPath_mac_pdf
+
+      - name: Test NephroPath_mac_pdf
+        run: |
+          ./NephroPath_mac_pdf
+          if [ $? -ne 0 ]; then exit 1; fi
+
+      - name: Commit and push changes
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          # Stage and commit unstaged changes
+          git add -f NephroPath_mac_pdf
+          git commit -m "Update built NephroPath_mac_pdf" || echo "No changes to commit"
+          # Stash any unstaged changes
+          git stash
+          # Fetch latest changes and rebase
+          git fetch origin main
+          git pull --rebase origin main || (git rebase --abort && echo "Rebase failed, aborting" && exit 1)
+          # Apply stashed changes
+          git stash pop || echo "No changes to apply"
+          # Push changes to remote repository
+          git push origin main
+
+      - name: Upload macOS executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: NephroPath_mac_pdf-macOS
+          path: NephroPath_mac_pdf
