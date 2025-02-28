@@ -41,11 +41,11 @@ print("Data preprocessing and metrics calculation complete.")
 print("Writing Output Data and generating PDFs...")
 
 # Generate patient PDFs
-date_folder = generate_patient_pdf(CKD_review)
+date_folder = generate_patient_pdf(CKD_review) # type: ignore
 
 # Save output to CSV
 output_file_name = f"eGFR_check_{pd.Timestamp.today().date()}.csv"
-CKD_review.to_csv(output_file_name, index=False)
+CKD_review.to_csv(output_file_name, index=False) # type: ignore
 logging.info(f"Saved output to {output_file_name}")
 
 # Function to move files to the date-stamped folder
@@ -118,13 +118,13 @@ def move_ckd_files(date_folder):
             return "No Data"
 
     # Apply CKD grouping
-    CKD_review['CKD_Group'] = CKD_review.apply(get_ckd_stage_acr_group, axis=1)
+    CKD_review['CKD_Group'] = CKD_review.apply(get_ckd_stage_acr_group, axis=1) # type: ignore
 
     # Save EMIS batch files
     emis_dir = os.path.join(base_path, "EMIS_Clinical_Code_Batch_Files")
     os.makedirs(emis_dir, exist_ok=True)
-    for group in CKD_review['CKD_Group'].unique():
-        filtered_patients = CKD_review[CKD_review['CKD_Group'] == group][["HC_Number"]].copy()
+    for group in CKD_review['CKD_Group'].unique(): # type: ignore
+        filtered_patients = CKD_review[CKD_review['CKD_Group'] == group][["HC_Number"]].copy() # type: ignore
         filtered_patients.rename(columns={'HC_Number': 'HCN'}, inplace=True)
         group_file_name = f"CKD_{group.replace(' ', '_').replace('-', '_')}_Patients.txt"
         group_file_path = os.path.join(emis_dir, group_file_name)
@@ -133,7 +133,7 @@ def move_ckd_files(date_folder):
 
     # Save additional CSV
     output_file_name2 = f"data_check_{pd.Timestamp.today().date()}.csv"
-    CKD_review.to_csv(output_file_name2, index=False)
+    CKD_review.to_csv(output_file_name2, index=False) # type: ignore
     logging.info(f"Saved output to {output_file_name2}")
 
 # Folder renaming function
