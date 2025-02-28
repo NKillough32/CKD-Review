@@ -148,6 +148,47 @@ def compute_review_message(patient):
     
     return review_message
 
+# Function to compute CKD Group (same as in CKD_Master_pdf_exefree.py)
+def get_ckd_stage_acr_group(row):
+    eGFR = row['eGFR']
+    ACR = row['ACR']
+
+    if pd.isna(eGFR) or pd.isna(ACR):
+        return "No Data"
+
+    try:
+        eGFR = float(eGFR)
+        ACR = float(ACR)
+    except (ValueError, TypeError):
+        return "No Data"
+
+    if eGFR >= 90:
+        if ACR < 3: return "Normal Function"
+        elif ACR <= 30: return "Stage 1 A2"
+        else: return "Stage 1 A3"
+    elif eGFR >= 60:
+        if ACR < 3: return "Normal Function"
+        elif ACR <= 30: return "Stage 2 A2"
+        else: return "Stage 2 A3"
+    elif eGFR >= 45:
+        if ACR < 3: return "Stage 3A A1"
+        elif ACR <= 30: return "Stage 3A A2"
+        else: return "Stage 3A A3"
+    elif eGFR >= 30:
+        if ACR < 3: return "Stage 3B A1"
+        elif ACR <= 30: return "Stage 3B A2"
+        else: return "Stage 3B A3"
+    elif eGFR >= 15:
+        if ACR < 3: return "Stage 4 A1"
+        elif ACR <= 30: return "Stage 4 A2"
+        else: return "Stage 4 A3"
+    elif 0 < eGFR < 15:
+        if ACR < 3: return "Stage 5 A1"
+        elif ACR <= 30: return "Stage 5 A2"
+        else: return "Stage 5 A3"
+    else:
+        return "No Data"
+
 # Function to create the stylesheet once with unique style names
 def create_stylesheet():
     styles = getSampleStyleSheet()
@@ -249,6 +290,11 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
 
         # Compute review message dynamically
         patient['review_message'] = compute_review_message(patient)
+
+        # Compute CKD_Group if missing
+        if patient.get('CKD_Group', "Missing") == "Missing" or pd.isna(patient.get('CKD_Group')):
+            patient['CKD_Group'] = get_ckd_stage_acr_group(patient)
+        logging.info(f"Patient HC_Number: {patient['HC_Number']}, CKD_Group: {patient.get('CKD_Group')}")
 
         # Header
         header_table = Table([
@@ -616,17 +662,17 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             elements.append(Paragraph("Final Clinical Recommendations", styles['CustomSectionHeader']))
             final_recs = []
             if patient.get('review_message', '').startswith("Review Required"):
-                final_recs.append(["Renal Function Review Needed:", Paragraph("Yes", styles['CustomNormalText'])])
+                final_recs.append([Paragraph("Renal Function Review Needed:", styles['CustomNormalText']), Paragraph("Yes", styles['CustomNormalText'])])
             recommendations = [
-                ("Nephrology Referral", patient.get('Nephrology_Referral'), ["Not Indicated", "N/A", "Missing", None]),
-                ("Medication Adjustments Required", patient.get('dose_adjustment_prescribed'), ["No adjustments needed", "N/A", "Missing", None]),
-                ("Consider Statin Therapy", patient.get('Statin_Recommendation'), ["On Statin", "Not Indicated", "N/A", "Missing", None]),
-                ("Consider Nephrology Referral", patient.get('Proteinuria_Flag'), ["No Referral Needed", "N/A", "Missing", None]),
-                ("Blood Pressure Management", patient.get('BP_Target'), ["On Target", "N/A", "Missing", None])
+                ("Consider Statin Therapy:", patient.get('Statin_Recommendation'), ["On Statin", "Not Indicated", "N/A", "Missing", None]),
+                ("Consider Nephrology Referral:", patient.get('Proteinuria_Flag'), ["No Referral Needed", "N/A", "Missing", None]),
+                ("Blood Pressure Management:", patient.get('BP_Target'), ["On Target", "N/A", "Missing", None]),
+                ("Nephrology Referral:", patient.get('Nephrology_Referral'), ["Not Indicated", "N/A", "Missing", None]),
+                ("Medication Adjustments Required:", patient.get('dose_adjustment_prescribed'), ["No adjustments needed", "N/A", "Missing", None])
             ]
             for title, value, ignore_list in recommendations:
                 if value not in ignore_list:
-                    final_recs.append([title + ":", Paragraph(format_value(value), styles['CustomNormalText'])])
+                    final_recs.append([Paragraph(title, styles['CustomNormalText']), Paragraph(format_value(value), styles['CustomNormalText'])])
             final_recs_table = Table(final_recs, colWidths=[2*inch, 3*inch])
             final_recs_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
@@ -702,9 +748,17 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         patient_data = patient.to_dict()
         patient_data.update(surgery_info)
 
-        review_message = patient.get('review_message', "Uncategorized")
+        # Compute review message before determining the folder
+        review_message = compute_review_message(patient_data)
+        patient_data['review_message'] = review_message
+
+        # Compute CKD_Group if missing
+        if patient_data.get('CKD_Group', "Missing") == "Missing" or pd.isna(patient_data.get('CKD_Group')):
+            patient_data['CKD_Group'] = get_ckd_stage_acr_group(patient_data)
+        logging.info(f"Patient HC_Number: {patient_data['HC_Number']}, CKD_Group: {patient_data.get('CKD_Group')}")
+
+        # Create subfolder based on computed review_message
         sanitized_review_folder = "".join([c if c.isalnum() or c.isspace() else "_" for c in review_message]).replace(" ", "_")
-        
         review_folder = os.path.join(date_folder, sanitized_review_folder)
         os.makedirs(review_folder, exist_ok=True)
         logging.info(f"Created review subfolder: {review_folder}")
