@@ -94,17 +94,14 @@ def classify_status(value, thresholds, field):
 
 # Function to compute review message based on clinical criteria
 def compute_review_message(patient):
-    # Default to "Uncategorized"
     review_message = "Uncategorized"
     
-    # Extract relevant patient data
     eGFR = patient.get('eGFR')
     ACR = patient.get('ACR')
     risk_2yr = patient.get('risk_2yr')
     risk_5yr = patient.get('risk_5yr')
     ckd_stage = patient.get('CKD_Stage')
     
-    # Convert to numeric where applicable
     try:
         eGFR = float(eGFR) if not pd.isna(eGFR) and eGFR != "Missing" else None
     except (ValueError, TypeError):
@@ -122,19 +119,12 @@ def compute_review_message(patient):
     except (ValueError, TypeError):
         risk_5yr = None
     
-    # Review criteria
     if ckd_stage in ["Stage 1", "Stage 2"]:
-        # For Stages 1-2, review required if ACR > 3 or eGFR date unavailable
         if ACR is not None and ACR > 3:
             review_message = "Review Required - CKD Stage 1-2 with ACR > 3"
         elif eGFR is None or pd.isna(patient.get('Sample_Date')):
             review_message = "Review Required - eGFR date unavailable"
     elif ckd_stage in ["Stage 3A", "Stage 3B", "Stage 4", "Stage 5"]:
-        # For Stages 3-5, review required if:
-        # - eGFR < 30 (Stage 4-5)
-        # - ACR >= 30
-        # - 5-year risk > 5%
-        # - eGFR date unavailable
         if eGFR is not None and eGFR < 30:
             review_message = "Review Required - CKD Stage 3-5 with eGFR < 30"
         elif ACR is not None and ACR >= 30:
@@ -150,16 +140,21 @@ def compute_review_message(patient):
 
 # Function to compute CKD Group (same as in CKD_Master_pdf_exefree.py)
 def get_ckd_stage_acr_group(row):
-    eGFR = row['eGFR']
-    ACR = row['ACR']
+    eGFR = row.get('eGFR')
+    ACR = row.get('ACR')
+
+    # Debug logging to inspect input values
+    logging.debug(f"Computing CKD_Group for eGFR: {eGFR}, ACR: {ACR}")
 
     if pd.isna(eGFR) or pd.isna(ACR):
+        logging.debug("eGFR or ACR is NaN, returning 'No Data'")
         return "No Data"
 
     try:
         eGFR = float(eGFR)
         ACR = float(ACR)
-    except (ValueError, TypeError):
+    except (ValueError, TypeError) as e:
+        logging.debug(f"Error converting eGFR or ACR to float: {e}, returning 'No Data'")
         return "No Data"
 
     if eGFR >= 90:
@@ -187,6 +182,7 @@ def get_ckd_stage_acr_group(row):
         elif ACR <= 30: return "Stage 5 A2"
         else: return "Stage 5 A3"
     else:
+        logging.debug("eGFR out of expected range, returning 'No Data'")
         return "No Data"
 
 # Function to create the stylesheet once with unique style names
@@ -203,8 +199,8 @@ def create_stylesheet():
     styles.add(ParagraphStyle(
         name='CustomSectionHeader',
         fontName='Helvetica-Bold',
-        fontSize=12,
-        leading=14,
+        fontSize=11,  # Reduced font size to prevent wrapping
+        leading=13,
         textColor=colors.darkblue,
         spaceAfter=6
     ))
@@ -243,6 +239,14 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
     for date_col in date_columns:
         CKD_review[date_col] = pd.to_datetime(CKD_review[date_col], errors='coerce').dt.strftime("%Y-%m-%d")
     
+    # Inspect CKD_review columns for debugging
+    logging.info(f"CKD_review columns: {list(CKD_review.columns)}")
+    
+    # Check if CKD_Group is in the DataFrame
+    if 'CKD_Group' not in CKD_review.columns:
+        logging.warning("CKD_Group column not found in CKD_review, computing now...")
+        CKD_review['CKD_Group'] = CKD_review.apply(get_ckd_stage_acr_group, axis=1)
+
     # Check if CKD_review is empty
     if CKD_review.empty:
         logging.warning("CKD_review DataFrame is empty. No PDFs will be generated.")
@@ -294,7 +298,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         # Compute CKD_Group if missing
         if patient.get('CKD_Group', "Missing") == "Missing" or pd.isna(patient.get('CKD_Group')):
             patient['CKD_Group'] = get_ckd_stage_acr_group(patient)
-        logging.info(f"Patient HC_Number: {patient['HC_Number']}, CKD_Group: {patient.get('CKD_Group')}")
+        logging.info(f"Patient HC_Number: {patient['HC_Number']}, CKD_Group: {patient.get('CKD_Group')}, eGFR: {patient.get('eGFR')}, ACR: {patient.get('ACR')}")
 
         # Header
         header_table = Table([
@@ -755,7 +759,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         # Compute CKD_Group if missing
         if patient_data.get('CKD_Group', "Missing") == "Missing" or pd.isna(patient_data.get('CKD_Group')):
             patient_data['CKD_Group'] = get_ckd_stage_acr_group(patient_data)
-        logging.info(f"Patient HC_Number: {patient_data['HC_Number']}, CKD_Group: {patient_data.get('CKD_Group')}")
+        logging.info(f"Patient HC_Number: {patient_data['HC_Number']}, CKD_Group: {patient_data.get('CKD_Group')}, eGFR: {patient_data.get('eGFR')}, ACR: {patient_data.get('ACR')}")
 
         # Create subfolder based on computed review_message
         sanitized_review_folder = "".join([c if c.isalnum() or c.isspace() else "_" for c in review_message]).replace(" ", "_")
