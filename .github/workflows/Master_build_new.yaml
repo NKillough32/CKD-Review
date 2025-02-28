@@ -59,7 +59,7 @@ jobs:
       - name: Move release
         shell: cmd
         run: |
-          Move-Item dist\NephroPath_win_pdf.exe .\NephroPath_win_pdf.exe -Force
+          move dist\NephroPath_win_pdf.exe NephroPath_win_pdf.exe /Y
 
       - name: Commit and push changes
         shell: cmd
