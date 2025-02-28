@@ -159,12 +159,12 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         # CKD Overview
         ckd_color, ckd_group = classify_status(patient.get('CKD_Group', 'Missing'), None, "CKD_Group")
         ckd_data = [
-            [Paragraph("CKD Overview", styles['Heading3']), Paragraph(f"KDIGO 2024 Classification<br/><font color='{ckd_color.hex_l}'>{format_value(patient.get('CKD_Group'))}</font>", styles['Normal'])],
+            [Paragraph("CKD Overview", styles['Heading3']), Paragraph(f"KDIGO 2024 Classification<br/><font color='{ckd_color.hexval()}'>{format_value(patient.get('CKD_Group'))}</font>", styles['Normal'])],
             [f"Stage: {format_value(patient.get('CKD_Stage'))} | ACR Criteria: {format_value(patient.get('CKD_ACR'))}"],
-            [f"Albumin-Creatinine Ratio (ACR): <font color='{classify_status(patient.get('ACR', 'Missing'), None, 'ACR')[0].hex_l}'>{format_value(patient.get('ACR'))} mg/mmol</font> | Date: {format_value(patient.get('Sample_Date1'))}"],
-            [f"Creatinine (Current): <font color='{classify_status(patient.get('Creatinine', 'Missing'), None, 'Creatinine')[0].hex_l}'>{format_value(patient.get('Creatinine'))} µmol/L</font> | Date: {format_value(patient.get('Sample_Date'))}"],
+            [f"Albumin-Creatinine Ratio (ACR): <font color='{classify_status(patient.get('ACR', 'Missing'), None, 'ACR')[0].hexval()}'>{format_value(patient.get('ACR'))} mg/mmol</font> | Date: {format_value(patient.get('Sample_Date1'))}"],
+            [f"Creatinine (Current): <font color='{classify_status(patient.get('Creatinine', 'Missing'), None, 'Creatinine')[0].hexval()}'>{format_value(patient.get('Creatinine'))} µmol/L</font> | Date: {format_value(patient.get('Sample_Date'))}"],
             [f"Creatinine (3 Months Prior): {format_value(patient.get('Creatinine_3m_prior'))} µmol/L | Date: {format_value(patient.get('Sample_Date2'))}"],
-            [f"eGFR (Current): <font color='{classify_status(patient.get('eGFR', 'Missing'), None, 'eGFR')[0].hex_l}'>{format_value(patient.get('eGFR'))} ml/min/1.73m²</font> | Date: {format_value(patient.get('Sample_Date'))}"],
+            [f"eGFR (Current): <font color='{classify_status(patient.get('eGFR', 'Missing'), None, 'eGFR')[0].hexval()}'>{format_value(patient.get('eGFR'))} ml/min/1.73m²</font> | Date: {format_value(patient.get('Sample_Date'))}"],
             [f"eGFR (3 Months Prior): {format_value(patient.get('eGFR_3m_prior'))} ml/min/1.73m² | Date: {format_value(patient.get('Sample_Date2'))}"],
             [f"eGFR Trend: {format_value(patient.get('eGFR_Trend'))}"]
         ]
@@ -180,7 +180,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         bp_data = [
             [Paragraph("Blood Pressure", styles['Heading3'])],
             [f"Classification: {format_value(patient.get('BP_Classification'))} | Date: {format_value(patient.get('Sample_Date3'))}"],
-            [f"Systolic / Diastolic: <font color='{classify_status(patient.get('Systolic_BP', 'Missing'), None, 'Systolic_BP')[0].hex_l}'>{format_value(patient.get('Systolic_BP'))}</font> / <font color='{classify_status(patient.get('Diastolic_BP', 'Missing'), None, 'Diastolic_BP')[0].hex_l}'>{format_value(patient.get('Diastolic_BP'))}</font> mmHg"],
+            [f"Systolic / Diastolic: <font color='{classify_status(patient.get('Systolic_BP', 'Missing'), None, 'Systolic_BP')[0].hexval()}'>{format_value(patient.get('Systolic_BP'))}</font> / <font color='{classify_status(patient.get('Diastolic_BP', 'Missing'), None, 'Diastolic_BP')[0].hexval()}'>{format_value(patient.get('Diastolic_BP'))}</font> mmHg"],
             [f"Target BP: {format_value(patient.get('BP_Target'))} | Status: {format_value(patient.get('BP_Flag'))}"]
         ]
         elements.append(Table(bp_data, colWidths=[500], style=[
@@ -193,7 +193,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         # Anaemia Overview
         anaemia_data = [
             [Paragraph("Anaemia Overview", styles['Heading3'])],
-            [f"Haemoglobin: <font color='{classify_status(patient.get('haemoglobin', 'Missing'), None, 'haemoglobin')[0].hex_l}'>{format_value(patient.get('haemoglobin'))} g/L</font> | Date: {format_value(patient.get('Sample_Date5'))}"],
+            [f"Haemoglobin: <font color='{classify_status(patient.get('haemoglobin', 'Missing'), None, 'haemoglobin')[0].hexval()}'>{format_value(patient.get('haemoglobin'))} g/L</font> | Date: {format_value(patient.get('Sample_Date5'))}"],
             [f"Current Status: {format_value(patient.get('Anaemia_Classification'))}"],
             [f"Anaemia Management: {format_value(patient.get('Anaemia_Flag'))}"]
         ]
@@ -364,7 +364,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         ]))
         elements.append(Spacer(1, 12))
 
-        # Final Clinical Recommendations (from HTML template)
+        # Final Clinical Recommendations
         show_recommendations = (
             patient.get('review_message', '').startswith("Review Required") or
             patient.get('Nephrology_Referral') not in ["Not Indicated", "N/A", "Missing", None] or
@@ -437,13 +437,13 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
 
 # Main execution block to run the script
 if __name__ == "__main__":
-    # Example: Load patient data from a CSV file (adjust path as needed)
+    # Load the preprocessed CKD_review.csv generated by your pipeline
     try:
-        input_file = os.path.join(base_path, "patient_data.csv")  # Replace with your actual data file path
+        input_file = os.path.join(base_path, "CKD_review.csv")
         CKD_review = pd.read_csv(input_file)
         output_folder = generate_patient_pdf(CKD_review)
         logging.info(f"All patient summaries generated in: {output_folder}")
     except FileNotFoundError:
-        logging.error(f"Input file not found: {input_file}. Please provide a valid patient data CSV.")
+        logging.error(f"Input file not found: {input_file}. Please ensure CKD_review.csv is generated by the pipeline.")
     except Exception as e:
-        logging.error(f"Error during execution: {str(e)}")
+        logging.error(f"Error during PDF generation: {str(e)}")
