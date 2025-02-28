@@ -29,6 +29,7 @@ jobs:
         with:
           python-version: '3.10'
           cache: 'pip'
+          cache-dependency-path: 'Dependencies/requirements.txt'
 
       - name: Install dependencies
         run: |
@@ -54,15 +55,32 @@ jobs:
 
       - name: Build with PyInstaller (Windows)
         run: |
-          python -m PyInstaller --onefile --name=NephroPath_win_pdf --icon=Dependencies/NephroPath_installer_icon.ico --add-data "Code/CKD_core.py;." --add-data "Code/CKD_pdf_files_new.py;." --add-data "Dependencies;Dependencies" --add-data "EMIS_Files;EMIS_Files" --hidden-import CKD_pdf_files_new Code/CKD_Master_pdf_exefree.py
+          python -m PyInstaller --onefile --name=NephroPath_win_pdf --icon=Dependencies/NephroPath_installer_icon.ico --add-data "Code/CKD_core.py;." --add-data "Code/CKD_pdf_files_new.py;." --add-data "Dependencies;Dependencies" --add-data "EMIS_Files;EMIS_Files" --hidden-import CKD_pdf_files_new --log-level DEBUG Code/CKD_Master_pdf_exefree.py
 
-      - name: Move release
+      - name: Debug dist directory
         shell: cmd
         run: |
-          move dist\NephroPath_win_pdf.exe NephroPath_win_pdf.exe /Y
+          dir dist
+
+      - name: Move release
+        run: |
+          if (-not (Test-Path "dist\NephroPath_win_pdf.exe")) {
+            Write-Error "dist\NephroPath_win_pdf.exe not found. PyInstaller build may have failed."
+            exit 1
+          }
+          Move-Item dist\NephroPath_win_pdf.exe .\NephroPath_win_pdf.exe -Force
+
+      - name: Test NephroPath_win_pdf.exe
+        shell: pwsh
+        run: |
+          .\NephroPath_win_pdf.exe
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Test run of NephroPath_win_pdf.exe failed with exit code $LASTEXITCODE"
+            exit 1
+          }
+          Write-Host "NephroPath_win_pdf.exe ran successfully"
 
       - name: Commit and push changes
-        shell: cmd
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
@@ -89,6 +107,7 @@ jobs:
         with:
           python-version: '3.10'
           cache: 'pip'
+          cache-dependency-path: 'Dependencies/requirements.txt'
 
       - name: Install dependencies
         run: |
@@ -111,22 +130,29 @@ jobs:
 
       - name: Build with PyInstaller (macOS)
         run: |
-          python -m PyInstaller --onefile --name=NephroPath_mac_pdf --add-data "Code/CKD_core.py:." --add-data "Code/CKD_pdf_files_new.py:." --add-data "Dependencies:Dependencies" --add-data "EMIS_Files:EMIS_Files" --hidden-import CKD_pdf_files_new Code/CKD_Master_pdf_exefree.py
+          python -m PyInstaller --onefile --name=NephroPath_mac_pdf --add-data "Code/CKD_core.py:." --add-data "Code/CKD_pdf_files_new.py:." --add-data "Dependencies:Dependencies" --add-data "EMIS_Files:EMIS_Files" --hidden-import CKD_pdf_files_new --log-level DEBUG Code/CKD_Master_pdf_exefree.py
+
+      - name: Debug dist directory
+        run: |
+          ls -R dist
 
       - name: Move release
         run: |
+          if [ ! -f "dist/NephroPath_mac_pdf" ]; then
+            echo "Error: dist/NephroPath_mac_pdf not found. PyInstaller build may have failed." >&2
+            exit 1
+          fi
           mv dist/NephroPath_mac_pdf ./NephroPath_mac_pdf
+
+      - name: Test NephroPath_mac_pdf
+        run: |
+          ./NephroPath_mac_pdf
+          if [ $? -ne 0 ]; then
+            echo "Error: Test run of NephroPath_mac_pdf failed" >&2
+            exit 1
+          fi
+          echo "NephroPath_mac_pdf ran successfully"
 
       - name: Commit and push changes
         run: |
-          git config user.email "actions@github.com"
-          git config user.name "GitHub Actions"
-          git add -f NephroPath_mac_pdf
-          git commit -m "Update built NephroPath_mac_pdf" || echo "No changes to commit"
-          git push origin main
-
-      - name: Upload macOS executable
-        uses: actions/upload-artifact@v4
-        with:
-          name: NephroPath_mac_pdf-macOS
-          path: NephroPath_mac_pdf
+          git config user.email "
