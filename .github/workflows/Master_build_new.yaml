@@ -37,11 +37,13 @@ jobs:
           pip install reportlab pyinstaller qrcode
 
       - name: Debug directory structure
+        shell: cmd
         run: |
           dir
           dir Code
 
       - name: Verify CKD_core.py exists
+        shell: cmd
         run: |
           if not exist "Code\CKD_core.py" (
             echo "CKD_core.py not found!"
@@ -55,10 +57,12 @@ jobs:
           python -m PyInstaller --onefile --name=NephroPath_win_pdf --icon=Dependencies/NephroPath_installer_icon.ico --add-data "Code/CKD_core.py;." --add-data "Code/CKD_pdf_files_new.py;." --add-data "Dependencies;Dependencies" --add-data "EMIS_Files;EMIS_Files" --hidden-import CKD_pdf_files_new Code/CKD_Master_pdf_exefree.py
 
       - name: Move release
+        shell: cmd
         run: |
           Move-Item dist\NephroPath_win_pdf.exe .\NephroPath_win_pdf.exe -Force
 
       - name: Commit and push changes
+        shell: cmd
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
@@ -71,3 +75,58 @@ jobs:
         with:
           name: NephroPath_win_pdf-Windows
           path: NephroPath_win_pdf.exe
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r Dependencies/requirements.txt
+          pip install reportlab pyinstaller qrcode
+
+      - name: Debug directory structure
+        run: |
+          ls -R
+
+      - name: Verify CKD_core.py exists
+        run: |
+          if [ ! -f "Code/CKD_core.py" ]; then
+            echo "CKD_core.py not found!"
+            exit 1
+          else
+            echo "CKD_core.py found."
+          fi
+
+      - name: Build with PyInstaller (macOS)
+        run: |
+          python -m PyInstaller --onefile --name=NephroPath_mac_pdf --add-data "Code/CKD_core.py:." --add-data "Code/CKD_pdf_files_new.py:." --add-data "Dependencies:Dependencies" --add-data "EMIS_Files:EMIS_Files" --hidden-import CKD_pdf_files_new Code/CKD_Master_pdf_exefree.py
+
+      - name: Move release
+        run: |
+          mv dist/NephroPath_mac_pdf ./NephroPath_mac_pdf
+
+      - name: Commit and push changes
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add -f NephroPath_mac_pdf
+          git commit -m "Update built NephroPath_mac_pdf" || echo "No changes to commit"
+          git push origin main
+
+      - name: Upload macOS executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: NephroPath_mac_pdf-macOS
+          path: NephroPath_mac_pdf
