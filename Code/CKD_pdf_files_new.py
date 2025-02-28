@@ -76,19 +76,26 @@ def classify_status(value, thresholds, field):
         return colors.grey, "Missing"
     value = float(value) if isinstance(value, (int, float)) else value
     if field == "Creatinine":
-        return colors.red if value > 150 else colors.orange if value >= 100 else colors.green, str(value)
+        return colors.Color(0.69, 0, 0.125), str(value) if value > 150 else colors.Color(0.827, 0.329, 0), str(value) if value >= 100 else colors.Color(0, 0.392, 0), str(value)  # #B00020, #D35400, #006400
     elif field == "eGFR":
-        return colors.red if value < 30 else colors.orange if value < 60 else colors.blue if value < 90 else colors.green, str(value)
+        return colors.Color(0.69, 0, 0.125), str(value) if value < 30 else colors.Color(0.827, 0.329, 0), str(value) if value < 60 else colors.Color(0, 0, 0.545), str(value) if value < 90 else colors.Color(0, 0.392, 0), str(value)  # #B00020, #D35400, #00008B, #006400
     elif field == "Systolic_BP":
-        return colors.red if value >= 180 else colors.orange if 140 <= value < 180 else colors.blue if value < 90 else colors.green, str(value)
+        return colors.Color(0.69, 0, 0.125), str(value) if value >= 180 else colors.Color(0.827, 0.329, 0), str(value) if 140 <= value < 180 else colors.Color(0, 0, 0.545), str(value) if value < 90 else colors.Color(0, 0.392, 0), str(value)  # #B00020, #D35400, #00008B, #006400
     elif field == "Diastolic_BP":
-        return colors.red if value >= 120 else colors.orange if 90 <= value < 120 else colors.blue if value < 60 else colors.green, str(value)
+        return colors.Color(0.69, 0, 0.125), str(value) if value >= 120 else colors.Color(0.827, 0.329, 0), str(value) if 90 <= value < 120 else colors.Color(0, 0, 0.545), str(value) if value < 60 else colors.Color(0, 0.392, 0), str(value)  # #B00020, #D35400, #00008B, #006400
     elif field == "haemoglobin":
-        return colors.red if value < 80 else colors.orange if 80 <= value <= 110 else colors.green, str(value)
+        return colors.Color(0.69, 0, 0.125), str(value) if value < 80 else colors.Color(0.827, 0.329, 0), str(value) if 80 <= value <= 110 else colors.Color(0, 0.392, 0), str(value)  # #B00020, #D35400, #006400
     elif field == "ACR":
-        return colors.red if value >= 30 else colors.orange if value > 3 else colors.green, str(value)
+        return colors.Color(0.69, 0, 0.125), str(value) if value >= 30 else colors.Color(0.827, 0.329, 0), str(value) if value > 3 else colors.Color(0, 0.392, 0), str(value)  # #B00020, #D35400, #006400
     elif field == "CKD_Group":
-        return colors.black, str(value) if value != "Missing" else "N/A"
+        if value in ['Normal Function', 'Stage 1 A1', 'Stage 2 A1']:
+            return colors.Color(0, 0.392, 0), str(value)  # #006400 (safe)
+        elif value in ['Stage 1 A2', 'Stage 2 A2', 'Stage 3A A1']:
+            return colors.Color(0.722, 0.525, 0.043), str(value)  # #B8860B (warning)
+        elif value in ['Stage 1 A3', 'Stage 2 A3', 'Stage 3A A2', 'Stage 3B A1', 'Stage 4 A1']:
+            return colors.Color(0.827, 0.329, 0), str(value)  # #D35400 (caution)
+        else:
+            return colors.Color(0.69, 0, 0.125), str(value)  # #B00020 (critical)
     return colors.black, str(value)
 
 # Function to compute review message based on clinical criteria
@@ -211,51 +218,61 @@ def create_stylesheet():
     styles = getSampleStyleSheet()
     styles.add(ParagraphStyle(
         name='CustomTitle',
-        fontName='Helvetica-Bold',
-        fontSize=16,
-        leading=18,
+        fontName='Helvetica-Bold',  # Arial not typically available in ReportLab; Helvetica is close
+        fontSize=32,
+        leading=36,
         alignment=1,  # Center
-        textColor=colors.darkblue
+        textColor=colors.black  # HTML uses black by default
+    ))
+    styles.add(ParagraphStyle(
+        name='CustomSubTitle',
+        fontName='Helvetica-Bold',
+        fontSize=24,
+        leading=28,
+        alignment=1,  # Center
+        textColor=colors.black,
+        spaceAfter=12
     ))
     styles.add(ParagraphStyle(
         name='CustomSectionHeader',
         fontName='Helvetica-Bold',
-        fontSize=11,
-        leading=13,
-        textColor=colors.darkblue,
+        fontSize=18,
+        leading=20,
+        alignment=0,  # Left
+        textColor=colors.black,
         spaceAfter=6
     ))
     styles.add(ParagraphStyle(
         name='CustomNormalText',
         fontName='Helvetica',
-        fontSize=10,
-        leading=12,
+        fontSize=12,  # Adjusted for better readability
+        leading=14,
         spaceAfter=4,
         wordWrap='CJK'  # Enable better text wrapping
     ))
-    # New style for table titles with a smaller font size to prevent wrapping
+    styles.add(ParagraphStyle(
+        name='CustomSmallText',
+        fontName='Helvetica',
+        fontSize=10,
+        leading=12,
+        spaceAfter=4,
+        wordWrap='CJK'
+    ))
     styles.add(ParagraphStyle(
         name='CustomTableTitle',
         fontName='Helvetica-Bold',
-        fontSize=9,  # Reduced font size to fit better
+        fontSize=9,
         leading=11,
         spaceAfter=4,
         wordWrap='CJK'
     ))
     styles.add(ParagraphStyle(
-        name='CustomCritical',
-        fontName='Helvetica-Bold',
-        textColor=colors.red
-    ))
-    styles.add(ParagraphStyle(
-        name='CustomCaution',
-        fontName='Helvetica-Bold',
-        textColor=colors.orange
-    ))
-    styles.add(ParagraphStyle(
-        name='CustomSafe',
-        fontName='Helvetica-Bold',
-        textColor=colors.green
+        name='CustomCenterText',
+        fontName='Helvetica',
+        fontSize=12,
+        leading=14,
+        alignment=1,  # Center
+        spaceAfter=4
     ))
     return styles
 
@@ -334,353 +351,400 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         header_table = Table([
             [Paragraph(f"{surgery_info.get('surgery_name', 'Unknown Surgery')}", styles['CustomTitle'])],
             [Paragraph("Chronic Kidney Disease Review", styles['CustomTitle'])],
-            [Paragraph(f"Generated on: {datetime.now().strftime('%Y-%m-%d')}", styles['CustomNormalText'])]
         ], colWidths=[doc.width])
         header_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TEXTCOLOR', (0, 0), (-1, -1), colors.darkblue),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
             ('BOTTOMPADDING', (0, 1), (-1, 1), 10),
         ]))
         elements.append(header_table)
         elements.append(Spacer(1, 12))
 
         # Review Status and EMIS Status
-        status_text = [
-            f"Review Status: {format_value(patient.get('review_message', 'Uncategorized'))}",
-            f"Current EMIS Status: {format_value(patient.get('EMIS_CKD_Code'))}"
+        status_lines = [
+            f"<b>Review Status:</b> {format_value(patient.get('review_message', 'Uncategorized'))}",
+            f"<b>Current EMIS Status:</b> {format_value(patient.get('EMIS_CKD_Code'))}"
         ]
         if patient.get('Transplant_Kidney', 'Missing') != "Missing":
-            status_text.append(f"Transplant: {format_value(patient.get('Transplant_Kidney'))}")
+            status_lines.append(f"<b>Transplant:</b> {format_value(patient.get('Transplant_Kidney'))}")
         if patient.get('Dialysis', 'Missing') != "Missing":
-            status_text.append(f"Dialysis: {format_value(patient.get('Dialysis'))}")
-        for line in status_text:
-            elements.append(Paragraph(line, styles['CustomNormalText']))
-        elements.append(Spacer(1, 12))
-
-        # Patient Information
-        elements.append(Paragraph("Patient Information", styles['CustomSectionHeader']))
-        patient_info = [
-            ["NHS Number:", Paragraph(f"{int(patient['HC_Number']) if pd.notna(patient['HC_Number']) else 'N/A'}", styles['CustomNormalText'])],
-            ["Age:", Paragraph(f"{int(patient['Age']) if pd.notna(patient['Age']) else 'N/A'}", styles['CustomNormalText'])],
-            ["Gender:", Paragraph(f"{format_value(patient.get('Gender'))}", styles['CustomNormalText'])]
-        ]
-        patient_info_table = Table(patient_info, colWidths=[2.5*inch, 3*inch])
-        patient_info_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
-            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.grey),
-            ('BOX', (0, 0), (-1, -1), 0.5, colors.grey),
+            status_lines.append(f"<b>Dialysis:</b> {format_value(patient.get('Dialysis'))}")
+        
+        status_table = Table([[Paragraph(line, styles['CustomCenterText'])] for line in status_lines], colWidths=[doc.width])
+        status_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('PADDING', (0, 0), (-1, -1), 5),
         ]))
+        elements.append(status_table)
+        elements.append(Spacer(1, 20))
+
+        # Results Overview
+        elements.append(Paragraph("Results Overview", styles['CustomSubTitle']))
+        elements.append(Spacer(1, 20))
+
+        # Patient Information
+        elements.append(Paragraph("Patient Information", styles['CustomSectionHeader']))
+        patient_info_data = [
+            [f"• <b>NHS Number:</b> {int(patient['HC_Number']) if pd.notna(patient['HC_Number']) else 'N/A'}"],
+            [f"• <b>Age:</b> {int(patient['Age']) if pd.notna(patient['Age']) else 'N/A'} | <b>Gender:</b> {format_value(patient.get('Gender'))}"]
+        ]
+        patient_info_table = Table(patient_info_data, colWidths=[doc.width])
+        patient_info_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 12),
+            ('BOX', (0, 0), (-1, -1), 2, colors.grey),
+            ('PADDING', (0, 0), (-1, -1), 15),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
         elements.append(patient_info_table)
-        elements.append(Spacer(1, 12))
+        elements.append(Spacer(1, 20))
 
         # CKD Overview
         elements.append(Paragraph("CKD Overview", styles['CustomSectionHeader']))
         ckd_color, ckd_group = classify_status(patient.get('CKD_Group', 'Missing'), None, "CKD_Group")
-        ckd_data = [
-            [Paragraph("KDIGO 2024 Classification:", styles['CustomTableTitle']), Paragraph(f"<font color='{ckd_color.hexval()}'>{ckd_group}</font>", styles['CustomNormalText'])],
-            [Paragraph("Stage:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('CKD_Stage'))}", styles['CustomNormalText'])],
-            [Paragraph("ACR Criteria:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('CKD_ACR'))}", styles['CustomNormalText'])],
-            [Paragraph("Albumin-Creatinine Ratio (ACR):", styles['CustomTableTitle']), Paragraph(f"<font color='{classify_status(patient.get('ACR', 'Missing'), None, 'ACR')[0].hexval()}'>{format_value(patient.get('ACR'))} mg/mmol</font> | Date: {format_value(patient.get('Sample_Date1'))}", styles['CustomNormalText'])],
-            [Paragraph("Creatinine (Current):", styles['CustomTableTitle']), Paragraph(f"<font color='{classify_status(patient.get('Creatinine', 'Missing'), None, 'Creatinine')[0].hexval()}'>{format_value(patient.get('Creatinine'))} µmol/L</font> | Date: {format_value(patient.get('Sample_Date'))}", styles['CustomNormalText'])],
-            [Paragraph("Creatinine (3 Months Prior):", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('Creatinine_3m_prior'))} µmol/L | Date: {format_value(patient.get('Sample_Date2'))}", styles['CustomNormalText'])],
-            [Paragraph("eGFR (Current):", styles['CustomTableTitle']), Paragraph(f"<font color='{classify_status(patient.get('eGFR', 'Missing'), None, 'eGFR')[0].hexval()}'>{format_value(patient.get('eGFR'))} mL/min/1.73m²</font> | Date: {format_value(patient.get('Sample_Date'))}", styles['CustomNormalText'])],
-            [Paragraph("eGFR (3 Months Prior):", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('eGFR_3m_prior'))} mL/min/1.73m² | Date: {format_value(patient.get('Sample_Date2'))}", styles['CustomNormalText'])],
-            [Paragraph("eGFR Trend:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('eGFR_Trend'))}", styles['CustomNormalText'])]
-        ]
-        ckd_table = Table(ckd_data, colWidths=[2.5*inch, 3*inch])
-        ckd_table.setStyle(TableStyle([
+        kdigo_table = Table([
+            [Paragraph("<b>KDIGO 2024 Classification</b>", styles['CustomNormalText'])],
+            [Paragraph(f"<font color='{ckd_color.hexval()}'>{ckd_group}</font>", styles['CustomNormalText'])]
+        ], colWidths=[1.5*inch])
+        kdigo_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
+            ('BOX', (0, 0), (-1, -1), 1, colors.grey),
+            ('PADDING', (0, 0), (-1, -1), 10),
+        ]))
+        
+        ckd_data = [
+            [f"• <b>Stage:</b> {format_value(patient.get('CKD_Stage'))} | <b>ACR Criteria:</b> {format_value(patient.get('CKD_ACR'))}"],
+            [f"• <b>Albumin-Creatinine Ratio (ACR):</b> <font color='{classify_status(patient.get('ACR', 'Missing'), None, 'ACR')[0].hexval()}'>{format_value(patient.get('ACR'))} mg/mmol</font> | <b>Date:</b> {format_value(patient.get('Sample_Date1'))}"],
+            [f"• <b>Creatinine:</b>"],
+            [f"    - <b>Current:</b> <font color='{classify_status(patient.get('Creatinine', 'Missing'), None, 'Creatinine')[0].hexval()}'>{format_value(patient.get('Creatinine'))} µmol/L</font> | <b>Date:</b> {format_value(patient.get('Sample_Date'))}"],
+            [f"    - <b>3 Months Prior:</b> {format_value(patient.get('Creatinine_3m_prior'))} µmol/L | <b>Date:</b> {format_value(patient.get('Sample_Date2'))}"],
+            [f"• <b>eGFR:</b>"],
+            [f"    - <b>Current:</b> <font color='{classify_status(patient.get('eGFR', 'Missing'), None, 'eGFR')[0].hexval()}'>{format_value(patient.get('eGFR'))} mL/min/1.73m²</font> | <b>Date:</b> {format_value(patient.get('Sample_Date'))}"],
+            [f"    - <b>3 Months Prior:</b> {format_value(patient.get('eGFR_3m_prior'))} mL/min/1.73m² | <b>Date:</b> {format_value(patient.get('Sample_Date2'))}"],
+            [f"    - <b>eGFR Trend:</b> {format_value(patient.get('eGFR_Trend'))}"]
+        ]
+        
+        ckd_inner_table = Table(ckd_data, colWidths=[doc.width - 2*inch])
+        ckd_inner_table.setStyle(TableStyle([
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (0, -1), 9),  # Apply smaller font size to titles
-            ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.grey),
-            ('BOX', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 12),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('PADDING', (0, 0), (-1, -1), 5),
-            ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
-            ('BACKGROUND', (0, 1), (0, -1), colors.white),
+        ]))
+        
+        ckd_table = Table([
+            ['', kdigo_table],
+            [ckd_inner_table, '']
+        ], colWidths=[doc.width - 2*inch, 2*inch])
+        ckd_table.setStyle(TableStyle([
+            ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+            ('VALIGN', (1, 0), (1, 0), 'TOP'),
+            ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
+            ('BOX', (0, 0), (-1, -1), 2, colors.grey),
+            ('PADDING', (0, 0), (-1, -1), 15),
         ]))
         elements.append(ckd_table)
-        elements.append(Spacer(1, 12))
+        
+        elements.append(Spacer(1, 5))
+        elements.append(Paragraph(
+            "<i>The eGFR trend is assessed by comparing the most recent value with the reading from three months prior. The change is adjusted to an annualized rate based on the time interval between measurements.</i>",
+            styles['CustomSmallText']
+        ))
+        elements.append(Paragraph(
+            "• <b>Rapid Decline:</b> A decrease of more than 5 mL/min/1.73m² per year or a relative drop of 25% or more.",
+            styles['CustomSmallText']
+        ))
+        elements.append(Paragraph(
+            "• <b>Stable:</b> No significant decline.",
+            styles['CustomSmallText']
+        ))
+        elements.append(Paragraph(
+            "A rapid decline may indicate progressive CKD, requiring closer monitoring or intervention.",
+            styles['CustomSmallText']
+        ))
+        elements.append(Spacer(1, 20))
 
         # Blood Pressure
         elements.append(Paragraph("Blood Pressure", styles['CustomSectionHeader']))
         bp_color_sys, bp_value_sys = classify_status(patient.get('Systolic_BP', 'Missing'), None, 'Systolic_BP')
         bp_color_dia, bp_value_dia = classify_status(patient.get('Diastolic_BP', 'Missing'), None, 'Diastolic_BP')
         bp_data = [
-            [Paragraph("Classification:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('BP_Classification'))} | Date: {format_value(patient.get('Sample_Date3'))}", styles['CustomNormalText'])],
-            [Paragraph("Systolic / Diastolic:", styles['CustomTableTitle']), Paragraph(f"<font color='{bp_color_sys.hexval()}'>{bp_value_sys}</font> / <font color='{bp_color_dia.hexval()}'>{bp_value_dia}</font> mmHg", styles['CustomNormalText'])],
-            [Paragraph("Target BP:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('BP_Target'))} | Status: {format_value(patient.get('BP_Flag'))}", styles['CustomNormalText'])]
+            [f"• <b>Classification:</b> {format_value(patient.get('BP_Classification'))} | <b>Date:</b> {format_value(patient.get('Sample_Date3'))}"],
+            [f"• <b>Systolic / Diastolic:</b> <font color='{bp_color_sys.hexval()}'>{bp_value_sys}</font> / <font color='{bp_color_dia.hexval()}'>{bp_value_dia}</font> mmHg"],
+            [f"• <b>Target BP:</b> {format_value(patient.get('BP_Target'))} | <b>BP Status:</b> {format_value(patient.get('BP_Flag'))}"]
         ]
-        bp_table = Table(bp_data, colWidths=[2.5*inch, 3*inch])
+        bp_table = Table(bp_data, colWidths=[doc.width])
         bp_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (0, -1), 9),
-            ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.grey),
-            ('BOX', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 12),
+            ('BOX', (0, 0), (-1, -1), 2, colors.grey),
+            ('PADDING', (0, 0), (-1, -1), 15),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('PADDING', (0, 0), (-1, -1), 5),
-            ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
-            ('BACKGROUND', (0, 1), (0, -1), colors.white),
         ]))
         elements.append(bp_table)
-        elements.append(Spacer(1, 12))
+        elements.append(Spacer(1, 20))
 
         # Anaemia Overview
         elements.append(Paragraph("Anaemia Overview", styles['CustomSectionHeader']))
         haemoglobin_color, haemoglobin_value = classify_status(patient.get('haemoglobin', 'Missing'), None, 'haemoglobin')
         anaemia_data = [
-            [Paragraph("Haemoglobin:", styles['CustomTableTitle']), Paragraph(f"<font color='{haemoglobin_color.hexval()}'>{haemoglobin_value} g/L</font> | Date: {format_value(patient.get('Sample_Date5'))}", styles['CustomNormalText'])],
-            [Paragraph("Current Status:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('Anaemia_Classification'))}", styles['CustomNormalText'])],
-            [Paragraph("Anaemia Management:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('Anaemia_Flag'))}", styles['CustomNormalText'])]
+            [f"• <b>Haemoglobin:</b> <font color='{haemoglobin_color.hexval()}'>{haemoglobin_value} g/L</font> | <b>Date:</b> {format_value(patient.get('Sample_Date5'))}"],
+            [f"• <b>Current Status:</b> {format_value(patient.get('Anaemia_Classification'))}"],
+            [f"• <b>Anaemia Management:</b> {format_value(patient.get('Anaemia_Flag'))}"]
         ]
-        anaemia_table = Table(anaemia_data, colWidths=[2.5*inch, 3*inch])
+        anaemia_table = Table(anaemia_data, colWidths=[doc.width])
         anaemia_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (0, -1), 9),
-            ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.grey),
-            ('BOX', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 12),
+            ('BOX', (0, 0), (-1, -1), 2, colors.grey),
+            ('PADDING', (0, 0), (-1, -1), 15),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('PADDING', (0, 0), (-1, -1), 5),
-            ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
-            ('BACKGROUND', (0, 1), (0, -1), colors.white),
         ]))
         elements.append(anaemia_table)
-        elements.append(Spacer(1, 12))
+        elements.append(Spacer(1, 20))
 
         # Electrolyte and MBD Management
         elements.append(Paragraph("Electrolyte and Mineral Bone Disorder (MBD) Management", styles['CustomSectionHeader']))
         mbd_data = [
-            [Paragraph("Potassium:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('Potassium'))} mmol/L | Status: {format_value(patient.get('Potassium_Flag'))} | Date: {format_value(patient.get('Sample_Date7'))}", styles['CustomNormalText'])],
-            [Paragraph("Bicarbonate:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('Bicarbonate'))} mmol/L | Status: {format_value(patient.get('Bicarbonate_Flag'))} | Date: {format_value(patient.get('Sample_Date13'))}", styles['CustomNormalText'])],
-            [Paragraph("Parathyroid Hormone (PTH):", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('Parathyroid'))} pg/mL | Status: {format_value(patient.get('Parathyroid_Flag'))} | Date: {format_value(patient.get('Sample_Date12'))}", styles['CustomNormalText'])],
-            [Paragraph("Phosphate:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('Phosphate'))} mmol/L | Status: {format_value(patient.get('Phosphate_Flag'))} | Date: {format_value(patient.get('Sample_Date8'))}", styles['CustomNormalText'])],
-            [Paragraph("Calcium:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('Calcium'))} mmol/L | Status: {format_value(patient.get('Calcium_Flag'))} | Date: {format_value(patient.get('Sample_Date9'))}", styles['CustomNormalText'])],
-            [Paragraph("Vitamin D Level:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('Vitamin_D'))} ng/mL | Status: {format_value(patient.get('Vitamin_D_Flag'))} | Date: {format_value(patient.get('Sample_Date10'))}", styles['CustomNormalText'])]
+            [f"• <b>Potassium:</b> <font color='{classify_status(patient.get('Potassium', 'Missing'), None, 'Potassium')[0].hexval()}'>{format_value(patient.get('Potassium'))} mmol/L</font> | <b>Status:</b> {format_value(patient.get('Potassium_Flag'))} | <b>Date:</b> {format_value(patient.get('Sample_Date7'))}"],
+            [f"• <b>Bicarbonate:</b> <font color='{classify_status(patient.get('Bicarbonate', 'Missing'), None, 'Bicarbonate')[0].hexval()}'>{format_value(patient.get('Bicarbonate'))} mmol/L</font> | <b>Status:</b> {format_value(patient.get('Bicarbonate_Flag'))} | <b>Date:</b> {format_value(patient.get('Sample_Date13'))}"],
+            [f"• <b>Parathyroid Hormone (PTH):</b> <font color='{classify_status(patient.get('Parathyroid', 'Missing'), None, 'Parathyroid')[0].hexval()}'>{format_value(patient.get('Parathyroid'))} pg/mL</font> | <b>Status:</b> {format_value(patient.get('Parathyroid_Flag'))} | <b>Date:</b> {format_value(patient.get('Sample_Date12'))}"],
+            [f"• <b>Phosphate:</b> <font color='{classify_status(patient.get('Phosphate', 'Missing'), None, 'Phosphate')[0].hexval()}'>{format_value(patient.get('Phosphate'))} mmol/L</font> | <b>Status:</b> {format_value(patient.get('Phosphate_Flag'))} | <b>Date:</b> {format_value(patient.get('Sample_Date8'))}"],
+            [f"• <b>Calcium:</b> <font color='{classify_status(patient.get('Calcium', 'Missing'), None, 'Calcium')[0].hexval()}'>{format_value(patient.get('Calcium'))} mmol/L</font> | <b>Status:</b> {format_value(patient.get('Calcium_Flag'))} | <b>Date:</b> {format_value(patient.get('Sample_Date9'))}"],
+            [f"• <b>Vitamin D Level:</b> <font color='{classify_status(patient.get('Vitamin_D', 'Missing'), None, 'Vitamin_D')[0].hexval()}'>{format_value(patient.get('Vitamin_D'))} ng/mL</font> | <b>Status:</b> {format_value(patient.get('Vitamin_D_Flag'))} | <b>Date:</b> {format_value(patient.get('Sample_Date10'))}"]
         ]
-        mbd_table = Table(mbd_data, colWidths=[2.5*inch, 3*inch])
-        mbd_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
+        mbd_inner_table = Table(mbd_data, colWidths=[doc.width])
+        mbd_inner_table.setStyle(TableStyle([
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (0, -1), 9),
-            ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.grey),
-            ('BOX', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 12),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('PADDING', (0, 0), (-1, -1), 5),
-            ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
-            ('BACKGROUND', (0, 1), (0, -1), colors.white),
+        ]))
+        
+        mbd_status_table = Table([
+            [Paragraph("<b>MBD Status</b>", styles['CustomNormalText'])],
+            [Paragraph(f"{format_value(patient.get('CKD_MBD_Flag'))}", styles['CustomNormalText'])]
+        ], colWidths=[1.5*inch])
+        mbd_status_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
+            ('BOX', (0, 0), (-1, -1), 1, colors.grey),
+            ('PADDING', (0, 0), (-1, -1), 10),
+        ]))
+        
+        mbd_table = Table([
+            [mbd_inner_table],
+            [mbd_status_table]
+        ], colWidths=[doc.width])
+        mbd_table.setStyle(TableStyle([
+            ('ALIGN', (0, 1), (-1, 1), 'CENTER'),
+            ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
+            ('BOX', (0, 0), (-1, -1), 2, colors.grey),
+            ('PADDING', (0, 0), (-1, -1), 15),
         ]))
         elements.append(mbd_table)
-        elements.append(Spacer(1, 12))
+        elements.append(Spacer(1, 20))
 
         # Diabetes and HbA1c Management
         elements.append(Paragraph("Diabetes and HbA1c Management", styles['CustomSectionHeader']))
+        hba1c_color, hba1c_value = classify_status(patient.get('HbA1c', 'Missing'), None, 'HbA1c')
         diabetes_data = [
-            [Paragraph("HbA1c Level:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('HbA1c'))} mmol/mol | Date: {format_value(patient.get('Sample_Date6'))}", styles['CustomNormalText'])],
-            [Paragraph("HbA1c Management:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('HbA1c_Target'))}", styles['CustomNormalText'])]
+            [f"• <b>HbA1c Level:</b> <font color='{hba1c_color.hexval()}'>{hba1c_value} mmol/mol</font> | <b>Date:</b> {format_value(patient.get('Sample_Date6'))}"],
+            [f"• <b>HbA1c Management:</b> {format_value(patient.get('HbA1c_Target'))}"]
         ]
-        diabetes_table = Table(diabetes_data, colWidths=[2.5*inch, 3*inch])
+        diabetes_table = Table(diabetes_data, colWidths=[doc.width])
         diabetes_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (0, -1), 9),
-            ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.grey),
-            ('BOX', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 12),
+            ('BOX', (0, 0), (-1, -1), 2, colors.grey),
+            ('PADDING', (0, 0), (-1, -1), 15),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('PADDING', (0, 0), (-1, -1), 5),
-            ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
-            ('BACKGROUND', (0, 1), (0, -1), colors.white),
         ]))
         elements.append(diabetes_table)
-        elements.append(Spacer(1, 12))
+        elements.append(Spacer(1, 20))
 
         # Kidney Failure Risk
         elements.append(Paragraph("Kidney Failure Risk", styles['CustomSectionHeader']))
+        risk_2yr_color, risk_2yr_value = classify_status(patient.get('risk_2yr', 'Missing'), None, 'risk_2yr')
+        risk_5yr_color, risk_5yr_value = classify_status(patient.get('risk_5yr', 'Missing'), None, 'risk_5yr')
         risk_data = [
-            [Paragraph("2-Year Risk:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('risk_2yr'))}%", styles['CustomNormalText'])],
-            [Paragraph("5-Year Risk:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('risk_5yr'))}%", styles['CustomNormalText'])]
+            [f"• <b>2-Year Risk:</b> <font color='{risk_2yr_color.hexval()}'>{risk_2yr_value}%</font>"],
+            [f"• <b>5-Year Risk:</b> <font color='{risk_5yr_color.hexval()}'>{risk_5yr_value}%</font>"]
         ]
-        risk_table = Table(risk_data, colWidths=[2.5*inch, 3*inch])
+        risk_table = Table(risk_data, colWidths=[doc.width])
         risk_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (0, -1), 9),
-            ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.grey),
-            ('BOX', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 12),
+            ('BOX', (0, 0), (-1, -1), 2, colors.grey),
+            ('PADDING', (0, 0), (-1, -1), 15),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('PADDING', (0, 0), (-1, -1), 5),
-            ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
-            ('BACKGROUND', (0, 1), (0, -1), colors.white),
         ]))
         elements.append(risk_table)
-        elements.append(Spacer(1, 12))
+        elements.append(Spacer(1, 5))
+        elements.append(Paragraph(
+            "<i>The patient's 2- and 5-year kidney failure risk scores estimate the likelihood that their kidney disease will progress to kidney failure within the next 2 or 5 years. These scores are calculated based on the patient's current kidney function and other risk factors such as age, blood pressure, and existing health conditions. Understanding these risk scores helps in predicting disease progression and planning appropriate treatment strategies.</i>",
+            styles['CustomSmallText']
+        ))
+        elements.append(Spacer(1, 20))
 
         # Care & Referrals
         elements.append(Paragraph("Care & Referrals", styles['CustomSectionHeader']))
         care_data = [
-            [Paragraph("Multidisciplinary Care:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('Multidisciplinary_Care'))}", styles['CustomNormalText'])],
-            [Paragraph("Modality Education:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('Modality_Education'))}", styles['CustomNormalText'])],
-            [Paragraph("Nephrology Referral:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('Nephrology_Referral'))}", styles['CustomNormalText'])],
-            [Paragraph("Persistent Proteinuria:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('Proteinuria_Flag'))}", styles['CustomNormalText'])]
+            [f"• <b>Multidisciplinary Care:</b> {format_value(patient.get('Multidisciplinary_Care'))}"],
+            [f"• <b>Modality Education:</b> {format_value(patient.get('Modality_Education'))}"],
+            [f"• <b>Nephrology Referral:</b> {format_value(patient.get('Nephrology_Referral'))}"],
+            [f"• <b>Persistent Proteinuria:</b> {format_value(patient.get('Proteinuria_Flag'))}"]
         ]
-        care_table = Table(care_data, colWidths=[2.5*inch, 3*inch])
+        care_table = Table(care_data, colWidths=[doc.width])
         care_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (0, -1), 9),
-            ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.grey),
-            ('BOX', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 12),
+            ('BOX', (0, 0), (-1, -1), 2, colors.grey),
+            ('PADDING', (0, 0), (-1, -1), 15),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('PADDING', (0, 0), (-1, -1), 5),
-            ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
-            ('BACKGROUND', (0, 1), (0, -1), colors.white),
         ]))
         elements.append(care_table)
-        elements.append(Spacer(1, 12))
+        elements.append(Spacer(1, 20))
 
         # Medication Review
         elements.append(Paragraph("Medication Review", styles['CustomSectionHeader']))
         med_data = [
-            [Paragraph("Current Medication:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('Medications', 'None'))}", styles['CustomNormalText'])],
-            [Paragraph("Review Medications:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('dose_adjustment_prescribed'))}", styles['CustomNormalText'])],
-            [Paragraph("Contraindicated Medications:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('contraindicated_prescribed'))}", styles['CustomNormalText'])],
-            [Paragraph("Suggested Medications:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('Recommended_Medications', 'None'))}", styles['CustomNormalText'])],
-            [Paragraph("Statin Recommendation:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('Statin_Recommendation'))}", styles['CustomNormalText'])]
+            [f"• <b>Current Medication:</b> {format_value(patient.get('Medications', 'None'))}"],
+            [f"• <b>Review Medications:</b> {format_value(patient.get('dose_adjustment_prescribed'))}"],
+            [f"• <b>Contraindicated Medications:</b> {format_value(patient.get('contraindicated_prescribed'))}"],
+            [f"• <b>Suggested Medications:</b> {format_value(patient.get('Recommended_Medications', 'None'))}"],
+            [f"• <b>Statin Recommendation:</b> {format_value(patient.get('Statin_Recommendation'))}"]
         ]
-        med_table = Table(med_data, colWidths=[2.5*inch, 3*inch])
+        med_table = Table(med_data, colWidths=[doc.width])
         med_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (0, -1), 9),
-            ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.grey),
-            ('BOX', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 12),
+            ('BOX', (0, 0), (-1, -1), 2, colors.grey),
+            ('PADDING', (0, 0), (-1, -1), 15),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('PADDING', (0, 0), (-1, -1), 5),
-            ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
-            ('BACKGROUND', (0, 1), (0, -1), colors.white),
         ]))
         elements.append(med_table)
-        elements.append(Spacer(1, 12))
+        elements.append(Spacer(1, 20))
 
         # Lifestyle and Preventative Advice
         elements.append(Paragraph("Lifestyle and Preventative Advice", styles['CustomSectionHeader']))
         lifestyle_data = [
-            [Paragraph("Lifestyle Recommendations:", styles['CustomTableTitle']), Paragraph(f"{format_value(patient.get('Lifestyle_Advice', 'No specific advice available.'))}", styles['CustomNormalText'])]
+            [f"• <b>Lifestyle Recommendations:</b> {format_value(patient.get('Lifestyle_Advice', 'No specific advice available.'))}"]
         ]
-        lifestyle_table = Table(lifestyle_data, colWidths=[2.5*inch, 3*inch])
+        lifestyle_table = Table(lifestyle_data, colWidths=[doc.width])
         lifestyle_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (0, -1), 9),
-            ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.grey),
-            ('BOX', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 12),
+            ('BOX', (0, 0), (-1, -1), 2, colors.grey),
+            ('PADDING', (0, 0), (-1, -1), 15),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('PADDING', (0, 0), (-1, -1), 5),
-            ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
-            ('BACKGROUND', (0, 1), (0, -1), colors.white),
         ]))
         elements.append(lifestyle_table)
-        elements.append(Spacer(1, 12))
+        elements.append(Spacer(1, 20))
 
         # NICE Guideline Recommendations
-        elements.append(Paragraph("NICE Guideline Recommendations", styles['CustomSectionHeader']))
-        elements.append(Paragraph("For detailed guidance, refer to <a href='https://www.nice.org.uk/guidance/ng203'>NICE NG203 guideline on Chronic Kidney Disease</a>.", styles['CustomNormalText']))
-        elements.append(Spacer(1, 12))
+        elements.append(Paragraph("NICE Guideline Recommendations", styles['CustomSubTitle']))
+        elements.append(Paragraph(
+            "For detailed guidance, refer to <a href='https://www.nice.org.uk/guidance/ng203'>NICE NG203 guideline on Chronic Kidney Disease</a>.",
+            styles['CustomNormalText']
+        ))
+        elements.append(Spacer(1, 10))
 
         ckd_stage = patient.get('CKD_Stage', 'Unknown')
         if ckd_stage == "Normal Function":
             nice_data = [
-                ["Recommendations for Normal Kidney Function"],
-                ["• General Health Maintenance: Encourage a balanced diet and regular physical activity. Avoid excessive use of NSAIDs and other nephrotoxic agents. Regular monitoring is not required unless risk factors are present."],
-                ["• Risk Factor Management: Monitor blood pressure and maintain within normal ranges. Screen for diabetes and manage blood glucose levels if necessary."],
-                ["• Preventive Measures: Encourage smoking cessation and limit alcohol intake. Stay hydrated and maintain a healthy weight."]
+                ["<b>Recommendations for Normal Kidney Function</b>"],
+                ["• <b>General Health Maintenance:</b> Encourage a balanced diet and regular physical activity. Avoid excessive use of NSAIDs and other nephrotoxic agents. Regular monitoring is not required unless risk factors are present."],
+                ["• <b>Risk Factor Management:</b> Monitor blood pressure and maintain within normal ranges. Screen for diabetes and manage blood glucose levels if necessary."],
+                ["• <b>Preventive Measures:</b> Encourage smoking cessation and limit alcohol intake. Stay hydrated and maintain a healthy weight."]
             ]
         elif ckd_stage == "Stage 1":
             nice_data = [
-                ["CKD Stage G1 Recommendations"],
-                ["• Initial Assessment: Perform Urine Albumin-to-Creatinine Ratio (ACR) testing to detect proteinuria, conduct haematuria screening, and monitor blood pressure (BP). Confirm stable renal function by reviewing prior estimated glomerular filtration rate (eGFR) results; if unavailable, re-evaluate renal function within 14 days."],
-                ["• Management and Monitoring: Manage in primary care with annual monitoring if ACR is greater than 3 mg/mmol (indicative of microalbuminuria). If ACR is less than 3 mg/mmol, consider reducing the frequency of monitoring based on individual risk factors."],
-                ["• Lifestyle and Preventive Measures: Encourage regular physical activity, smoking cessation, and maintaining a healthy weight. Aim for BP targets of less than 140/90 mmHg generally, or less than 130/80 mmHg if the patient has diabetes or an ACR greater than 70 mg/mmol (significant proteinuria)."],
-                ["• Medication: Assess cardiovascular risk and consider initiating statin therapy if appropriate, following current guidelines."]
+                ["<b>CKD Stage G1 Recommendations</b>"],
+                ["• <b>Initial Assessment:</b> Perform Urine Albumin-to-Creatinine Ratio (ACR) testing to detect proteinuria, conduct haematuria screening, and monitor blood pressure (BP). Confirm stable renal function by reviewing prior estimated glomerular filtration rate (eGFR) results; if unavailable, re-evaluate renal function within 14 days."],
+                ["• <b>Management and Monitoring:</b> Manage in primary care with annual monitoring if ACR is greater than 3 mg/mmol (indicative of microalbuminuria). If ACR is less than 3 mg/mmol, consider reducing the frequency of monitoring based on individual risk factors."],
+                ["• <b>Lifestyle and Preventive Measures:</b> Encourage regular physical activity, smoking cessation, and maintaining a healthy weight. Aim for BP targets of less than 140/90 mmHg generally, or less than 130/80 mmHg if the patient has diabetes or an ACR greater than 70 mg/mmol (significant proteinuria)."],
+                ["• <b>Medication:</b> Assess cardiovascular risk and consider initiating statin therapy if appropriate, following current guidelines."]
             ]
         elif ckd_stage == "Stage 2":
             nice_data = [
-                ["CKD Stage G2 Recommendations"],
-                ["• Initial Assessment: Repeat Urine ACR testing, haematuria screening, and BP monitoring as per Stage G1. Confirm stable renal function by reviewing previous eGFR results or retest within 14 days if necessary."],
-                ["• Management and Monitoring: Continue primary care management with annual monitoring if ACR is greater than 3 mg/mmol. Reduce monitoring frequency if ACR is less than 3 mg/mmol and no additional risk factors are present."],
-                ["• Lifestyle and Preventive Measures: Promote lifestyle interventions such as regular exercise, smoking cessation, and weight management. Maintain BP targets of less than 140/90 mmHg, or less than 130/80 mmHg for patients with diabetes or significant proteinuria (ACR >70 mg/mmol)."],
-                ["• Medication: Evaluate cardiovascular risk and consider statin therapy as per guidelines. If proteinuria is present, consider initiating an ACE inhibitor or angiotensin receptor blocker (ARB) to reduce proteinuria and slow CKD progression."]
+                ["<b>CKD Stage G2 Recommendations</b>"],
+                ["• <b>Initial Assessment:</b> Repeat Urine ACR testing, haematuria screening, and BP monitoring as per Stage G1. Confirm stable renal function by reviewing previous eGFR results or retest within 14 days if necessary."],
+                ["• <b>Management and Monitoring:</b> Continue primary care management with annual monitoring if ACR is greater than 3 mg/mmol. Reduce monitoring frequency if ACR is less than 3 mg/mmol and no additional risk factors are present."],
+                ["• <b>Lifestyle and Preventive Measures:</b> Promote lifestyle interventions such as regular exercise, smoking cessation, and weight management. Maintain BP targets of less than 140/90 mmHg, or less than 130/80 mmHg for patients with diabetes or significant proteinuria (ACR >70 mg/mmol)."],
+                ["• <b>Medication:</b> Evaluate cardiovascular risk and consider statin therapy as per guidelines. If proteinuria is present, consider initiating an ACE inhibitor or angiotensin receptor blocker (ARB) to reduce proteinuria and slow CKD progression."]
             ]
         elif ckd_stage == "Stage 3A":
             nice_data = [
-                ["CKD Stage G3a Recommendations"],
-                ["• Monitoring and Risk Assessment: Manage in primary care with at least annual renal function tests; increase monitoring to every 6 months if ACR is greater than 3 mg/mmol. Use the Kidney Failure Risk Equation (KFRE) at each assessment to estimate progression risk; refer to nephrology if the 5-year risk is greater than 5%."],
-                ["• Referral Criteria: Refer to nephrology if ACR is greater than 70 mg/mmol, there’s a sustained decrease in eGFR of 25% or more over 12 months, or if significant proteinuria or haematuria is present."],
-                ["• Lifestyle and Preventive Measures: Intensify cardiovascular risk management, including prescribing Atorvastatin 20 mg unless contraindicated. Maintain BP targets as per guidelines: less than 140/90 mmHg generally, or less than 130/80 mmHg if the patient has diabetes or significant proteinuria."],
-                ["• Medication: Initiate or optimize ACE inhibitor or ARB therapy if proteinuria is present, unless contraindicated."],
-                ["• Patient Education: Educate on CKD progression, importance of medication adherence, and regular monitoring."]
+                ["<b>CKD Stage G3a Recommendations</b>"],
+                ["• <b>Monitoring and Risk Assessment:</b> Manage in primary care with at least annual renal function tests; increase monitoring to every 6 months if ACR is greater than 3 mg/mmol. Use the Kidney Failure Risk Equation (KFRE) at each assessment to estimate progression risk; refer to nephrology if the 5-year risk is greater than 5%."],
+                ["• <b>Referral Criteria:</b> Refer to nephrology if ACR is greater than 70 mg/mmol, there’s a sustained decrease in eGFR of 25% or more over 12 months, or if significant proteinuria or haematuria is present."],
+                ["• <b>Lifestyle and Preventive Measures:</b> Intensify cardiovascular risk management, including prescribing Atorvastatin 20 mg unless contraindicated. Maintain BP targets as per guidelines: less than 140/90 mmHg generally, or less than 130/80 mmHg if the patient has diabetes or significant proteinuria."],
+                ["• <b>Medication:</b> Initiate or optimize ACE inhibitor or ARB therapy if proteinuria is present, unless contraindicated."],
+                ["• <b>Patient Education:</b> Educate on CKD progression, importance of medication adherence, and regular monitoring."]
             ]
         elif ckd_stage == "Stage 3B":
             nice_data = [
-                ["CKD Stage G3b Recommendations"],
-                ["• Monitoring and Risk Management: Continue primary care management with renal function tests every 6 months, or more frequently if ACR is greater than 3 mg/mmol. Use the KFRE to assess progression risk; refer to nephrology if the 5-year risk exceeds 5% or if there’s a rapid decline in eGFR."],
-                ["• Referral Considerations: Consider nephrology referral for further evaluation and management, especially if complications like anaemia, electrolyte imbalances, or bone mineral disorders arise."],
-                ["• Lifestyle and Preventive Measures: Aggressively manage BP and cardiovascular risk factors. Optimize dosing of ACE inhibitors or ARBs. Continue statin therapy as indicated."],
-                ["• Patient Education: Reinforce the importance of lifestyle modifications and adherence to treatment plans to slow CKD progression."]
+                ["<b>CKD Stage G3b Recommendations</b>"],
+                ["• <b>Monitoring and Risk Management:</b> Continue primary care management with renal function tests every 6 months, or more frequently if ACR is greater than 3 mg/mmol. Use the KFRE to assess progression risk; refer to nephrology if the 5-year risk exceeds 5% or if there’s a rapid decline in eGFR."],
+                ["• <b>Referral Considerations:</b> Consider nephrology referral for further evaluation and management, especially if complications like anaemia, electrolyte imbalances, or bone mineral disorders arise."],
+                ["• <b>Lifestyle and Preventive Measures:</b> Aggressively manage BP and cardiovascular risk factors. Optimize dosing of ACE inhibitors or ARBs. Continue statin therapy as indicated."],
+                ["• <b>Patient Education:</b> Reinforce the importance of lifestyle modifications and adherence to treatment plans to slow CKD progression."]
             ]
         elif ckd_stage == "Stage 4":
             nice_data = [
-                ["CKD Stage G4 Recommendations"],
-                ["• Specialist Management and Referral: Routine referral to nephrology for co-management and preparation for potential renal replacement therapy. Regularly monitor eGFR, ACR, potassium, calcium, phosphate, and haemoglobin levels. Perform renal ultrasound if structural abnormalities or obstruction are suspected."],
-                ["• Management of Complications: Monitor and manage anaemia, electrolyte imbalances, acidosis, and bone mineral disorders. Adjust medications that are renally excreted. Maintain BP targets as per guidelines."],
-                ["• Lifestyle and Preventive Measures: Continue statin therapy (Atorvastatin 20 mg) for cardiovascular risk reduction. Provide vaccinations including influenza, pneumococcal, and COVID-19 as indicated. Regularly review medications to avoid nephrotoxic drugs and adjust dosages. Discontinue metformin if eGFR is less than 30 mL/min/1.73 m²."],
-                ["• Patient Education: Discuss potential need for renal replacement therapy and available options. Provide guidance on diet, fluid intake, and symptom management."]
+                ["<b>CKD Stage G4 Recommendations</b>"],
+                ["• <b>Specialist Management and Referral:</b> Routine referral to nephrology for co-management and preparation for potential renal replacement therapy. Regularly monitor eGFR, ACR, potassium, calcium, phosphate, and haemoglobin levels. Perform renal ultrasound if structural abnormalities or obstruction are suspected."],
+                ["• <b>Management of Complications:</b> Monitor and manage anaemia, electrolyte imbalances, acidosis, and bone mineral disorders. Adjust medications that are renally excreted. Maintain BP targets as per guidelines."],
+                ["• <b>Lifestyle and Preventive Measures:</b> Continue statin therapy (Atorvastatin 20 mg) for cardiovascular risk reduction. Provide vaccinations including influenza, pneumococcal, and COVID-19 as indicated. Regularly review medications to avoid nephrotoxic drugs and adjust dosages. Discontinue metformin if eGFR is less than 30 mL/min/1.73 m²."],
+                ["• <b>Patient Education:</b> Discuss potential need for renal replacement therapy and available options. Provide guidance on diet, fluid intake, and symptom management."]
             ]
         elif ckd_stage == "Stage 5":
             nice_data = [
-                ["CKD Stage G5 Recommendations"],
-                ["• Specialist Management and Comprehensive Care Plan: Under specialist nephrology care with preparation for renal replacement therapy (dialysis or transplantation) as needed. Regularly monitor renal function and labs including electrolytes, bicarbonate, calcium, phosphate, haemoglobin, and fluid status."],
-                ["• Management of Complications: Actively manage hyperkalaemia, metabolic acidosis, and anaemia (with iron supplementation and erythropoiesis-stimulating agents). Adjust or discontinue medications contraindicated in advanced CKD."],
-                ["• Lifestyle and Preventive Measures: Continue statin therapy unless contraindicated. Provide comprehensive lifestyle guidance, including dietary advice (e.g., potassium and phosphate restrictions) and fluid management. Ensure all appropriate immunizations are up to date."],
-                ["• Patient Support and Education: Offer psychological support and counseling. Educate the patient and family about end-stage renal disease management options and advance care planning."]
+                ["<b>CKD Stage G5 Recommendations</b>"],
+                ["• <b>Specialist Management and Comprehensive Care Plan:</b> Under specialist nephrology care with preparation for renal replacement therapy (dialysis or transplantation) as needed. Regularly monitor renal function and labs including electrolytes, bicarbonate, calcium, phosphate, haemoglobin, and fluid status."],
+                ["• <b>Management of Complications:</b> Actively manage hyperkalaemia, metabolic acidosis, and anaemia (with iron supplementation and erythropoiesis-stimulating agents). Adjust or discontinue medications contraindicated in advanced CKD."],
+                ["• <b>Lifestyle and Preventive Measures:</b> Continue statin therapy unless contraindicated. Provide comprehensive lifestyle guidance, including dietary advice (e.g., potassium and phosphate restrictions) and fluid management. Ensure all appropriate immunizations are up to date."],
+                ["• <b>Patient Support and Education:</b> Offer psychological support and counseling. Educate the patient and family about end-stage renal disease management options and advance care planning."]
             ]
         else:
             nice_data = [
-                ["No specific recommendations available for this CKD stage."]
+                ["<b>No specific recommendations available for this CKD stage.</b>"]
             ]
 
-        nice_table = Table([[Paragraph(cell, styles['CustomNormalText']) for cell in row] for row in nice_data], colWidths=[doc.width])
+        nice_table = Table(nice_data, colWidths=[doc.width])
         nice_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.grey),
-            ('BOX', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('FONTSIZE', (0, 0), (-1, -1), 12),
+            ('BOX', (0, 0), (-1, -1), 2, colors.grey),
+            ('PADDING', (0, 0), (-1, -1), 15),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('PADDING', (0, 0), (-1, -1), 5),
-            ('BACKGROUND', (0, 0), (0, 0), colors.lightblue),
-            ('BACKGROUND', (0, 1), (0, -1), colors.white),
         ]))
         elements.append(nice_table)
-        elements.append(Spacer(1, 12))
+        elements.append(Spacer(1, 20))
 
         # Final Clinical Recommendations
         show_recommendations = (
@@ -696,72 +760,73 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             elements.append(Paragraph("Final Clinical Recommendations", styles['CustomSectionHeader']))
             final_recs = []
             if patient.get('review_message', '').startswith("Review Required"):
-                final_recs.append([Paragraph("Renal Function Review Needed:", styles['CustomTableTitle']), Paragraph("Yes", styles['CustomNormalText'])])
+                final_recs.append([f"• <b>Renal Function Review Needed:</b> Yes"])
             recommendations = [
-                ("Consider Statin Therapy:", patient.get('Statin_Recommendation'), ["On Statin", "Not Indicated", "N/A", "Missing", None]),
-                ("Consider Nephrology Referral:", patient.get('Proteinuria_Flag'), ["No Referral Needed", "N/A", "Missing", None]),
-                ("Blood Pressure Management:", patient.get('BP_Target'), ["On Target", "N/A", "Missing", None]),
-                ("Nephrology Referral:", patient.get('Nephrology_Referral'), ["Not Indicated", "N/A", "Missing", None]),
-                ("Medication Adjustments Required:", patient.get('dose_adjustment_prescribed'), ["No adjustments needed", "N/A", "Missing", None])
+                ("Nephrology Referral", patient.get('Nephrology_Referral'), ["Not Indicated", "N/A", "Missing", None]),
+                ("Medication Adjustments Required", patient.get('dose_adjustment_prescribed'), ["No adjustments needed", "N/A", "Missing", None]),
+                ("Consider Statin Therapy", patient.get('Statin_Recommendation'), ["On Statin", "Not Indicated", "N/A", "Missing", None]),
+                ("Consider Nephrology Referral", patient.get('Proteinuria_Flag'), ["No Referral Needed", "N/A", "Missing", None]),
+                ("Blood Pressure Management", patient.get('BP_Target'), ["On Target", "N/A", "Missing", None])
             ]
             for title, value, ignore_list in recommendations:
                 if value not in ignore_list:
-                    final_recs.append([Paragraph(title, styles['CustomTableTitle']), Paragraph(format_value(value), styles['CustomNormalText'])])
-            final_recs_table = Table(final_recs, colWidths=[2.5*inch, 3*inch])
+                    final_recs.append([f"• <b>{title}:</b> {format_value(value)}"])
+            final_recs_table = Table(final_recs, colWidths=[doc.width])
             final_recs_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
                 ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-                ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (0, -1), 9),
-                ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.grey),
-                ('BOX', (0, 0), (-1, -1), 0.5, colors.grey),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), 12),
+                ('BOX', (0, 0), (-1, -1), 2, colors.grey),
+                ('PADDING', (0, 0), (-1, -1), 15),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('PADDING', (0, 0), (-1, -1), 5),
-                ('BACKGROUND', (0, 0), (0, -1), colors.lightblue),
-                ('BACKGROUND', (0, 1), (0, -1), colors.white),
             ]))
             elements.append(final_recs_table)
-            elements.append(Spacer(1, 12))
+            elements.append(Spacer(1, 20))
 
-        # QR Code and Surgery Info
-        elements.append(Paragraph("More Information on Chronic Kidney Disease", styles['CustomSectionHeader']))
-        elements.append(Paragraph("Scan this QR code with your phone to access trusted resources on Chronic Kidney Disease (CKD).", styles['CustomNormalText']))
+        # QR Code and More Information
+        elements.append(Paragraph("More Information on Chronic Kidney Disease", styles['CustomSubTitle']))
+        qr_text = "Scan this QR code with your phone to access trusted resources on <b>Chronic Kidney Disease (CKD)</b>, including <br>guidance on managing your condition, lifestyle recommendations, and when to seek medical advice."
         qr_section = Table([
-            [Image(qr_path, width=150, height=150)]
+            [Image(qr_path, width=150, height=150) if qr_path else Paragraph("QR code unavailable", styles['CustomNormalText'])],
+            [Paragraph(qr_text, styles['CustomSmallText'])]
         ], colWidths=[doc.width])
         qr_section.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('BACKGROUND', (0, 0), (-1, -1), colors.lightgrey),
-            ('BOX', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
+            ('BOX', (0, 0), (-1, -1), 1, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 10),
         ]))
         elements.append(qr_section)
-        elements.append(Spacer(1, 12))
+        elements.append(Spacer(1, 20))
 
-        surgery_contact = [
-            [Paragraph(f"{surgery_info.get('surgery_name', 'Unknown Surgery')}", styles['CustomNormalText'])],
-            [Paragraph(f"{surgery_info.get('surgery_address_line1', 'N/A')}", styles['CustomNormalText'])],
-            [Paragraph(f"{surgery_info.get('surgery_address_line2', 'N/A')}" if surgery_info.get('surgery_address_line2') else "", styles['CustomNormalText'])],
-            [Paragraph(f"{surgery_info.get('surgery_city', 'N/A')}", styles['CustomNormalText'])],
-            [Paragraph(f"{surgery_info.get('surgery_postcode', 'N/A')}", styles['CustomNormalText'])],
-            [Paragraph(f"Tel: {surgery_info.get('surgery_phone', 'N/A')}", styles['CustomNormalText'])]
+        # Surgery Contact Info
+        surgery_contact_data = [
+            [f"{surgery_info.get('surgery_name', 'Unknown Surgery')}"],
+            [f"{surgery_info.get('surgery_address_line1', 'N/A')}"],
+            [f"{surgery_info.get('surgery_address_line2', 'N/A')}" if surgery_info.get('surgery_address_line2') else ""],
+            [f"{surgery_info.get('surgery_city', 'N/A')}"],
+            [f"{surgery_info.get('surgery_postcode', 'N/A')}"],
+            [f"<b>Tel:</b> {surgery_info.get('surgery_phone', 'N/A')}"]
         ]
-        surgery_contact_table = Table(surgery_contact, colWidths=[doc.width])
+        surgery_contact_table = Table(surgery_contact_data, colWidths=[doc.width])
         surgery_contact_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('BOX', (0, 0), (-1, -1), 0.5, colors.grey),
-            ('PADDING', (0, 0), (-1, -1), 5),
+            ('FONTSIZE', (0, 0), (-1, -1), 12),
+            ('BOX', (0, 0), (-1, -1), 1, colors.grey),
+            ('PADDING', (0, 0), (-1, -1), 10),
+            ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
         ]))
         elements.append(surgery_contact_table)
+        elements.append(Spacer(1, 20))
 
         # Build the PDF with header and footer
         def add_header_footer(canvas, doc):
             canvas.saveState()
             canvas.setFont('Helvetica', 10)
-            canvas.setFillColor(colors.darkblue)
+            canvas.setFillColor(colors.black)
             canvas.drawString(doc.leftMargin, doc.pagesize[1] - doc.topMargin + 20, f"{surgery_info.get('surgery_name', 'Unknown Surgery')}")
             canvas.drawCentredString(doc.pagesize[0]/2, doc.pagesize[1] - doc.topMargin + 20, f"Chronic Kidney Disease Review")
             canvas.drawRightString(doc.pagesize[0] - doc.rightMargin, doc.pagesize[1] - doc.topMargin + 20, f"Date: {datetime.now().strftime('%Y-%m-%d')}")
