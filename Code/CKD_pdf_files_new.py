@@ -6,7 +6,7 @@ import logging
 import numpy as np
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image, PageBreak
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 import qrcode
@@ -89,6 +89,49 @@ def classify_status(value, thresholds, field):
         return colors.red if value >= 30 else colors.orange if value > 3 else colors.green, str(value)
     return colors.black, str(value)
 
+# Function to create the stylesheet once
+def create_stylesheet():
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(
+        name='Title',
+        fontName='Helvetica-Bold',
+        fontSize=16,
+        leading=18,
+        alignment=1,  # Center
+        textColor=colors.darkblue
+    ))
+    styles.add(ParagraphStyle(
+        name='SectionHeader',
+        fontName='Helvetica-Bold',
+        fontSize=12,
+        leading=14,
+        textColor=colors.darkblue,
+        spaceAfter=6
+    ))
+    styles.add(ParagraphStyle(
+        name='NormalText',
+        fontName='Helvetica',
+        fontSize=10,
+        leading=12,
+        spaceAfter=4
+    ))
+    styles.add(ParagraphStyle(
+        name='Critical',
+        fontName='Helvetica-Bold',
+        textColor=colors.red
+    ))
+    styles.add(ParagraphStyle(
+        name='Caution',
+        fontName='Helvetica-Bold',
+        textColor=colors.orange
+    ))
+    styles.add(ParagraphStyle(
+        name='Safe',
+        fontName='Helvetica-Bold',
+        textColor=colors.green
+    ))
+    return styles
+
 # Function to generate patient PDF using ReportLab
 def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
     # Load surgery info
@@ -129,8 +172,11 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         if col in CKD_review.columns:
             CKD_review[col] = pd.to_numeric(CKD_review[col], errors='coerce')
 
+    # Create the stylesheet once before generating PDFs
+    styles = create_stylesheet()
+
     # Function to create patient PDF using ReportLab
-    def create_patient_pdf(patient, surgery_info, output_path, qr_path):
+    def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles):
         doc = SimpleDocTemplate(
             output_path,
             pagesize=letter,
@@ -140,47 +186,6 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             bottomMargin=0.5*inch
         )
         elements = []
-        styles = getSampleStyleSheet()
-
-        # Define custom styles
-        styles.add(ParagraphStyle(
-            name='Title',
-            fontName='Helvetica-Bold',
-            fontSize=16,
-            leading=18,
-            alignment=1,  # Center
-            textColor=colors.darkblue
-        ))
-        styles.add(ParagraphStyle(
-            name='SectionHeader',
-            fontName='Helvetica-Bold',
-            fontSize=12,
-            leading=14,
-            textColor=colors.darkblue,
-            spaceAfter=6
-        ))
-        styles.add(ParagraphStyle(
-            name='NormalText',
-            fontName='Helvetica',
-            fontSize=10,
-            leading=12,
-            spaceAfter=4
-        ))
-        styles.add(ParagraphStyle(
-            name='Critical',
-            fontName='Helvetica-Bold',
-            textColor=colors.red
-        ))
-        styles.add(ParagraphStyle(
-            name='Caution',
-            fontName='Helvetica-Bold',
-            textColor=colors.orange
-        ))
-        styles.add(ParagraphStyle(
-            name='Safe',
-            fontName='Helvetica-Bold',
-            textColor=colors.green
-        ))
 
         # Header
         header_table = Table([
@@ -611,7 +616,6 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
 
         # Build the PDF with header and footer
         def add_header_footer(canvas, doc):
-            # Header
             canvas.saveState()
             canvas.setFont('Helvetica', 10)
             canvas.setFillColor(colors.darkblue)
@@ -620,7 +624,6 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             canvas.drawRightString(doc.pagesize[0] - doc.rightMargin, doc.pagesize[1] - doc.topMargin + 20, f"Date: {datetime.now().strftime('%Y-%m-%d')}")
             canvas.line(doc.leftMargin, doc.pagesize[1] - doc.topMargin + 10, doc.pagesize[0] - doc.rightMargin, doc.pagesize[1] - doc.topMargin + 10)
             
-            # Footer
             canvas.setFont('Helvetica', 8)
             canvas.setFillColor(colors.grey)
             canvas.drawString(doc.leftMargin, doc.bottomMargin - 10, f"Page {doc.page}")
@@ -644,7 +647,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         logging.info(f"Created review subfolder: {review_folder}")
         
         file_name = os.path.join(review_folder, f"Patient_Summary_{patient['HC_Number']}.pdf")
-        create_patient_pdf(patient_data, surgery_info, file_name, qr_path)
+        create_patient_pdf(patient_data, surgery_info, file_name, qr_path, styles)
 
         logging.info(f"Report saved as Patient_Summary_{patient['HC_Number']}.pdf in {review_folder}")
 
