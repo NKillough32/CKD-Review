@@ -89,11 +89,11 @@ def classify_status(value, thresholds, field):
         return colors.red if value >= 30 else colors.orange if value > 3 else colors.green, str(value)
     return colors.black, str(value)
 
-# Function to create the stylesheet once
+# Function to create the stylesheet once with unique style names
 def create_stylesheet():
     styles = getSampleStyleSheet()
     styles.add(ParagraphStyle(
-        name='Title',
+        name='CustomTitle',
         fontName='Helvetica-Bold',
         fontSize=16,
         leading=18,
@@ -101,7 +101,7 @@ def create_stylesheet():
         textColor=colors.darkblue
     ))
     styles.add(ParagraphStyle(
-        name='SectionHeader',
+        name='CustomSectionHeader',
         fontName='Helvetica-Bold',
         fontSize=12,
         leading=14,
@@ -109,24 +109,24 @@ def create_stylesheet():
         spaceAfter=6
     ))
     styles.add(ParagraphStyle(
-        name='NormalText',
+        name='CustomNormalText',
         fontName='Helvetica',
         fontSize=10,
         leading=12,
         spaceAfter=4
     ))
     styles.add(ParagraphStyle(
-        name='Critical',
+        name='CustomCritical',
         fontName='Helvetica-Bold',
         textColor=colors.red
     ))
     styles.add(ParagraphStyle(
-        name='Caution',
+        name='CustomCaution',
         fontName='Helvetica-Bold',
         textColor=colors.orange
     ))
     styles.add(ParagraphStyle(
-        name='Safe',
+        name='CustomSafe',
         fontName='Helvetica-Bold',
         textColor=colors.green
     ))
@@ -189,9 +189,9 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
 
         # Header
         header_table = Table([
-            [Paragraph(f"{surgery_info.get('surgery_name', 'Unknown Surgery')}", styles['Title'])],
-            [Paragraph("Chronic Kidney Disease Review", styles['Title'])],
-            [Paragraph(f"Generated on: {datetime.now().strftime('%Y-%m-%d')}", styles['NormalText'])]
+            [Paragraph(f"{surgery_info.get('surgery_name', 'Unknown Surgery')}", styles['CustomTitle'])],
+            [Paragraph("Chronic Kidney Disease Review", styles['CustomTitle'])],
+            [Paragraph(f"Generated on: {datetime.now().strftime('%Y-%m-%d')}", styles['CustomNormalText'])]
         ], colWidths=[doc.width])
         header_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -212,11 +212,11 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         if patient.get('Dialysis', 'Missing') != "Missing":
             status_text.append(f"Dialysis: {format_value(patient.get('Dialysis'))}")
         for line in status_text:
-            elements.append(Paragraph(line, styles['NormalText']))
+            elements.append(Paragraph(line, styles['CustomNormalText']))
         elements.append(Spacer(1, 12))
 
         # Patient Information
-        elements.append(Paragraph("Patient Information", styles['SectionHeader']))
+        elements.append(Paragraph("Patient Information", styles['CustomSectionHeader']))
         patient_info = [
             ["NHS Number:", f"{int(patient['HC_Number']) if pd.notna(patient['HC_Number']) else 'N/A'}"],
             ["Age:", f"{int(patient['Age']) if pd.notna(patient['Age']) else 'N/A'}"],
@@ -237,16 +237,16 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         elements.append(Spacer(1, 12))
 
         # CKD Overview
-        elements.append(Paragraph("CKD Overview", styles['SectionHeader']))
+        elements.append(Paragraph("CKD Overview", styles['CustomSectionHeader']))
         ckd_color, ckd_group = classify_status(patient.get('CKD_Group', 'Missing'), None, "CKD_Group")
         ckd_data = [
-            ["KDIGO 2024 Classification:", Paragraph(f"<font color='{ckd_color.hexval()}'>{format_value(patient.get('CKD_Group'))}</font>", styles['NormalText'])],
+            ["KDIGO 2024 Classification:", Paragraph(f"<font color='{ckd_color.hexval()}'>{format_value(patient.get('CKD_Group'))}</font>", styles['CustomNormalText'])],
             ["Stage:", f"{format_value(patient.get('CKD_Stage'))}"],
             ["ACR Criteria:", f"{format_value(patient.get('CKD_ACR'))}"],
-            ["Albumin-Creatinine Ratio (ACR):", Paragraph(f"<font color='{classify_status(patient.get('ACR', 'Missing'), None, 'ACR')[0].hexval()}'>{format_value(patient.get('ACR'))} mg/mmol</font> | Date: {format_value(patient.get('Sample_Date1'))}", styles['NormalText'])],
-            ["Creatinine (Current):", Paragraph(f"<font color='{classify_status(patient.get('Creatinine', 'Missing'), None, 'Creatinine')[0].hexval()}'>{format_value(patient.get('Creatinine'))} µmol/L</font> | Date: {format_value(patient.get('Sample_Date'))}", styles['NormalText'])],
+            ["Albumin-Creatinine Ratio (ACR):", Paragraph(f"<font color='{classify_status(patient.get('ACR', 'Missing'), None, 'ACR')[0].hexval()}'>{format_value(patient.get('ACR'))} mg/mmol</font> | Date: {format_value(patient.get('Sample_Date1'))}", styles['CustomNormalText'])],
+            ["Creatinine (Current):", Paragraph(f"<font color='{classify_status(patient.get('Creatinine', 'Missing'), None, 'Creatinine')[0].hexval()}'>{format_value(patient.get('Creatinine'))} µmol/L</font> | Date: {format_value(patient.get('Sample_Date'))}", styles['CustomNormalText'])],
             ["Creatinine (3 Months Prior):", f"{format_value(patient.get('Creatinine_3m_prior'))} µmol/L | Date: {format_value(patient.get('Sample_Date2'))}"],
-            ["eGFR (Current):", Paragraph(f"<font color='{classify_status(patient.get('eGFR', 'Missing'), None, 'eGFR')[0].hexval()}'>{format_value(patient.get('eGFR'))} mL/min/1.73m²</font> | Date: {format_value(patient.get('Sample_Date'))}", styles['NormalText'])],
+            ["eGFR (Current):", Paragraph(f"<font color='{classify_status(patient.get('eGFR', 'Missing'), None, 'eGFR')[0].hexval()}'>{format_value(patient.get('eGFR'))} mL/min/1.73m²</font> | Date: {format_value(patient.get('Sample_Date'))}", styles['CustomNormalText'])],
             ["eGFR (3 Months Prior):", f"{format_value(patient.get('eGFR_3m_prior'))} mL/min/1.73m² | Date: {format_value(patient.get('Sample_Date2'))}"],
             ["eGFR Trend:", f"{format_value(patient.get('eGFR_Trend'))}"]
         ]
@@ -267,12 +267,12 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         elements.append(Spacer(1, 12))
 
         # Blood Pressure
-        elements.append(Paragraph("Blood Pressure", styles['SectionHeader']))
+        elements.append(Paragraph("Blood Pressure", styles['CustomSectionHeader']))
         bp_color_sys, bp_value_sys = classify_status(patient.get('Systolic_BP', 'Missing'), None, 'Systolic_BP')
         bp_color_dia, bp_value_dia = classify_status(patient.get('Diastolic_BP', 'Missing'), None, 'Diastolic_BP')
         bp_data = [
             ["Classification:", f"{format_value(patient.get('BP_Classification'))} | Date: {format_value(patient.get('Sample_Date3'))}"],
-            ["Systolic / Diastolic:", Paragraph(f"<font color='{bp_color_sys.hexval()}'>{bp_value_sys}</font> / <font color='{bp_color_dia.hexval()}'>{bp_value_dia}</font> mmHg", styles['NormalText'])],
+            ["Systolic / Diastolic:", Paragraph(f"<font color='{bp_color_sys.hexval()}'>{bp_value_sys}</font> / <font color='{bp_color_dia.hexval()}'>{bp_value_dia}</font> mmHg", styles['CustomNormalText'])],
             ["Target BP:", f"{format_value(patient.get('BP_Target'))} | Status: {format_value(patient.get('BP_Flag'))}"]
         ]
         bp_table = Table(bp_data, colWidths=[2*inch, 3*inch])
@@ -292,10 +292,10 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         elements.append(Spacer(1, 12))
 
         # Anaemia Overview
-        elements.append(Paragraph("Anaemia Overview", styles['SectionHeader']))
+        elements.append(Paragraph("Anaemia Overview", styles['CustomSectionHeader']))
         haemoglobin_color, haemoglobin_value = classify_status(patient.get('haemoglobin', 'Missing'), None, 'haemoglobin')
         anaemia_data = [
-            ["Haemoglobin:", Paragraph(f"<font color='{haemoglobin_color.hexval()}'>{haemoglobin_value} g/L</font> | Date: {format_value(patient.get('Sample_Date5'))}", styles['NormalText'])],
+            ["Haemoglobin:", Paragraph(f"<font color='{haemoglobin_color.hexval()}'>{haemoglobin_value} g/L</font> | Date: {format_value(patient.get('Sample_Date5'))}", styles['CustomNormalText'])],
             ["Current Status:", f"{format_value(patient.get('Anaemia_Classification'))}"],
             ["Anaemia Management:", f"{format_value(patient.get('Anaemia_Flag'))}"]
         ]
@@ -316,7 +316,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         elements.append(Spacer(1, 12))
 
         # Electrolyte and MBD Management
-        elements.append(Paragraph("Electrolyte and Mineral Bone Disorder (MBD) Management", styles['SectionHeader']))
+        elements.append(Paragraph("Electrolyte and Mineral Bone Disorder (MBD) Management", styles['CustomSectionHeader']))
         mbd_data = [
             ["Potassium:", f"{format_value(patient.get('Potassium'))} mmol/L | Status: {format_value(patient.get('Potassium_Flag'))} | Date: {format_value(patient.get('Sample_Date7'))}"],
             ["Bicarbonate:", f"{format_value(patient.get('Bicarbonate'))} mmol/L | Status: {format_value(patient.get('Bicarbonate_Flag'))} | Date: {format_value(patient.get('Sample_Date13'))}"],
@@ -342,7 +342,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         elements.append(Spacer(1, 12))
 
         # Diabetes and HbA1c Management
-        elements.append(Paragraph("Diabetes and HbA1c Management", styles['SectionHeader']))
+        elements.append(Paragraph("Diabetes and HbA1c Management", styles['CustomSectionHeader']))
         diabetes_data = [
             ["HbA1c Level:", f"{format_value(patient.get('HbA1c'))} mmol/mol | Date: {format_value(patient.get('Sample_Date6'))}"],
             ["HbA1c Management:", f"{format_value(patient.get('HbA1c_Target'))}"]
@@ -364,7 +364,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         elements.append(Spacer(1, 12))
 
         # Kidney Failure Risk
-        elements.append(Paragraph("Kidney Failure Risk", styles['SectionHeader']))
+        elements.append(Paragraph("Kidney Failure Risk", styles['CustomSectionHeader']))
         risk_data = [
             ["2-Year Risk:", f"{format_value(patient.get('risk_2yr'))}%"],
             ["5-Year Risk:", f"{format_value(patient.get('risk_5yr'))}%"]
@@ -386,7 +386,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         elements.append(Spacer(1, 12))
 
         # Care & Referrals
-        elements.append(Paragraph("Care & Referrals", styles['SectionHeader']))
+        elements.append(Paragraph("Care & Referrals", styles['CustomSectionHeader']))
         care_data = [
             ["Multidisciplinary Care:", f"{format_value(patient.get('Multidisciplinary_Care'))}"],
             ["Modality Education:", f"{format_value(patient.get('Modality_Education'))}"],
@@ -410,7 +410,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         elements.append(Spacer(1, 12))
 
         # Medication Review
-        elements.append(Paragraph("Medication Review", styles['SectionHeader']))
+        elements.append(Paragraph("Medication Review", styles['CustomSectionHeader']))
         med_data = [
             ["Current Medication:", f"{format_value(patient.get('Medications', 'None'))}"],
             ["Review Medications:", f"{format_value(patient.get('dose_adjustment_prescribed'))}"],
@@ -435,9 +435,9 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         elements.append(Spacer(1, 12))
 
         # Lifestyle and Preventative Advice
-        elements.append(Paragraph("Lifestyle and Preventative Advice", styles['SectionHeader']))
+        elements.append(Paragraph("Lifestyle and Preventative Advice", styles['CustomSectionHeader']))
         lifestyle_data = [
-            ["Lifestyle Recommendations:", Paragraph(f"{format_value(patient.get('Lifestyle_Advice', 'No specific advice available.'))}", styles['NormalText'])]
+            ["Lifestyle Recommendations:", Paragraph(f"{format_value(patient.get('Lifestyle_Advice', 'No specific advice available.'))}", styles['CustomNormalText'])]
         ]
         lifestyle_table = Table(lifestyle_data, colWidths=[2*inch, 3*inch])
         lifestyle_table.setStyle(TableStyle([
@@ -456,8 +456,8 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         elements.append(Spacer(1, 12))
 
         # NICE Guideline Recommendations
-        elements.append(Paragraph("NICE Guideline Recommendations", styles['SectionHeader']))
-        elements.append(Paragraph("For detailed guidance, refer to <a href='https://www.nice.org.uk/guidance/ng203'>NICE NG203 guideline on Chronic Kidney Disease</a>.", styles['NormalText']))
+        elements.append(Paragraph("NICE Guideline Recommendations", styles['CustomSectionHeader']))
+        elements.append(Paragraph("For detailed guidance, refer to <a href='https://www.nice.org.uk/guidance/ng203'>NICE NG203 guideline on Chronic Kidney Disease</a>.", styles['CustomNormalText']))
         elements.append(Spacer(1, 12))
 
         ckd_stage = patient.get('CKD_Stage', 'Unknown')
@@ -550,7 +550,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         )
         
         if show_recommendations:
-            elements.append(Paragraph("Final Clinical Recommendations", styles['SectionHeader']))
+            elements.append(Paragraph("Final Clinical Recommendations", styles['CustomSectionHeader']))
             final_recs = []
             if patient.get('review_message', '').startswith("Review Required"):
                 final_recs.append(["Renal Function Review Needed:", "Yes"])
@@ -581,8 +581,8 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             elements.append(Spacer(1, 12))
 
         # QR Code and Surgery Info
-        elements.append(Paragraph("More Information on Chronic Kidney Disease", styles['SectionHeader']))
-        elements.append(Paragraph("Scan this QR code with your phone to access trusted resources on Chronic Kidney Disease (CKD).", styles['NormalText']))
+        elements.append(Paragraph("More Information on Chronic Kidney Disease", styles['CustomSectionHeader']))
+        elements.append(Paragraph("Scan this QR code with your phone to access trusted resources on Chronic Kidney Disease (CKD).", styles['CustomNormalText']))
         qr_section = Table([
             [Image(qr_path, width=150, height=150)]
         ], colWidths=[doc.width])
