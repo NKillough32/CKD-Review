@@ -23,10 +23,13 @@ else:
 
 # Execute the main CKD processing logic
 print("Starting CKD Data Analysis Pipeline....")
+# Determine the path to CKD_core.py based on execution mode
+ckd_core_path = os.path.join(base_path, "CKD_core.py" if getattr(sys, 'frozen', False) else os.path.join("Code", "CKD_core.py"))
+
 try:
-    exec(open(os.path.join(base_path, "Code", "CKD_core.py")).read())
+    exec(open(ckd_core_path).read())
 except FileNotFoundError:
-    logging.error(f"CKD_core.py not found in {base_path}. Ensure it’s included in the build.")
+    logging.error(f"CKD_core.py not found at {ckd_core_path}. Ensure it’s included in the build.")
     sys.exit(1)
 
 if 'CKD_review' not in globals():
