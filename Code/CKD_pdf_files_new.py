@@ -88,20 +88,18 @@ def classify_status(value, thresholds, field):
     elif field == "ACR":
         return colors.red if value >= 30 else colors.orange if value > 3 else colors.green, str(value)
     elif field == "CKD_Group":
-        # For CKD_Group, just return the value with black color since it's a string
         return colors.black, str(value) if value != "Missing" else "N/A"
     return colors.black, str(value)
 
 # Function to compute review message based on clinical criteria
 def compute_review_message(patient):
-    review_message = "Uncategorized"
-    
     eGFR = patient.get('eGFR')
     ACR = patient.get('ACR')
     risk_2yr = patient.get('risk_2yr')
     risk_5yr = patient.get('risk_5yr')
     ckd_stage = patient.get('CKD_Stage')
     
+    # Convert to numeric where applicable
     try:
         eGFR = float(eGFR) if not pd.isna(eGFR) and eGFR != "Missing" else None
     except (ValueError, TypeError):
@@ -118,12 +116,15 @@ def compute_review_message(patient):
         risk_5yr = float(risk_5yr) if not pd.isna(risk_5yr) and risk_5yr != "Missing" else None
     except (ValueError, TypeError):
         risk_5yr = None
-    
+
+    # Review criteria
     if ckd_stage in ["Stage 1", "Stage 2"]:
         if ACR is not None and ACR > 3:
             review_message = "Review Required - CKD Stage 1-2 with ACR > 3"
         elif eGFR is None or pd.isna(patient.get('Sample_Date')):
             review_message = "Review Required - eGFR date unavailable"
+        else:
+            review_message = "General Review - CKD Stage 1-2"
     elif ckd_stage in ["Stage 3A", "Stage 3B", "Stage 4", "Stage 5"]:
         if eGFR is not None and eGFR < 30:
             review_message = "Review Required - CKD Stage 3-5 with eGFR < 30"
@@ -133,10 +134,30 @@ def compute_review_message(patient):
             review_message = "Review Required - CKD Stage 3-5 with 5-year risk > 5%"
         elif eGFR is None or pd.isna(patient.get('Sample_Date')):
             review_message = "Review Required - eGFR date unavailable"
+        else:
+            review_message = "General Review - CKD Stage 3-5"
     elif ckd_stage == "Normal Function":
         review_message = "No Immediate Review Required"
-    
+    else:
+        review_message = "General Review - Unknown CKD Stage"
+        logging.warning(f"Patient HC_Number: {patient.get('HC_Number')}, categorized as 'General Review - Unknown CKD Stage' due to CKD_Stage: {ckd_stage}, eGFR: {eGFR}, ACR: {ACR}, risk_5yr: {risk_5yr}")
+
     return review_message
+
+# Function to map review_message to a shorter folder name
+def map_review_message_to_folder(review_message):
+    mapping = {
+        "Review Required - CKD Stage 1-2 with ACR > 3": "Review_Stage1_2_ACR3",
+        "Review Required - CKD Stage 3-5 with eGFR < 30": "Review_Stage3_5_eGFR30",
+        "Review Required - CKD Stage 3-5 with ACR >= 30": "Review_Stage3_5_ACR30",
+        "Review Required - CKD Stage 3-5 with 5-year risk > 5%": "Review_Stage3_5_Risk5",
+        "Review Required - eGFR date unavailable": "Review_eGFR_Unavailable",
+        "No Immediate Review Required": "No_Immediate_Review",
+        "General Review - CKD Stage 1-2": "General_Review_Stage1_2",
+        "General Review - CKD Stage 3-5": "General_Review_Stage3_5",
+        "General Review - Unknown CKD Stage": "General_Review_Unknown"
+    }
+    return mapping.get(review_message, "".join([c if c.isalnum() or c.isspace() else "_" for c in review_message]).replace(" ", "_"))
 
 # Function to compute CKD Group (same as in CKD_Master_pdf_exefree.py)
 def get_ckd_stage_acr_group(row):
@@ -761,8 +782,8 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             patient_data['CKD_Group'] = get_ckd_stage_acr_group(patient_data)
         logging.info(f"Patient HC_Number: {patient_data['HC_Number']}, CKD_Group: {patient_data.get('CKD_Group')}, eGFR: {patient_data.get('eGFR')}, ACR: {patient_data.get('ACR')}")
 
-        # Create subfolder based on computed review_message
-        sanitized_review_folder = "".join([c if c.isalnum() or c.isspace() else "_" for c in review_message]).replace(" ", "_")
+        # Create subfolder based on computed review_message with shortened name
+        sanitized_review_folder = map_review_message_to_folder(review_message)
         review_folder = os.path.join(date_folder, sanitized_review_folder)
         os.makedirs(review_folder, exist_ok=True)
         logging.info(f"Created review subfolder: {review_folder}")
