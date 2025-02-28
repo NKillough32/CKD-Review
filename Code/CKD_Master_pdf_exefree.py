@@ -18,8 +18,11 @@ warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
 # Get the base path (works for both script and executable)
 if getattr(sys, 'frozen', False):
     base_path = sys._MEIPASS
+    # Use the current working directory for saving output files
+    working_base_path = os.getcwd()
 else:
     base_path = os.getcwd()
+    working_base_path = base_path
 
 # Execute the main CKD processing logic
 print("Starting CKD Data Analysis Pipeline....")
@@ -52,9 +55,11 @@ if not date_folder or not os.path.isdir(date_folder):
     sys.exit(1)
 
 # Save output to CSV
-output_file_name = f"eGFR_check_{pd.Timestamp.today().date()}.csv"
+output_file_name = os.path.join(working_base_path, f"eGFR_check_{pd.Timestamp.today().date()}.csv")
 CKD_review.to_csv(output_file_name, index=False)  # type: ignore
 logging.info(f"Saved output to {output_file_name}")
+if not os.path.exists(output_file_name):
+    logging.error(f"Failed to confirm existence of {output_file_name} after saving")
 
 # Function to move files to the date-stamped folder
 def move_ckd_files(date_folder):
@@ -70,16 +75,16 @@ def move_ckd_files(date_folder):
     missing_KFRE_file = "missing_data_subjects.csv"
 
     # Construct source and destination paths
-    egfr_source = os.path.join(base_path, egfr_file)
+    egfr_source = os.path.join(working_base_path, egfr_file)
     egfr_destination = os.path.join(date_folder, egfr_file)
     
-    data_source = os.path.join(base_path, data_file)
+    data_source = os.path.join(working_base_path, data_file)
     data_destination = os.path.join(date_folder, data_file)
     
-    ckd_source = os.path.join(base_path, ckd_review_file)
+    ckd_source = os.path.join(working_base_path, ckd_review_file)
     ckd_destination = os.path.join(date_folder, ckd_review_file)
 
-    missing_source = os.path.join(base_path, missing_KFRE_file)
+    missing_source = os.path.join(working_base_path, missing_KFRE_file)
     missing_destination = os.path.join(date_folder, missing_KFRE_file)
 
     # Move files with error handling
@@ -97,6 +102,18 @@ def move_ckd_files(date_folder):
                 logging.warning(f"Source file {src} does not exist, skipping")
         except Exception as e:
             logging.error(f"Failed to move {name}: {e}")
+
+    # Move the EMIS_Clinical_Code_Batch_Files folder
+    emis_source = os.path.join(working_base_path, "EMIS_Clinical_Code_Batch_Files")
+    emis_destination = os.path.join(date_folder, "EMIS_Clinical_Code_Batch_Files")
+    try:
+        if os.path.exists(emis_source):
+            shutil.move(emis_source, emis_destination)
+            logging.info(f"Moved EMIS_Clinical_Code_Batch_Files to {date_folder}")
+        else:
+            logging.warning(f"EMIS_Clinical_Code_Batch_Files folder not found at {emis_source}, skipping")
+    except Exception as e:
+        logging.error(f"Failed to move EMIS_Clinical_Code_Batch_Files: {e}")
 
     # CKD stage and ACR grade codes for EMIS grouping
     def get_ckd_stage_acr_group(row):
@@ -137,8 +154,9 @@ def move_ckd_files(date_folder):
     CKD_review['CKD_Group'] = CKD_review.apply(get_ckd_stage_acr_group, axis=1)  # type: ignore
 
     # Save EMIS batch files
-    emis_dir = os.path.join(base_path, "EMIS_Clinical_Code_Batch_Files")
+    emis_dir = os.path.join(working_base_path, "EMIS_Clinical_Code_Batch_Files")
     os.makedirs(emis_dir, exist_ok=True)
+    logging.info(f"Created EMIS batch files directory: {emis_dir}")
     for group in CKD_review['CKD_Group'].unique():  # type: ignore
         filtered_patients = CKD_review[CKD_review['CKD_Group'] == group][["HC_Number"]].copy()  # type: ignore
         filtered_patients.rename(columns={'HC_Number': 'HCN'}, inplace=True)
@@ -146,11 +164,15 @@ def move_ckd_files(date_folder):
         group_file_path = os.path.join(emis_dir, group_file_name)
         filtered_patients.to_csv(group_file_path, index=False, sep='\t', header=False)
         logging.info(f"Saved {group} patients to: {group_file_path}")
+        if not os.path.exists(group_file_path):
+            logging.error(f"Failed to confirm existence of {group_file_path} after saving")
 
     # Save additional CSV
-    output_file_name2 = f"data_check_{pd.Timestamp.today().date()}.csv"
+    output_file_name2 = os.path.join(working_base_path, f"data_check_{pd.Timestamp.today().date()}.csv")
     CKD_review.to_csv(output_file_name2, index=False)  # type: ignore
     logging.info(f"Saved output to {output_file_name2}")
+    if not os.path.exists(output_file_name2):
+        logging.error(f"Failed to confirm existence of {output_file_name2} after saving")
 
 # Folder renaming function
 def rename_folders(date_folder):
