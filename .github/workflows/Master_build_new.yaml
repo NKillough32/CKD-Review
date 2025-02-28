@@ -86,6 +86,8 @@ jobs:
           git config user.name "GitHub Actions"
           git add -f NephroPath_win_pdf.exe
           git commit -m "Update built NephroPath_win_pdf.exe" || echo "No changes to commit"
+          git fetch origin main
+          git pull --rebase origin main || (git rebase --abort && echo "Rebase failed, aborting" && exit 1)
           git push origin main
 
       - name: Upload Windows executable
@@ -96,6 +98,7 @@ jobs:
 
   build-macos:
     runs-on: macos-latest
+    needs: build-windows  # Ensure this job runs after build-windows
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -155,4 +158,16 @@ jobs:
 
       - name: Commit and push changes
         run: |
-          git config user.email "
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add -f NephroPath_mac_pdf
+          git commit -m "Update built NephroPath_mac_pdf" || echo "No changes to commit"
+          git fetch origin main
+          git pull --rebase origin main || (git rebase --abort && echo "Rebase failed, aborting" && exit 1)
+          git push origin main
+
+      - name: Upload macOS executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: NephroPath_mac_pdf-macOS
+          path: NephroPath_mac_pdf
