@@ -41,6 +41,7 @@ jobs:
         with:
           python-version: '3.10'
           cache: 'pip'
+          cache-dependency-path: 'Dependencies/requirements.txt'
 
       - name: Install dependencies
         run: |
@@ -48,9 +49,29 @@ jobs:
           pip install -r Dependencies/requirements.txt
           pip install pyinstaller
 
+      - name: Verify required files exist
+        shell: pwsh
+        run: |
+          $requiredFiles = @(
+            "EMIS_Files/Creatinine.csv",
+            "EMIS_Files/CKD_check.csv",
+            "Dependencies/contraindicated_drugs.csv",
+            "Dependencies/drug_adjustment.csv",
+            "Dependencies/statins.csv",
+            "Dependencies/NephroPath_installer_icon.ico"
+          )
+          foreach ($file in $requiredFiles) {
+            if (-Not (Test-Path $file)) {
+              Write-Error "Missing required file: $file"
+              exit 1
+            } else {
+              Write-Host "Found: $file"
+            }
+          }
+
       - name: Build with PyInstaller
         run: |
-          python -m PyInstaller --onefile --name=${{ matrix.name }} --icon=Dependencies/NephroPath_installer_icon.ico ${{ matrix.script }}
+          python -m PyInstaller --onefile --name=${{ matrix.name }} --icon=Dependencies/NephroPath_installer_icon.ico --add-data "EMIS_Files;EMIS_Files" --add-data "Dependencies;Dependencies" --log-level DEBUG ${{ matrix.script }}
 
       - name: Move release
         run: |
@@ -60,24 +81,23 @@ jobs:
         shell: pwsh
         run: |
           .\${{ matrix.output }}
-          if (!$?) { exit 1 }
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Test run of ${{ matrix.output }} failed with exit code $LASTEXITCODE"
+            exit 1
+          }
+          Write-Host "${{ matrix.output }} ran successfully"
 
       - name: Commit and push changes
         run: |
-            git config user.email "actions@github.com"
-            git config user.name "GitHub Actions"
-            # Stage and commit unstaged changes
-            git add -f ${{ matrix.output }}
-            git commit -m "Update built ${{ matrix.output }}" || echo "No changes to commit"
-            # Stash any unstaged changes
-            git stash
-            # Fetch latest changes and rebase
-            git fetch origin main
-            git pull --rebase origin main || (git rebase --abort && echo "Rebase failed, aborting" && exit 1)
-            # Apply stashed changes
-            git stash pop || echo "No changes to apply"
-            # Push changes to remote repository
-            git push origin main
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add -f ${{ matrix.output }}
+          git commit -m "Update built ${{ matrix.output }}" || echo "No changes to commit"
+          git stash
+          git fetch origin main
+          git pull --rebase origin main || (git rebase --abort && echo "Rebase failed, aborting" && exit 1)
+          git stash pop || echo "No changes to apply"
+          git push origin main
 
       - name: Upload Windows executable
         uses: actions/upload-artifact@v4
@@ -107,6 +127,7 @@ jobs:
         with:
           python-version: '3.10'
           cache: 'pip'
+          cache-dependency-path: 'Dependencies/requirements.txt'
 
       - name: Install dependencies
         run: |
@@ -114,9 +135,28 @@ jobs:
           pip install -r Dependencies/requirements.txt
           pip install pyinstaller
 
+      - name: Verify required files exist
+        run: |
+          required_files=(
+            "EMIS_Files/Creatinine.csv"
+            "EMIS_Files/CKD_check.csv"
+            "Dependencies/contraindicated_drugs.csv"
+            "Dependencies/drug_adjustment.csv"
+            "Dependencies/statins.csv"
+            "Dependencies/NephroPath_installer_icon.icns"
+          )
+          for file in "${required_files[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "Error: Missing required file: $file" >&2
+              exit 1
+            else
+              echo "Found: $file"
+            fi
+          done
+
       - name: Build with PyInstaller
         run: |
-          python -m PyInstaller --onefile --name=${{ matrix.name }} --icon=Dependencies/NephroPath_installer_icon.icns ${{ matrix.script }}
+          python -m PyInstaller --onefile --name=${{ matrix.name }} --icon=Dependencies/NephroPath_installer_icon.icns --add-data "EMIS_Files:EMIS_Files" --add-data "Dependencies:Dependencies" --log-level DEBUG ${{ matrix.script }}
 
       - name: Move release
         run: |
@@ -125,24 +165,23 @@ jobs:
       - name: Test ${{ matrix.output }}
         run: |
           ./${{ matrix.output }}
-          if [ $? -ne 0 ]; then exit 1; fi
+          if [ $? -ne 0 ]; then
+            echo "Error: Test run of ${{ matrix.output }} failed" >&2
+            exit 1
+          fi
+          echo "${{ matrix.output }} ran successfully"
 
       - name: Commit and push changes
         run: |
-            git config user.email "actions@github.com"
-            git config user.name "GitHub Actions"
-            # Stage and commit unstaged changes
-            git add -f ${{ matrix.output }}
-            git commit -m "Update built ${{ matrix.output }}" || echo "No changes to commit"
-            # Stash any unstaged changes
-            git stash
-            # Fetch latest changes and rebase
-            git fetch origin main
-            git pull --rebase origin main || (git rebase --abort && echo "Rebase failed, aborting" && exit 1)
-            # Apply stashed changes
-            git stash pop || echo "No changes to apply"
-            # Push changes to remote repository
-            git push origin main
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add -f ${{ matrix.output }}
+          git commit -m "Update built ${{ matrix.output }}" || echo "No changes to commit"
+          git stash
+          git fetch origin main
+          git pull --rebase origin main || (git rebase --abort && echo "Rebase failed, aborting" && exit 1)
+          git stash pop || echo "No changes to apply"
+          git push origin main
 
       - name: Upload macOS executable
         uses: actions/upload-artifact@v4
