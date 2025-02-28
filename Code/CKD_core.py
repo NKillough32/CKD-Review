@@ -478,7 +478,8 @@ def prioritize_patient(row):
 if getattr(sys, 'frozen', False):
     base_path = sys._MEIPASS
 else:
-    base_path = os.getcwd()
+    # Use the directory of this script (CKD_core.py) and go up one level
+    base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
 # File paths
 creatinine_file = os.path.join(base_path, "EMIS_Files", "Creatinine.csv")
