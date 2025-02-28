@@ -44,15 +44,25 @@ print("Data preprocessing and metrics calculation complete.")
 print("Writing Output Data and generating PDFs...")
 
 # Generate patient PDFs
-date_folder = generate_patient_pdf(CKD_review) # type: ignore
+logging.info("Generating patient PDFs...")
+date_folder = generate_patient_pdf(CKD_review)  # type: ignore
+logging.info(f"date_folder returned by generate_patient_pdf: {date_folder}")
+if not date_folder or not os.path.isdir(date_folder):
+    logging.error(f"Invalid date_folder: {date_folder}. Patient summary folder not created.")
+    sys.exit(1)
 
 # Save output to CSV
 output_file_name = f"eGFR_check_{pd.Timestamp.today().date()}.csv"
-CKD_review.to_csv(output_file_name, index=False) # type: ignore
+CKD_review.to_csv(output_file_name, index=False)  # type: ignore
 logging.info(f"Saved output to {output_file_name}")
 
 # Function to move files to the date-stamped folder
 def move_ckd_files(date_folder):
+    logging.info(f"Moving CKD files to {date_folder}")
+    if not os.path.isdir(date_folder):
+        logging.error(f"Cannot move files: {date_folder} is not a valid directory")
+        return
+
     # Construct file names based on today's date
     egfr_file = f"eGFR_check_{pd.Timestamp.today().date()}.csv"
     data_file = f"data_check_{pd.Timestamp.today().date()}.csv"
@@ -80,8 +90,11 @@ def move_ckd_files(date_folder):
         (missing_source, missing_destination, missing_KFRE_file)
     ]:
         try:
-            shutil.move(src, dst)
-            logging.info(f"Moved {name} to {date_folder}")
+            if os.path.exists(src):
+                shutil.move(src, dst)
+                logging.info(f"Moved {name} to {date_folder}")
+            else:
+                logging.warning(f"Source file {src} does not exist, skipping")
         except Exception as e:
             logging.error(f"Failed to move {name}: {e}")
 
@@ -121,13 +134,13 @@ def move_ckd_files(date_folder):
             return "No Data"
 
     # Apply CKD grouping
-    CKD_review['CKD_Group'] = CKD_review.apply(get_ckd_stage_acr_group, axis=1) # type: ignore
+    CKD_review['CKD_Group'] = CKD_review.apply(get_ckd_stage_acr_group, axis=1)  # type: ignore
 
     # Save EMIS batch files
     emis_dir = os.path.join(base_path, "EMIS_Clinical_Code_Batch_Files")
     os.makedirs(emis_dir, exist_ok=True)
-    for group in CKD_review['CKD_Group'].unique(): # type: ignore
-        filtered_patients = CKD_review[CKD_review['CKD_Group'] == group][["HC_Number"]].copy() # type: ignore
+    for group in CKD_review['CKD_Group'].unique():  # type: ignore
+        filtered_patients = CKD_review[CKD_review['CKD_Group'] == group][["HC_Number"]].copy()  # type: ignore
         filtered_patients.rename(columns={'HC_Number': 'HCN'}, inplace=True)
         group_file_name = f"CKD_{group.replace(' ', '_').replace('-', '_')}_Patients.txt"
         group_file_path = os.path.join(emis_dir, group_file_name)
@@ -136,11 +149,12 @@ def move_ckd_files(date_folder):
 
     # Save additional CSV
     output_file_name2 = f"data_check_{pd.Timestamp.today().date()}.csv"
-    CKD_review.to_csv(output_file_name2, index=False) # type: ignore
+    CKD_review.to_csv(output_file_name2, index=False)  # type: ignore
     logging.info(f"Saved output to {output_file_name2}")
 
 # Folder renaming function
 def rename_folders(date_folder):
+    logging.info(f"Renaming folders in {date_folder}")
     folder_mapping = {
         "Review_Required__CKD_Stage_1_2_with__1_year_since_last_eGFR_or_ACR__3_": "Stages_1-2_(12_Months_Review)",
         "No_immediate_review_required": "No_Immediate_Review",
@@ -165,6 +179,7 @@ def rename_folders(date_folder):
 
 # File deletion function
 def delete_ckd_files(date_folder):
+    logging.info(f"Deleting CKD files in {date_folder}")
     files_to_delete = [
         os.path.join(date_folder, f"eGFR_check_{pd.Timestamp.today().date()}.csv"),
         os.path.join(date_folder, "CKD_review.csv")

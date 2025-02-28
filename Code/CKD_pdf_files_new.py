@@ -23,10 +23,12 @@ warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
 # Get the base path
 if getattr(sys, 'frozen', False):
     base_path = sys._MEIPASS
+    # Use the current working directory for output when running as an executable
+    output_dir = os.path.join(os.getcwd(), "Patient_Summaries")
 else:
     base_path = os.getcwd()
+    output_dir = os.path.join(base_path, "Patient_Summaries")
 
-output_dir = os.path.join(base_path, "Patient_Summaries")
 surgery_info_file = os.path.join(base_path, "Dependencies", "surgery_information.csv")
 
 # Function to load surgery information
@@ -99,6 +101,15 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
     for date_col in date_columns:
         CKD_review[date_col] = pd.to_datetime(CKD_review[date_col], errors='coerce').dt.strftime("%Y-%m-%d")
     
+    # Check if CKD_review is empty
+    if CKD_review.empty:
+        logging.warning("CKD_review DataFrame is empty. No PDFs will be generated.")
+        # Still create the date_folder to maintain consistency
+        date_folder = os.path.join(output_dir, datetime.now().strftime("%Y-%m-%d"))
+        os.makedirs(date_folder, exist_ok=True)
+        logging.info(f"Created empty patient summary folder: {date_folder}")
+        return date_folder
+
     # Generate CKD info QR code once
     qr_filename = "ckd_info_qr.png"
     qr_path = os.path.join(base_path, "Dependencies", qr_filename)
@@ -109,6 +120,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
     # Use provided output_dir (absolute path handled by caller if needed)
     date_folder = os.path.join(output_dir, datetime.now().strftime("%Y-%m-%d"))
     os.makedirs(date_folder, exist_ok=True)
+    logging.info(f"Created patient summary folder: {date_folder}")
 
     # Replace empty cells with pd.NA in all columns
     CKD_review = CKD_review.replace({"": pd.NA, None: pd.NA, pd.NA: pd.NA, np.nan: pd.NA})
@@ -427,6 +439,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         
         review_folder = os.path.join(date_folder, sanitized_review_folder)
         os.makedirs(review_folder, exist_ok=True)
+        logging.info(f"Created review subfolder: {review_folder}")
         
         file_name = os.path.join(review_folder, f"Patient_Summary_{patient['HC_Number']}.pdf")
         create_patient_pdf(patient_data, surgery_info, file_name, qr_path)
