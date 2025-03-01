@@ -424,38 +424,28 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             elif 'stage 2' in emis_code.lower() and 'stage 2' not in ckd_stage.lower():
                 logging.warning(f"Patient HC_Number: {patient['HC_Number']}, EMIS_CKD_Code '{emis_code}' conflicts with computed CKD_Stage '{ckd_stage}'")
 
-        # Header
-        header_table = Table([
-            [Paragraph(f"{surgery_info.get('surgery_name', 'Unknown Surgery')}<br/>Chronic Kidney Disease Review", styles['CustomTitle'])],
-        ], colWidths=[doc.width])
-        header_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-        ]))
-        elements.append(header_table)
-        elements.append(Spacer(1, 0.3*inch))
+        # Header Section as Paragraphs
+        elements.append(Paragraph(f"{surgery_info.get('surgery_name', 'Unknown Surgery')}", styles['CustomTitle']))
+        elements.append(Spacer(1, 0.1 * inch))
+        elements.append(Paragraph("Chronic Kidney Disease Review", styles['CustomTitle']))
+        elements.append(Spacer(1, 0.1 * inch))
+        elements.append(Paragraph(f"<b>Review Status:</b> {escape(format_value(patient.get('review_message', 'Uncategorized')))}", styles['CustomCenterText']))
+        elements.append(Spacer(1, 0.1 * inch))
+        elements.append(Paragraph(f"<b>Current EMIS Status:</b> {escape(format_value(patient.get('EMIS_CKD_Code', 'N/A')))}", styles['CustomCenterText']))
+        elements.append(Spacer(1, 0.1 * inch))
 
-        # Review Status and EMIS Status
-        status_lines = [
-            f"<b>Review Status:</b> {escape(format_value(patient.get('review_message', 'Uncategorized')))}",
-            f"<b>Current EMIS Status:</b> {escape(format_value(patient.get('EMIS_CKD_Code')))}"
-        ]
-        if patient.get('Transplant_Kidney', 'Missing') != "Missing":
-            status_lines.append(f"<b>Transplant:</b> {escape(format_value(patient.get('Transplant_Kidney')))}")
-        if patient.get('Dialysis', 'Missing') != "Missing":
-            status_lines.append(f"<b>Dialysis:</b> {escape(format_value(patient.get('Dialysis')))}")
-        
-        status_table = Table([[Paragraph(line, styles['CustomCenterText'], encoding='utf-8')] for line in status_lines], colWidths=[doc.width])
-        status_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('PADDING', (0, 0), (-1, -1), 8),
-            ('BOX', (0, 0), (-1, -1), 1, colors.grey),
-        ]))
-        elements.append(status_table)
-        elements.append(Spacer(1, 0.5*inch))
+        # Add Transplant info if present
+        if format_value(patient.get('Transplant_Kidney')) != "N/A":
+            elements.append(Paragraph(f"<b>Transplant:</b> {escape(format_value(patient.get('Transplant_Kidney')))}", styles['CustomCenterText']))
+            elements.append(Spacer(1, 0.1 * inch))
+
+        # Add Dialysis info if present
+        if format_value(patient.get('Dialysis')) != "N/A":
+            elements.append(Paragraph(f"<b>Dialysis:</b> {escape(format_value(patient.get('Dialysis')))}", styles['CustomCenterText']))
+            elements.append(Spacer(1, 0.1 * inch))
+
+        elements.append(Paragraph("Results Overview", styles['CustomSubTitle']))
+        elements.append(Spacer(1, 0.2 * inch))  # Larger space before the next section
 
         # Results Overview
         elements.append(Paragraph("Results Overview", styles['CustomSubTitle']))
