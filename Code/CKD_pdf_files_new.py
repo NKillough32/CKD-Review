@@ -68,7 +68,13 @@ def generate_ckd_info_qr(output_path):
 
 # Helper function to format value
 def format_value(value, default="N/A"):
-    return default if pd.isna(value) or value == "" or value == "Missing" else str(value)
+    if pd.isna(value) or value == "" or value == "Missing":
+        return default
+    formatted = str(value)
+    # Handle OCR misinterpretation of "N/A" as "N/"
+    if formatted.startswith("N/"):
+        return "N/A"
+    return formatted
 
 # Helper function to classify status and return color
 def classify_status(value, thresholds, field):
@@ -79,7 +85,7 @@ def classify_status(value, thresholds, field):
     
     if field == "Creatinine":
         if value > 150:
-            return colors.Color(0.69, 0, 0.125), formatted_value  # #B00020
+            return colors.Color(0.69, 0, 0.125), formatted_value  # #B00020 (approx #af001f)
         elif value >= 100:
             return colors.Color(0.827, 0.329, 0), formatted_value  # #D35400
         else:
@@ -324,8 +330,8 @@ def create_stylesheet():
     styles.add(ParagraphStyle(
         name='CustomLongText',
         fontName='Helvetica',
-        fontSize=10,
-        leading=12,
+        fontSize=9,  # Reduced further for better wrapping
+        leading=10,
         spaceAfter=4,
         wordWrap='CJK'
     ))
@@ -636,10 +642,10 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         mbd_inner_table.setStyle(TableStyle([
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 12),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),  # Reduced for better wrapping
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('PADDING', (0, 0), (-1, -1), 5),
-            ('LEADING', (0, 0), (-1, -1), 14),
+            ('LEADING', (0, 0), (-1, -1), 12),
         ]))
         
         mbd_status_table = Table([
@@ -661,7 +667,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('ALIGN', (0, 1), (-1, 1), 'CENTER'),
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('BOX', (0, 0), (-1, -1), 2, colors.grey),
-            ('PADDING', (0, 0), (-1, -1), 15),
+            ('PADDING', (0, 0), (-1, -1), 10),  # Reduced padding
         ]))
         elements.append(mbd_table)
         elements.append(Spacer(1, 20))
@@ -751,7 +757,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
             ('BOX', (0, 0), (-1, -1), 2, colors.grey),
-            ('PADDING', (0, 0), (-1, -1), 15),
+            ('PADDING', (0, 0), (-1, -1), 5),  # Reduced padding for more wrapping space
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ]))
         elements.append(med_table)
@@ -768,7 +774,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
             ('BOX', (0, 0), (-1, -1), 2, colors.grey),
-            ('PADDING', (0, 0), (-1, -1), 15),
+            ('PADDING', (0, 0), (-1, -1), 5),  # Reduced padding
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ]))
         elements.append(lifestyle_table)
@@ -849,11 +855,11 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
             ('BOX', (0, 0), (-1, -1), 2, colors.grey),
-            ('PADDING', (0, 0), (-1, -1), 15),
+            ('PADDING', (0, 0), (-1, -1), 5),  # Reduced padding
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEADING', (0, 0), (-1, -1), 12),
+            ('LEADING', (0, 0), (-1, -1), 10),
         ]))
         elements.append(nice_table)
         elements.append(Spacer(1, 20))
