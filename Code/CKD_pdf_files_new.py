@@ -529,12 +529,12 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         
         ckd_data = [
             [f"• <b>Stage:</b> {format_value(patient.get('CKD_Stage'))} | <b>ACR Criteria:</b> {format_value(patient.get('CKD_ACR'))}"],
-            [f"• <b>Albumin-Creatinine Ratio (ACR):</b> <font color='#{classify_status(patient.get('ACR', 'Missing'), None, 'ACR')[0].hex_l[2:]}'>{format_value(patient.get('ACR'))} mg/mmol</font> | <b>Date:</b> {format_value(patient.get('Sample_Date1'))}"],
+            [f"• <b>Albumin-Creatinine Ratio (ACR):</b> <font color='#{classify_status(patient.get('ACR', 'Missing'), None, 'ACR')[0].hexval()[2:8]}'>{format_value(patient.get('ACR'))} mg/mmol</font> | <b>Date:</b> {format_value(patient.get('Sample_Date1'))}"],
             [f"• <b>Creatinine:</b>"],
-            [f"    - <b>Current:</b> <font color='#{classify_status(patient.get('Creatinine', 'Missing'), None, 'Creatinine')[0].hex_l[2:]}'>{format_value(patient.get('Creatinine'))} µmol/L</font> | <b>Date:</b> {format_value(patient.get('Sample_Date'))}"],
+            [f"    - <b>Current:</b> <font color='#{classify_status(patient.get('Creatinine', 'Missing'), None, 'Creatinine')[0].hexval()[2:8]}'>{format_value(patient.get('Creatinine'))} µmol/L</font> | <b>Date:</b> {format_value(patient.get('Sample_Date'))}"],
             [f"    - <b>3 Months Prior:</b> {format_value(patient.get('Creatinine_3m_prior'))} µmol/L | <b>Date:</b> {format_value(patient.get('Sample_Date2'))}"],
             [f"• <b>eGFR:</b>"],
-            [f"    - <b>Current:</b> <font color='#{classify_status(patient.get('eGFR', 'Missing'), None, 'eGFR')[0].hex_l[2:]}'>{format_value(patient.get('eGFR'))} mL/min/1.73m²</font> | <b>Date:</b> {format_value(patient.get('Sample_Date'))}"],
+            [f"    - <b>Current:</b> <font color='#{classify_status(patient.get('eGFR', 'Missing'), None, 'eGFR')[0].hexval()[2:8]}'>{format_value(patient.get('eGFR'))} mL/min/1.73m²</font> | <b>Date:</b> {format_value(patient.get('Sample_Date'))}"],
             [f"    - <b>3 Months Prior:</b> {format_value(patient.get('eGFR_3m_prior'))} mL/min/1.73m² | <b>Date:</b> {format_value(patient.get('Sample_Date2'))}"],
             [f"    - <b>eGFR Trend:</b> {format_value(patient.get('eGFR_Trend'))}"]
         ]
@@ -587,7 +587,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         bp_color_dia, bp_value_dia = classify_status(patient.get('Diastolic_BP', 'Missing'), None, 'Diastolic_BP')
         bp_data = [
             [f"• <b>Classification:</b> {format_value(patient.get('BP_Classification'))} | <b>Date:</b> {format_value(patient.get('Sample_Date3'))}"],
-            [f"• <b>Systolic / Diastolic:</b> <font color='#{bp_color_sys.hex_l[2:]}'>{bp_value_sys}</font> / <font color='#{bp_color_dia.hex_l[2:]}'>{bp_value_dia}</font> mmHg"],
+            [f"• <b>Systolic / Diastolic:</b> <font color='#{bp_color_sys.hexval()[2:8]}'>{bp_value_sys}</font> / <font color='#{bp_color_dia.hexval()[2:8]}'>{bp_value_dia}</font> mmHg"],
             [f"• <b>Target BP:</b> {format_value(patient.get('BP_Target'))} | <b>BP Status:</b> {format_value(patient.get('BP_Flag'))}"]
         ]
         bp_table = Table(bp_data, colWidths=[doc.width])
@@ -608,7 +608,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         elements.append(Paragraph("Anaemia Overview", styles['CustomSectionHeader']))
         haemoglobin_color, haemoglobin_value = classify_status(patient.get('haemoglobin', 'Missing'), None, 'haemoglobin')
         anaemia_data = [
-            [f"• <b>Haemoglobin:</b> <font color='#{haemoglobin_color.hex_l[2:]}'>{haemoglobin_value} g/L</font> | <b>Date:</b> {format_value(patient.get('Sample_Date5'))}"],
+            [f"• <b>Haemoglobin:</b> <font color='#{haemoglobin_color.hexval()[2:8]}'>{haemoglobin_value} g/L</font> | <b>Date:</b> {format_value(patient.get('Sample_Date5'))}"],
             [f"• <b>Current Status:</b> {format_value(patient.get('Anaemia_Classification'))}"],
             [f"• <b>Anaemia Management:</b> {format_value(patient.get('Anaemia_Flag'))}"]
         ]
@@ -641,15 +641,15 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
                 logging.warning(f"Patient HC_Number: {patient['HC_Number']}, duplicate Vitamin D entry: {value}, {flag}, {date}")
 
         mbd_data = [
-            [f"• <b>Potassium:</b> <font color='#{classify_status(patient.get('Potassium', 'Missing'), None, 'Potassium')[0].hex_l[2:]}'>{format_value(patient.get('Potassium'))} mmol/L</font> | <b>Status:</b> {format_value(patient.get('Potassium_Flag'))} | <b>Date:</b> {format_value(patient.get('Sample_Date7'))}"],
-            [f"• <b>Bicarbonate:</b> <font color='#{classify_status(patient.get('Bicarbonate', 'Missing'), None, 'Bicarbonate')[0].hex_l[2:]}'>{format_value(patient.get('Bicarbonate'))} mmol/L</font> | <b>Status:</b> {format_value(patient.get('Bicarbonate_Flag'))} | <b>Date:</b> {format_value(patient.get('Sample_Date13'))}"],
-            [f"• <b>Parathyroid Hormone (PTH):</b> <font color='#{classify_status(patient.get('Parathyroid', 'Missing'), None, 'Parathyroid')[0].hex_l[2:]}'>{format_value(patient.get('Parathyroid'))} pg/mL</font> | <b>Status:</b> {format_value(patient.get('Parathyroid_Flag'))} | <b>Date:</b> {format_value(patient.get('Sample_Date12'))}"],
-            [f"• <b>Phosphate:</b> <font color='#{classify_status(patient.get('Phosphate', 'Missing'), None, 'Phosphate')[0].hex_l[2:]}'>{format_value(patient.get('Phosphate'))} mmol/L</font> | <b>Status:</b> {format_value(patient.get('Phosphate_Flag'))} | <b>Date:</b> {format_value(patient.get('Sample_Date8'))}"],
-            [f"• <b>Calcium:</b> <font color='#{classify_status(patient.get('Calcium', 'Missing'), None, 'Calcium')[0].hex_l[2:]}'>{format_value(patient.get('Calcium'))} mmol/L</font> | <b>Status:</b> {format_value(patient.get('Calcium_Flag'))} | <b>Date:</b> {format_value(patient.get('Sample_Date9'))}"]
+            [f"• <b>Potassium:</b> <font color='#{classify_status(patient.get('Potassium', 'Missing'), None, 'Potassium')[0].hexval()[2:8]}'>{format_value(patient.get('Potassium'))} mmol/L</font> | <b>Status:</b> {format_value(patient.get('Potassium_Flag'))} | <b>Date:</b> {format_value(patient.get('Sample_Date7'))}"],
+            [f"• <b>Bicarbonate:</b> <font color='#{classify_status(patient.get('Bicarbonate', 'Missing'), None, 'Bicarbonate')[0].hexval()[2:8]}'>{format_value(patient.get('Bicarbonate'))} mmol/L</font> | <b>Status:</b> {format_value(patient.get('Bicarbonate_Flag'))} | <b>Date:</b> {format_value(patient.get('Sample_Date13'))}"],
+            [f"• <b>Parathyroid Hormone (PTH):</b> <font color='#{classify_status(patient.get('Parathyroid', 'Missing'), None, 'Parathyroid')[0].hexval()[2:8]}'>{format_value(patient.get('Parathyroid'))} pg/mL</font> | <b>Status:</b> {format_value(patient.get('Parathyroid_Flag'))} | <b>Date:</b> {format_value(patient.get('Sample_Date12'))}"],
+            [f"• <b>Phosphate:</b> <font color='#{classify_status(patient.get('Phosphate', 'Missing'), None, 'Phosphate')[0].hexval()[2:8]}'>{format_value(patient.get('Phosphate'))} mmol/L</font> | <b>Status:</b> {format_value(patient.get('Phosphate_Flag'))} | <b>Date:</b> {format_value(patient.get('Sample_Date8'))}"],
+            [f"• <b>Calcium:</b> <font color='#{classify_status(patient.get('Calcium', 'Missing'), None, 'Calcium')[0].hexval()[2:8]}'>{format_value(patient.get('Calcium'))} mmol/L</font> | <b>Status:</b> {format_value(patient.get('Calcium_Flag'))} | <b>Date:</b> {format_value(patient.get('Sample_Date9'))}"]
         ]
         for value, flag, date in unique_vitamin_d:
             mbd_data.append(
-                [f"• <b>Vitamin D Level:</b> <font color='#{classify_status(value, None, 'Vitamin_D')[0].hex_l[2:]}'>{format_value(value)} ng/mL</font> | <b>Status:</b> {format_value(flag)} | <b>Date:</b> {format_value(date)}"]
+                [f"• <b>Vitamin D Level:</b> <font color='#{classify_status(value, None, 'Vitamin_D')[0].hexval()[2:8]}'>{format_value(value)} ng/mL</font> | <b>Status:</b> {format_value(flag)} | <b>Date:</b> {format_value(date)}"]
             )
         
         mbd_inner_table = Table(mbd_data, colWidths=[doc.width])
@@ -690,7 +690,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         elements.append(Paragraph("Diabetes and HbA1c Management", styles['CustomSectionHeader']))
         hba1c_color, hba1c_value = classify_status(patient.get('HbA1c', 'Missing'), None, 'HbA1c')
         diabetes_data = [
-            [f"• <b>HbA1c Level:</b> <font color='#{hba1c_color.hex_l[2:]}'>{hba1c_value} mmol/mol</font> | <b>Date:</b> {format_value(patient.get('Sample_Date6'))}"],
+            [f"• <b>HbA1c Level:</b> <font color='#{hba1c_color.hexval()[2:8]}'>{hba1c_value} mmol/mol</font> | <b>Date:</b> {format_value(patient.get('Sample_Date6'))}"],
             [f"• <b>HbA1c Management:</b> {format_value(patient.get('HbA1c_Target'))}"]
         ]
         diabetes_table = Table(diabetes_data, colWidths=[doc.width])
@@ -712,8 +712,8 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         risk_2yr_color, risk_2yr_value = classify_status(patient.get('risk_2yr', 'Missing'), None, 'risk_2yr')
         risk_5yr_color, risk_5yr_value = classify_status(patient.get('risk_5yr', 'Missing'), None, 'risk_5yr')
         risk_data = [
-            [f"• <b>2-Year Risk:</b> <font color='#{risk_2yr_color.hex_l[2:]}'>{risk_2yr_value}%</font>"],
-            [f"• <b>5-Year Risk:</b> <font color='#{risk_5yr_color.hex_l[2:]}'>{risk_5yr_value}%</font>"]
+            [f"• <b>2-Year Risk:</b> <font color='#{risk_2yr_color.hexval()[2:8]}'>{risk_2yr_value}%</font>"],
+            [f"• <b>5-Year Risk:</b> <font color='#{risk_5yr_color.hexval()[2:8]}'>{risk_5yr_value}%</font>"]
         ]
         risk_table = Table(risk_data, colWidths=[doc.width])
         risk_table.setStyle(TableStyle([
