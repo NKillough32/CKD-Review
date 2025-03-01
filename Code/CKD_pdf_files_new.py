@@ -894,11 +894,11 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
 
         # QR Code with More Information (Combined into One Box)
         elements.append(Paragraph("More Information on Chronic Kidney Disease", styles['CustomSubTitle']))
-        elements.append(Spacer(1, 20))  # Match HTML margin: 20px
+        elements.append(Spacer(1, 7.5))  # Match HTML margin: 20px
         qr_text = "Scan this QR code with your phone to access trusted resources on <b>Chronic Kidney Disease (CKD)</b>, including <br/>guidance on managing your condition, lifestyle recommendations, and when to seek medical advice."
         qr_section = Table([
             [Image(qr_path, width=1.5*inch, height=1.5*inch) if qr_path else Paragraph("QR code unavailable", styles['CustomTableText'], encoding='utf-8')],
-            [Paragraph(qr_text, styles['CustomSmallText'], encoding='utf-8', spaceBefore=10)]
+            [Paragraph(qr_text, styles['CustomSmallText'], encoding='utf-8')]
         ], colWidths=[doc.width])
         qr_section.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
