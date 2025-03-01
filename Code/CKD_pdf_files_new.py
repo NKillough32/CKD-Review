@@ -265,7 +265,7 @@ def create_stylesheet():
 
     # Register Arial-Bold font
     try:
-        pdfmetrics.registerFont(TTFont('Arial-Bold', os.path.join(base_path, "Dependencies", 'Arial-Bold.ttf')))
+        pdfmetrics.registerFont(TTFont('Arial-Bold', os.path.join(base_path, "Dependencies", 'arialbd.ttf')))
         font_name_bold = 'Arial-Bold'
     except Exception as e:
         logging.warning(f"Failed to load Arial-Bold font from Dependencies folder: {str(e)}. Falling back to Helvetica-Bold.")
