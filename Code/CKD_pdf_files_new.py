@@ -341,7 +341,11 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
     date_columns = [col for col in CKD_review.columns if "Date" in col]
     for date_col in date_columns:
         CKD_review[date_col] = pd.to_datetime(CKD_review[date_col], errors='coerce').dt.strftime("%Y-%m-%d")
-    
+        # Log warning for malformed dates
+        malformed_dates = CKD_review[date_col][CKD_review[date_col].isna() & CKD_review[date_col].notna()]
+        if not malformed_dates.empty:
+            logging.warning(f"Found {len(malformed_dates)} malformed entries in {date_col}: {malformed_dates.tolist()}")
+
     # Inspect CKD_review columns for debugging
     logging.info(f"CKD_review columns: {list(CKD_review.columns)}")
     
@@ -403,6 +407,15 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             patient['CKD_Group'] = get_ckd_stage_acr_group(patient)
         logging.info(f"Patient HC_Number: {patient['HC_Number']}, CKD_Group: {patient.get('CKD_Group')}, eGFR: {patient.get('eGFR')}, ACR: {patient.get('ACR')}")
 
+        # Validate EMIS_CKD_Code vs. CKD_Stage
+        if patient.get('EMIS_CKD_Code', '').lower().find('stage') != -1 and patient.get('CKD_Stage', '') != 'Unknown':
+            emis_stage = patient['EMIS_CKD_Code'].lower()
+            computed_stage = patient['CKD_Stage'].lower()
+            if 'stage 3' in emis_stage and 'stage 3' not in computed_stage:
+                logging.warning(f"Patient HC_Number: {patient['HC_Number']}, EMIS_CKD_Code '{patient['EMIS_CKD_Code']}' conflicts with computed CKD_Stage '{patient['CKD_Stage']}'")
+            elif 'stage 2' in emis_stage and 'stage 2' not in computed_stage:
+                logging.warning(f"Patient HC_Number: {patient['HC_Number']}, EMIS_CKD_Code '{patient['EMIS_CKD_Code']}' conflicts with computed CKD_Stage '{patient['CKD_Stage']}'")
+
         # Header
         header_table = Table([
             [Paragraph(f"{surgery_info.get('surgery_name', 'Unknown Surgery')}", styles['CustomTitle'])],
@@ -455,6 +468,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('BOX', (0, 0), (-1, -1), 2, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 15),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('LEADING', (0, 0), (-1, -1), 14),
         ]))
         elements.append(patient_info_table)
         elements.append(Spacer(1, 20))
@@ -492,6 +506,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('FONTSIZE', (0, 0), (-1, -1), 12),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('PADDING', (0, 0), (-1, -1), 5),
+            ('LEADING', (0, 0), (-1, -1), 14),
         ]))
         
         ckd_table = Table([
@@ -544,6 +559,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('BOX', (0, 0), (-1, -1), 2, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 15),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('LEADING', (0, 0), (-1, -1), 14),
         ]))
         elements.append(bp_table)
         elements.append(Spacer(1, 20))
@@ -565,20 +581,37 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('BOX', (0, 0), (-1, -1), 2, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 15),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('LEADING', (0, 0), (-1, -1), 14),
         ]))
         elements.append(anaemia_table)
         elements.append(Spacer(1, 20))
 
         # Electrolyte and MBD Management
         elements.append(Paragraph("Electrolyte and Mineral Bone Disorder (MBD) Management", styles['CustomSectionHeader']))
+        # Deduplicate Vitamin D entries
+        vitamin_d_entries = [(patient.get('Vitamin_D', 'Missing'), patient.get('Vitamin_D_Flag', 'Missing'), patient.get('Sample_Date10', 'Missing'))]
+        seen_vitamin_d = set()
+        unique_vitamin_d = []
+        for value, flag, date in vitamin_d_entries:
+            entry = (value, flag, date)
+            if entry not in seen_vitamin_d:
+                seen_vitamin_d.add(entry)
+                unique_vitamin_d.append(entry)
+            else:
+                logging.warning(f"Patient HC_Number: {patient['HC_Number']}, duplicate Vitamin D entry: {value}, {flag}, {date}")
+
         mbd_data = [
             [f"• <b>Potassium:</b> <font color='{classify_status(patient.get('Potassium', 'Missing'), None, 'Potassium')[0].hexval()}'>{format_value(patient.get('Potassium'))} mmol/L</font> | <b>Status:</b> {format_value(patient.get('Potassium_Flag'))} | <b>Date:</b> {format_value(patient.get('Sample_Date7'))}"],
             [f"• <b>Bicarbonate:</b> <font color='{classify_status(patient.get('Bicarbonate', 'Missing'), None, 'Bicarbonate')[0].hexval()}'>{format_value(patient.get('Bicarbonate'))} mmol/L</font> | <b>Status:</b> {format_value(patient.get('Bicarbonate_Flag'))} | <b>Date:</b> {format_value(patient.get('Sample_Date13'))}"],
             [f"• <b>Parathyroid Hormone (PTH):</b> <font color='{classify_status(patient.get('Parathyroid', 'Missing'), None, 'Parathyroid')[0].hexval()}'>{format_value(patient.get('Parathyroid'))} pg/mL</font> | <b>Status:</b> {format_value(patient.get('Parathyroid_Flag'))} | <b>Date:</b> {format_value(patient.get('Sample_Date12'))}"],
             [f"• <b>Phosphate:</b> <font color='{classify_status(patient.get('Phosphate', 'Missing'), None, 'Phosphate')[0].hexval()}'>{format_value(patient.get('Phosphate'))} mmol/L</font> | <b>Status:</b> {format_value(patient.get('Phosphate_Flag'))} | <b>Date:</b> {format_value(patient.get('Sample_Date8'))}"],
-            [f"• <b>Calcium:</b> <font color='{classify_status(patient.get('Calcium', 'Missing'), None, 'Calcium')[0].hexval()}'>{format_value(patient.get('Calcium'))} mmol/L</font> | <b>Status:</b> {format_value(patient.get('Calcium_Flag'))} | <b>Date:</b> {format_value(patient.get('Sample_Date9'))}"],
-            [f"• <b>Vitamin D Level:</b> <font color='{classify_status(patient.get('Vitamin_D', 'Missing'), None, 'Vitamin_D')[0].hexval()}'>{format_value(patient.get('Vitamin_D'))} ng/mL</font> | <b>Status:</b> {format_value(patient.get('Vitamin_D_Flag'))} | <b>Date:</b> {format_value(patient.get('Sample_Date10'))}"]
+            [f"• <b>Calcium:</b> <font color='{classify_status(patient.get('Calcium', 'Missing'), None, 'Calcium')[0].hexval()}'>{format_value(patient.get('Calcium'))} mmol/L</font> | <b>Status:</b> {format_value(patient.get('Calcium_Flag'))} | <b>Date:</b> {format_value(patient.get('Sample_Date9'))}"]
         ]
+        for value, flag, date in unique_vitamin_d:
+            mbd_data.append(
+                [f"• <b>Vitamin D Level:</b> <font color='{classify_status(value, None, 'Vitamin_D')[0].hexval()}'>{format_value(value)} ng/mL</font> | <b>Status:</b> {format_value(flag)} | <b>Date:</b> {format_value(date)}"]
+            )
+        
         mbd_inner_table = Table(mbd_data, colWidths=[doc.width])
         mbd_inner_table.setStyle(TableStyle([
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
@@ -586,6 +619,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('FONTSIZE', (0, 0), (-1, -1), 12),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('PADDING', (0, 0), (-1, -1), 5),
+            ('LEADING', (0, 0), (-1, -1), 14),
         ]))
         
         mbd_status_table = Table([
@@ -628,6 +662,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('BOX', (0, 0), (-1, -1), 2, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 15),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('LEADING', (0, 0), (-1, -1), 14),
         ]))
         elements.append(diabetes_table)
         elements.append(Spacer(1, 20))
@@ -649,6 +684,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('BOX', (0, 0), (-1, -1), 2, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 15),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('LEADING', (0, 0), (-1, -1), 14),
         ]))
         elements.append(risk_table)
         elements.append(Spacer(1, 5))
@@ -675,6 +711,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('BOX', (0, 0), (-1, -1), 2, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 15),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('LEADING', (0, 0), (-1, -1), 14),
         ]))
         elements.append(care_table)
         elements.append(Spacer(1, 20))
@@ -697,6 +734,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('BOX', (0, 0), (-1, -1), 2, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 15),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('LEADING', (0, 0), (-1, -1), 14),
         ]))
         elements.append(med_table)
         elements.append(Spacer(1, 20))
@@ -715,6 +753,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('BOX', (0, 0), (-1, -1), 2, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 15),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('LEADING', (0, 0), (-1, -1), 14),
         ]))
         elements.append(lifestyle_table)
         elements.append(Spacer(1, 20))
@@ -798,6 +837,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('BOX', (0, 0), (-1, -1), 2, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 15),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('LEADING', (0, 0), (-1, -1), 14),
         ]))
         elements.append(nice_table)
         elements.append(Spacer(1, 20))
@@ -826,7 +866,9 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ]
             for title, value, ignore_list in recommendations:
                 if value not in ignore_list:
-                    final_recs.append([f"• <b>{title}:</b> {format_value(value)}"])
+                    # Escape special characters
+                    safe_value = format_value(value).replace('<', '&lt;').replace('>', '&gt;')
+                    final_recs.append([f"• <b>{title}:</b> {safe_value}"])
             final_recs_table = Table(final_recs, colWidths=[doc.width])
             final_recs_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
@@ -836,6 +878,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
                 ('BOX', (0, 0), (-1, -1), 2, colors.grey),
                 ('PADDING', (0, 0), (-1, -1), 15),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('LEADING', (0, 0), (-1, -1), 14),
             ]))
             elements.append(final_recs_table)
             elements.append(Spacer(1, 20))
