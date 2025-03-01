@@ -842,7 +842,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
 
         # QR Code and More Information
         elements.append(Paragraph("More Information on Chronic Kidney Disease", styles['CustomSubTitle']))
-        qr_text = "Scan this QR code with your phone to access trusted resources on <b>Chronic Kidney Disease (CKD)</b>, including <br>guidance on managing your condition, lifestyle recommendations, and when to seek medical advice."
+        qr_text = "Scan this QR code with your phone to access trusted resources on <b>Chronic Kidney Disease (CKD)</b>, including <br/>guidance on managing your condition, lifestyle recommendations, and when to seek medical advice."
         qr_section = Table([
             [Image(qr_path, width=150, height=150) if qr_path else Paragraph("QR code unavailable", styles['CustomNormalText'])],
             [Paragraph(qr_text, styles['CustomSmallText'])]
