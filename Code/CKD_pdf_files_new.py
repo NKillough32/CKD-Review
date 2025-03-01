@@ -254,12 +254,12 @@ def get_ckd_stage_acr_group(row):
 # Function to create the stylesheet with adjusted styles to match HTML
 def create_stylesheet():
     styles = getSampleStyleSheet()
-    # Register Arial font (if available, otherwise falls back to Helvetica)
+    # Register Arial font from the Dependencies folder
     try:
-        pdfmetrics.registerFont(TTFont('Arial', 'Arial.ttf'))
-        pdfmetrics.registerFont(TTFont('Arial-Bold', 'Arial-Bold.ttf'))
-    except:
-        logging.warning("Arial font not found; falling back to Helvetica.")
+        pdfmetrics.registerFont(TTFont('Arial', os.path.join(base_path, "Dependencies", 'Arial.ttf')))
+        pdfmetrics.registerFont(TTFont('Arial-Bold', os.path.join(base_path, "Dependencies", 'Arial-Bold.ttf')))
+    except Exception as e:
+        logging.warning(f"Failed to load Arial fonts from Dependencies folder: {str(e)}. Falling back to Helvetica.")
         font_name = 'Helvetica'
         font_name_bold = 'Helvetica-Bold'
     else:
@@ -342,7 +342,7 @@ def create_stylesheet():
         alignment=1,  # Center
         spaceAfter=4
     ))
-    return styles
+    return styles, font_name, font_name_bold
 
 # Function to generate patient PDF using ReportLab
 def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
