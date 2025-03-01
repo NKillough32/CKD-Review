@@ -237,6 +237,13 @@ def get_ckd_stage_acr_group(row):
     try:
         eGFR = float(eGFR)
         ACR = float(ACR)
+        # Validate eGFR and ACR ranges
+        if eGFR <= 0:
+            logging.warning(f"Invalid eGFR value {eGFR} for HC_Number {row.get('HC_Number')}, expected positive value")
+            return "No Data"
+        if ACR < 0 or ACR > 1000:  # Arbitrary upper limit for ACR
+            logging.warning(f"Invalid ACR value {ACR} for HC_Number {row.get('HC_Number')}, expected value between 0 and 1000")
+            return "No Data"
     except (ValueError, TypeError) as e:
         logging.debug(f"Error converting eGFR or ACR to float: {e}, returning 'No Data'")
         return "No Data"
@@ -408,13 +415,16 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         logging.info(f"Patient HC_Number: {patient['HC_Number']}, CKD_Group: {patient.get('CKD_Group')}, eGFR: {patient.get('eGFR')}, ACR: {patient.get('ACR')}")
 
         # Validate EMIS_CKD_Code vs. CKD_Stage
-        if patient.get('EMIS_CKD_Code', '').lower().find('stage') != -1 and patient.get('CKD_Stage', '') != 'Unknown':
-            emis_stage = patient['EMIS_CKD_Code'].lower()
-            computed_stage = patient['CKD_Stage'].lower()
-            if 'stage 3' in emis_stage and 'stage 3' not in computed_stage:
-                logging.warning(f"Patient HC_Number: {patient['HC_Number']}, EMIS_CKD_Code '{patient['EMIS_CKD_Code']}' conflicts with computed CKD_Stage '{patient['CKD_Stage']}'")
-            elif 'stage 2' in emis_stage and 'stage 2' not in computed_stage:
-                logging.warning(f"Patient HC_Number: {patient['HC_Number']}, EMIS_CKD_Code '{patient['EMIS_CKD_Code']}' conflicts with computed CKD_Stage '{patient['CKD_Stage']}'")
+        emis_code = patient.get('EMIS_CKD_Code', '')
+        if emis_code is None:
+            logging.warning(f"Patient HC_Number: {patient['HC_Number']}, EMIS_CKD_Code is None")
+            emis_code = ''
+        ckd_stage = patient.get('CKD_Stage', '')
+        if emis_code.lower().find('stage') != -1 and ckd_stage != 'Unknown':
+            if 'stage 3' in emis_code.lower() and 'stage 3' not in ckd_stage.lower():
+                logging.warning(f"Patient HC_Number: {patient['HC_Number']}, EMIS_CKD_Code '{emis_code}' conflicts with computed CKD_Stage '{ckd_stage}'")
+            elif 'stage 2' in emis_code.lower() and 'stage 2' not in ckd_stage.lower():
+                logging.warning(f"Patient HC_Number: {patient['HC_Number']}, EMIS_CKD_Code '{emis_code}' conflicts with computed CKD_Stage '{ckd_stage}'")
 
         # Header
         header_table = Table([
@@ -866,8 +876,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ]
             for title, value, ignore_list in recommendations:
                 if value not in ignore_list:
-                    # Escape special characters
-                    safe_value = format_value(value).replace('<', '&lt;').replace('>', '&gt;')
+                    safe_value = format_value(value).replace('<', '<').replace('>', '>')
                     final_recs.append([f"• <b>{title}:</b> {safe_value}"])
             final_recs_table = Table(final_recs, colWidths=[doc.width])
             final_recs_table.setStyle(TableStyle([
