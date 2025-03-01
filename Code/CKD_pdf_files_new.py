@@ -389,7 +389,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
 
     styles, font_name, font_name_bold = create_stylesheet()
 
-    def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles):
+    def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font_name, font_name_bold):
         doc = SimpleDocTemplate(
             output_path,
             pagesize=letter,
