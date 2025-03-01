@@ -254,17 +254,24 @@ def get_ckd_stage_acr_group(row):
 # Function to create the stylesheet with adjusted styles to match HTML
 def create_stylesheet():
     styles = getSampleStyleSheet()
-    # Register Arial font from the Dependencies folder
+    
+    # Register Arial font
     try:
         pdfmetrics.registerFont(TTFont('Arial', os.path.join(base_path, "Dependencies", 'Arial.ttf')))
-        pdfmetrics.registerFont(TTFont('Arial-Bold', os.path.join(base_path, "Dependencies", 'Arial-Bold.ttf')))
-    except Exception as e:
-        logging.warning(f"Failed to load Arial fonts from Dependencies folder: {str(e)}. Falling back to Helvetica.")
-        font_name = 'Helvetica'
-        font_name_bold = 'Helvetica-Bold'
-    else:
         font_name = 'Arial'
+    except Exception as e:
+        logging.warning(f"Failed to load Arial font from Dependencies folder: {str(e)}. Falling back to Helvetica.")
+        font_name = 'Helvetica'
+
+    # Register Arial-Bold font
+    try:
+        pdfmetrics.registerFont(TTFont('Arial-Bold', os.path.join(base_path, "Dependencies", 'Arial-Bold.ttf')))
         font_name_bold = 'Arial-Bold'
+    except Exception as e:
+        logging.warning(f"Failed to load Arial-Bold font from Dependencies folder: {str(e)}. Falling back to Helvetica-Bold.")
+        font_name_bold = 'Helvetica-Bold'
+
+    logging.info(f"Using fonts - Regular: {font_name}, Bold: {font_name_bold}")
 
     styles.add(ParagraphStyle(
         name='CustomTitle',
@@ -416,10 +423,6 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
                 logging.warning(f"Patient HC_Number: {patient['HC_Number']}, EMIS_CKD_Code '{emis_code}' conflicts with computed CKD_Stage '{ckd_stage}'")
             elif 'stage 2' in emis_code.lower() and 'stage 2' not in ckd_stage.lower():
                 logging.warning(f"Patient HC_Number: {patient['HC_Number']}, EMIS_CKD_Code '{emis_code}' conflicts with computed CKD_Stage '{ckd_stage}'")
-
-        # Determine font names based on availability
-        font_name = 'Arial' if 'Arial' in pdfmetrics.getRegisteredFontNames() else 'Helvetica'
-        font_name_bold = 'Arial-Bold' if 'Arial-Bold' in pdfmetrics.getRegisteredFontNames() else 'Helvetica-Bold'
 
         # Header
         header_table = Table([
