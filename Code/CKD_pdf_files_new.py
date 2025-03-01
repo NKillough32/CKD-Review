@@ -426,18 +426,18 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
 
         # Header Section as Paragraphs
         elements.append(Paragraph(f"{surgery_info.get('surgery_name', 'Unknown Surgery')}", styles['CustomTitle']))
-        elements.append(Spacer(1, 0.1 * inch))
+        elements.append(Spacer(1, 0.05 * inch))
         elements.append(Paragraph("Chronic Kidney Disease Review", styles['CustomTitle']))
         elements.append(Spacer(1, 0.1 * inch))
         elements.append(Paragraph(f"<b>Review Status:</b> {escape(format_value(patient.get('review_message', 'Uncategorized')))}", styles['CustomCenterText']))
-        elements.append(Spacer(1, 0.1 * inch))
+        elements.append(Spacer(1, 0.05 * inch))
         elements.append(Paragraph(f"<b>Current EMIS Status:</b> {escape(format_value(patient.get('EMIS_CKD_Code', 'N/A')))}", styles['CustomCenterText']))
-        elements.append(Spacer(1, 0.1 * inch))
+        elements.append(Spacer(1, 0.05 * inch))
 
         # Add Transplant info if present
         if format_value(patient.get('Transplant_Kidney')) != "N/A":
             elements.append(Paragraph(f"<b>Transplant:</b> {escape(format_value(patient.get('Transplant_Kidney')))}", styles['CustomCenterText']))
-            elements.append(Spacer(1, 0.1 * inch))
+            elements.append(Spacer(1, 0.05 * inch))
 
         # Add Dialysis info if present
         if format_value(patient.get('Dialysis')) != "N/A":
@@ -445,32 +445,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             elements.append(Spacer(1, 0.1 * inch))
 
         elements.append(Paragraph("Results Overview", styles['CustomSubTitle']))
-        elements.append(Spacer(1, 0.2 * inch))  # Larger space before the next section
-
-        # Results Overview
-        elements.append(Paragraph("Results Overview", styles['CustomSubTitle']))
-        elements.append(Spacer(1, 0.3*inch))
-
-        # KDIGO 2024 Classification (Centered Box)
-        ckd_color, ckd_group = classify_status(patient.get('CKD_Group', 'Missing'), None, "CKD_Group")
-        ckd_style = ParagraphStyle(name='CKDStyle', parent=styles['CustomTableText'], textColor=ckd_color)
-        kdigo_table = Table([
-            [Paragraph("<b>KDIGO 2024 Classification</b>", styles['CustomTableText'], encoding='utf-8')],
-            [Paragraph(f"<b>{escape(ckd_group)}</b>", ckd_style, encoding='utf-8')]
-        ], colWidths=[1.5*inch])
-        kdigo_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
-            ('BOX', (0, 0), (-1, -1), 1, colors.grey),
-            ('PADDING', (0, 0), (-1, -1), 8),
-        ]))
-        centered_kdigo_table = Table([[kdigo_table]], colWidths=[doc.width], rowHeights=[None])
-        centered_kdigo_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ]))
-        elements.append(centered_kdigo_table)
-        elements.append(Spacer(1, 0.3*inch))
+        elements.append(Spacer(1, 0.1 * inch))  # Larger space before the next section
 
         # Patient Information
         elements.append(Paragraph("Patient Information", styles['CustomSectionHeader']))
@@ -490,34 +465,52 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('LEADING', (0, 0), (-1, -1), 12),
         ]))
         elements.append(patient_info_table)
-        elements.append(Spacer(1, 0.3*inch))
+        elements.append(Spacer(1, 0.05*inch))
 
-        # CKD Overview (Without KDIGO Classification)
+        # KDIGO 2024 Classification (Centered Box)
+        ckd_color, ckd_group = classify_status(patient.get('CKD_Group', 'Missing'), None, "CKD_Group")
+        ckd_style = ParagraphStyle(name='CKDStyle', parent=styles['CustomTableText'], textColor=ckd_color)
+        kdigo_table = Table([
+            [Paragraph("<b>KDIGO 2024 Classification</b>", styles['CustomTableText'], encoding='utf-8')],
+            [Paragraph(f"<b>{escape(ckd_group)}</b>", ckd_style, encoding='utf-8')]
+        ], colWidths=[doc.width])  # Use full document width
+        kdigo_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),    # Center text horizontally
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),   # Center text vertically
+            ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
+            ('BOX', (0, 0), (-1, -1), 1, colors.grey),
+            ('PADDING', (0, 0), (-1, -1), 8),
+        ]))
+        elements.append(kdigo_table)
+        elements.append(Spacer(1, 0.1*inch))
+
+        # CKD Overview 
         elements.append(Paragraph("CKD Overview", styles['CustomSectionHeader']))
         ckd_data = [
             [Paragraph(f"• <b>Stage:</b> {escape(format_value(patient.get('CKD_Stage')))} | <b>ACR Criteria:</b> {escape(format_value(patient.get('CKD_ACR')))}", styles['CustomTableText'], encoding='utf-8')],
             [Paragraph(f"• <b>Albumin-Creatinine Ratio (ACR):</b> <font color='#{classify_status(patient.get('ACR', 'Missing'), None, 'ACR')[0].hexval()[2:8]}'>{escape(format_value(patient.get('ACR')))} mg/mmol</font> | <b>Date:</b> {escape(format_value(patient.get('Sample_Date1')))}", styles['CustomTableText'], encoding='utf-8')],
             [Paragraph(f"• <b>Creatinine:</b>", styles['CustomTableText'], encoding='utf-8')],
-            [Paragraph(f"    - <b>Current:</b> <font color='#{classify_status(patient.get('Creatinine', 'Missing'), None, 'Creatinine')[0].hexval()[2:8]}'>{escape(format_value(patient.get('Creatinine')))} µmol/L</font> | <b>Date:</b> {escape(format_value(patient.get('Sample_Date')))}", styles['CustomTableText'], encoding='utf-8')],
-            [Paragraph(f"    - <b>3 Months Prior:</b> {escape(format_value(patient.get('Creatinine_3m_prior')))} µmol/L | <b>Date:</b> {escape(format_value(patient.get('Sample_Date2')))}", styles['CustomTableText'], encoding='utf-8')],
+            [Paragraph(f"       - <b>Current:</b> <font color='#{classify_status(patient.get('Creatinine', 'Missing'), None, 'Creatinine')[0].hexval()[2:8]}'>{escape(format_value(patient.get('Creatinine')))} µmol/L</font> | <b>Date:</b> {escape(format_value(patient.get('Sample_Date')))}", styles['CustomTableText'], encoding='utf-8')],
+            [Paragraph(f"       - <b>3 Months Prior:</b> {escape(format_value(patient.get('Creatinine_3m_prior')))} µmol/L | <b>Date:</b> {escape(format_value(patient.get('Sample_Date2')))}", styles['CustomTableText'], encoding='utf-8')],
             [Paragraph(f"• <b>eGFR:</b>", styles['CustomTableText'], encoding='utf-8')],
-            [Paragraph(f"    - <b>Current:</b> <font color='#{classify_status(patient.get('eGFR', 'Missing'), None, 'eGFR')[0].hexval()[2:8]}'>{escape(format_value(patient.get('eGFR')))} mL/min/1.73m²</font> | <b>Date:</b> {escape(format_value(patient.get('Sample_Date')))}", styles['CustomTableText'], encoding='utf-8')],
-            [Paragraph(f"    - <b>3 Months Prior:</b> {escape(format_value(patient.get('eGFR_3m_prior')))} mL/min/1.73m² | <b>Date:</b> {escape(format_value(patient.get('Sample_Date2')))}", styles['CustomTableText'], encoding='utf-8')],
-            [Paragraph(f"    - <b>eGFR Trend:</b> {escape(format_value(patient.get('eGFR_Trend')))}", styles['CustomTableText'], encoding='utf-8')]
+            [Paragraph(f"       - <b>Current:</b> <font color='#{classify_status(patient.get('eGFR', 'Missing'), None, 'eGFR')[0].hexval()[2:8]}'>{escape(format_value(patient.get('eGFR')))} mL/min/1.73m²</font> | <b>Date:</b> {escape(format_value(patient.get('Sample_Date')))}", styles['CustomTableText'], encoding='utf-8')],
+            [Paragraph(f"       - <b>3 Months Prior:</b> {escape(format_value(patient.get('eGFR_3m_prior')))} mL/min/1.73m² | <b>Date:</b> {escape(format_value(patient.get('Sample_Date2')))}", styles['CustomTableText'], encoding='utf-8')],
+            [Paragraph(f"       - <b>eGFR Trend:</b> {escape(format_value(patient.get('eGFR_Trend')))}", styles['CustomTableText'], encoding='utf-8')]
         ]
-        
+
         ckd_table = Table(ckd_data, colWidths=[doc.width])
         ckd_table.setStyle(TableStyle([
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
             ('FONTNAME', (0, 0), (-1, -1), font_name),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('BOX', (0, 0), (-1, -1), 1, colors.grey),
+            ('BOX', (0, 0), (-1, -1), 1, colors.grey),  # Keep the grey border
             ('PADDING', (0, 0), (-1, -1), 8),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('LEADING', (0, 0), (-1, -1), 12),
+            ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke)  # White background instead of grey/whitesmoke
         ]))
         elements.append(ckd_table)
-        
+
         elements.append(Spacer(1, 0.1*inch))
         elements.append(Paragraph(
             "<i>The eGFR trend is assessed by comparing the most recent value with the reading from three months prior. The change is adjusted to an annualized rate based on the time interval between measurements.</i>",
@@ -539,7 +532,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             styles['CustomSmallText'],
             encoding='utf-8'
         ))
-        elements.append(Spacer(1, 0.3*inch))
+        elements.append(Spacer(1, 0.1*inch))
 
         # Blood Pressure
         elements.append(Paragraph("Blood Pressure", styles['CustomSectionHeader']))
@@ -562,7 +555,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('LEADING', (0, 0), (-1, -1), 12),
         ]))
         elements.append(bp_table)
-        elements.append(Spacer(1, 0.3*inch))
+        elements.append(Spacer(1, 0.1*inch))
 
         # Anaemia Overview
         elements.append(Paragraph("Anaemia Overview", styles['CustomSectionHeader']))
@@ -584,7 +577,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('LEADING', (0, 0), (-1, -1), 12),
         ]))
         elements.append(anaemia_table)
-        elements.append(Spacer(1, 0.3*inch))
+        elements.append(Spacer(1, 0.1*inch))
 
         # Electrolyte and MBD Management
         elements.append(Paragraph("Electrolyte and Mineral Bone Disorder (MBD) Management", styles['CustomSectionHeader']))
@@ -620,6 +613,13 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('LEADING', (0, 0), (-1, -1), 12),
         ]))
+
+        # Define a centered style for MBD Status
+        mbd_status_style = ParagraphStyle(
+            name='MBDStatusStyle',
+            parent=styles['CustomTableText'],
+            alignment=1  # Center alignment
+        )
         
         mbd_status_table = Table([
             [Paragraph("<b>MBD Status</b>", styles['CustomTableText'], encoding='utf-8')],
@@ -645,7 +645,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('PADDING', (0, 0), (-1, -1), 8),
         ]))
         elements.append(mbd_table)
-        elements.append(Spacer(1, 0.3*inch))
+        elements.append(Spacer(1, 0.1*inch))
 
         # Diabetes and HbA1c Management
         elements.append(Paragraph("Diabetes and HbA1c Management", styles['CustomSectionHeader']))
