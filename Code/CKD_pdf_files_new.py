@@ -75,18 +75,74 @@ def classify_status(value, thresholds, field):
     if pd.isna(value) or value == "Missing":
         return colors.grey, "Missing"
     value = float(value) if isinstance(value, (int, float)) else value
+    formatted_value = str(value)
+    
     if field == "Creatinine":
-        return colors.Color(0.69, 0, 0.125), str(value) if value > 150 else colors.Color(0.827, 0.329, 0), str(value) if value >= 100 else colors.Color(0, 0.392, 0), str(value)  # #B00020, #D35400, #006400
+        if value > 150:
+            return colors.Color(0.69, 0, 0.125), formatted_value  # #B00020
+        elif value >= 100:
+            return colors.Color(0.827, 0.329, 0), formatted_value  # #D35400
+        else:
+            return colors.Color(0, 0.392, 0), formatted_value  # #006400
     elif field == "eGFR":
-        return colors.Color(0.69, 0, 0.125), str(value) if value < 30 else colors.Color(0.827, 0.329, 0), str(value) if value < 60 else colors.Color(0, 0, 0.545), str(value) if value < 90 else colors.Color(0, 0.392, 0), str(value)  # #B00020, #D35400, #00008B, #006400
+        if value < 30:
+            return colors.Color(0.69, 0, 0.125), formatted_value  # #B00020
+        elif value < 60:
+            return colors.Color(0.827, 0.329, 0), formatted_value  # #D35400
+        elif value < 90:
+            return colors.Color(0, 0, 0.545), formatted_value  # #00008B
+        else:
+            return colors.Color(0, 0.392, 0), formatted_value  # #006400
     elif field == "Systolic_BP":
-        return colors.Color(0.69, 0, 0.125), str(value) if value >= 180 else colors.Color(0.827, 0.329, 0), str(value) if 140 <= value < 180 else colors.Color(0, 0, 0.545), str(value) if value < 90 else colors.Color(0, 0.392, 0), str(value)  # #B00020, #D35400, #00008B, #006400
+        if value >= 180:
+            return colors.Color(0.69, 0, 0.125), formatted_value  # #B00020
+        elif 140 <= value < 180:
+            return colors.Color(0.827, 0.329, 0), formatted_value  # #D35400
+        elif value < 90:
+            return colors.Color(0, 0, 0.545), formatted_value  # #00008B
+        else:
+            return colors.Color(0, 0.392, 0), formatted_value  # #006400
     elif field == "Diastolic_BP":
-        return colors.Color(0.69, 0, 0.125), str(value) if value >= 120 else colors.Color(0.827, 0.329, 0), str(value) if 90 <= value < 120 else colors.Color(0, 0, 0.545), str(value) if value < 60 else colors.Color(0, 0.392, 0), str(value)  # #B00020, #D35400, #00008B, #006400
+        if value >= 120:
+            return colors.Color(0.69, 0, 0.125), formatted_value  # #B00020
+        elif 90 <= value < 120:
+            return colors.Color(0.827, 0.329, 0), formatted_value  # #D35400
+        elif value < 60:
+            return colors.Color(0, 0, 0.545), formatted_value  # #00008B
+        else:
+            return colors.Color(0, 0.392, 0), formatted_value  # #006400
     elif field == "haemoglobin":
-        return colors.Color(0.69, 0, 0.125), str(value) if value < 80 else colors.Color(0.827, 0.329, 0), str(value) if 80 <= value <= 110 else colors.Color(0, 0.392, 0), str(value)  # #B00020, #D35400, #006400
+        if value < 80:
+            return colors.Color(0.69, 0, 0.125), formatted_value  # #B00020
+        elif 80 <= value <= 110:
+            return colors.Color(0.827, 0.329, 0), formatted_value  # #D35400
+        else:
+            return colors.Color(0, 0.392, 0), formatted_value  # #006400
     elif field == "ACR":
-        return colors.Color(0.69, 0, 0.125), str(value) if value >= 30 else colors.Color(0.827, 0.329, 0), str(value) if value > 3 else colors.Color(0, 0.392, 0), str(value)  # #B00020, #D35400, #006400
+        if value >= 30:
+            return colors.Color(0.69, 0, 0.125), formatted_value  # #B00020
+        elif value > 3:
+            return colors.Color(0.827, 0.329, 0), formatted_value  # #D35400
+        else:
+            return colors.Color(0, 0.392, 0), formatted_value  # #006400
+    elif field == "risk_2yr":
+        if value >= 20:
+            return colors.Color(0.69, 0, 0.125), formatted_value  # #B00020
+        elif 10 <= value < 20:
+            return colors.Color(0.827, 0.329, 0), formatted_value  # #D35400
+        elif 1 <= value < 10:
+            return colors.Color(0, 0, 0.545), formatted_value  # #00008B
+        else:
+            return colors.Color(0, 0.392, 0), formatted_value  # #006400
+    elif field == "risk_5yr":
+        if value >= 10:
+            return colors.Color(0.69, 0, 0.125), formatted_value  # #B00020
+        elif 5 <= value < 10:
+            return colors.Color(0.827, 0.329, 0), formatted_value  # #D35400
+        elif 1 <= value < 5:
+            return colors.Color(0, 0, 0.545), formatted_value  # #00008B
+        else:
+            return colors.Color(0, 0.392, 0), formatted_value  # #006400
     elif field == "CKD_Group":
         if value in ['Normal Function', 'Stage 1 A1', 'Stage 2 A1']:
             return colors.Color(0, 0.392, 0), str(value)  # #006400 (safe)
