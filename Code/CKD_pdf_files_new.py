@@ -281,11 +281,11 @@ def create_stylesheet():
     styles = getSampleStyleSheet()
     styles.add(ParagraphStyle(
         name='CustomTitle',
-        fontName='Helvetica-Bold',  # Arial not typically available in ReportLab; Helvetica is close
+        fontName='Helvetica-Bold',
         fontSize=32,
         leading=36,
         alignment=1,  # Center
-        textColor=colors.black  # HTML uses black by default
+        textColor=colors.black
     ))
     styles.add(ParagraphStyle(
         name='CustomSubTitle',
@@ -308,13 +308,21 @@ def create_stylesheet():
     styles.add(ParagraphStyle(
         name='CustomNormalText',
         fontName='Helvetica',
-        fontSize=12,  # Adjusted for better readability
+        fontSize=12,
         leading=14,
         spaceAfter=4,
-        wordWrap='CJK'  # Enable better text wrapping
+        wordWrap='CJK'
     ))
     styles.add(ParagraphStyle(
         name='CustomSmallText',
+        fontName='Helvetica',
+        fontSize=10,
+        leading=12,
+        spaceAfter=4,
+        wordWrap='CJK'
+    ))
+    styles.add(ParagraphStyle(
+        name='CustomLongText',
         fontName='Helvetica',
         fontSize=10,
         leading=12,
@@ -348,10 +356,12 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
     date_columns = [col for col in CKD_review.columns if "Date" in col]
     for date_col in date_columns:
         CKD_review[date_col] = pd.to_datetime(CKD_review[date_col], errors='coerce').dt.strftime("%Y-%m-%d")
+        # Replace partial or invalid dates with "N/A"
+        CKD_review[date_col] = CKD_review[date_col].apply(lambda x: "N/A" if pd.isna(x) or len(str(x)) < 10 else x)
         # Log warning for malformed dates
-        malformed_dates = CKD_review[date_col][CKD_review[date_col].isna() & CKD_review[date_col].notna()]
+        malformed_dates = CKD_review[date_col][CKD_review[date_col] == "N/A"]
         if not malformed_dates.empty:
-            logging.warning(f"Found {len(malformed_dates)} malformed entries in {date_col}: {malformed_dates.tolist()}")
+            logging.warning(f"Found {len(malformed_dates)} malformed entries in {date_col}")
 
     # Inspect CKD_review columns for debugging
     logging.info(f"CKD_review columns: {list(CKD_review.columns)}")
@@ -729,22 +739,20 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         # Medication Review
         elements.append(Paragraph("Medication Review", styles['CustomSectionHeader']))
         med_data = [
-            [f"• <b>Current Medication:</b> {format_value(patient.get('Medications', 'None'))}"],
-            [f"• <b>Review Medications:</b> {format_value(patient.get('dose_adjustment_prescribed'))}"],
-            [f"• <b>Contraindicated Medications:</b> {format_value(patient.get('contraindicated_prescribed'))}"],
-            [f"• <b>Suggested Medications:</b> {format_value(patient.get('Recommended_Medications', 'None'))}"],
-            [f"• <b>Statin Recommendation:</b> {format_value(patient.get('Statin_Recommendation'))}"]
+            [Paragraph(f"• <b>Current Medication:</b> {format_value(patient.get('Medications', 'None'))}", styles['CustomNormalText'])],
+            [Paragraph(f"• <b>Review Medications:</b> {format_value(patient.get('dose_adjustment_prescribed'))}", styles['CustomNormalText'])],
+            [Paragraph(f"• <b>Contraindicated Medications:</b> {format_value(patient.get('contraindicated_prescribed'))}", styles['CustomNormalText'])],
+            [Paragraph(f"• <b>Suggested Medications:</b> {format_value(patient.get('Recommended_Medications', 'None'))}", styles['CustomLongText'])],
+            [Paragraph(f"• <b>Statin Recommendation:</b> {format_value(patient.get('Statin_Recommendation'))}", styles['CustomNormalText'])]
         ]
         med_table = Table(med_data, colWidths=[doc.width])
         med_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 12),
             ('BOX', (0, 0), (-1, -1), 2, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 15),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEADING', (0, 0), (-1, -1), 14),
         ]))
         elements.append(med_table)
         elements.append(Spacer(1, 20))
@@ -752,18 +760,16 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         # Lifestyle and Preventative Advice
         elements.append(Paragraph("Lifestyle and Preventative Advice", styles['CustomSectionHeader']))
         lifestyle_data = [
-            [f"• <b>Lifestyle Recommendations:</b> {format_value(patient.get('Lifestyle_Advice', 'No specific advice available.'))}"]
+            [Paragraph(f"• <b>Lifestyle Recommendations:</b> {format_value(patient.get('Lifestyle_Advice', 'No specific advice available.'))}", styles['CustomLongText'])]
         ]
         lifestyle_table = Table(lifestyle_data, colWidths=[doc.width])
         lifestyle_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 12),
             ('BOX', (0, 0), (-1, -1), 2, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 15),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEADING', (0, 0), (-1, -1), 14),
         ]))
         elements.append(lifestyle_table)
         elements.append(Spacer(1, 20))
@@ -843,11 +849,11 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 12),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('BOX', (0, 0), (-1, -1), 2, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 15),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEADING', (0, 0), (-1, -1), 14),
+            ('LEADING', (0, 0), (-1, -1), 12),
         ]))
         elements.append(nice_table)
         elements.append(Spacer(1, 20))
@@ -986,5 +992,7 @@ if __name__ == "__main__":
         logging.info(f"All patient summaries generated in: {output_folder}")
     except FileNotFoundError:
         logging.error(f"Input file not found: {input_file}. Please ensure CKD_review.csv is generated by the pipeline.")
+        sys.exit(1)
     except Exception as e:
         logging.error(f"Error during PDF generation: {str(e)}")
+        sys.exit(1)
