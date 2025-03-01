@@ -387,7 +387,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         if col in CKD_review.columns:
             CKD_review[col] = pd.to_numeric(CKD_review[col], errors='coerce')
 
-    styles = create_stylesheet()
+    styles, font_name, font_name_bold = create_stylesheet()
 
     def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles):
         doc = SimpleDocTemplate(
@@ -975,7 +975,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         logging.info(f"Created review subfolder: {review_folder}")
         
         file_name = os.path.join(review_folder, f"Patient_Summary_{patient['HC_Number']}.pdf")
-        create_patient_pdf(patient_data, surgery_info, file_name, qr_path, styles)
+        create_patient_pdf(patient_data, surgery_info, file_name, qr_path, styles, font_name, font_name_bold)
 
         logging.info(f"Report saved as Patient_Summary_{patient['HC_Number']}.pdf in {review_folder}")
 
