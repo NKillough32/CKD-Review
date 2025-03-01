@@ -338,7 +338,7 @@ def create_stylesheet():
     styles.add(ParagraphStyle(
         name='CustomTableText',
         fontName='Helvetica',
-        fontSize=10,  # Reduced for better wrapping in tables
+        fontSize=10,
         leading=12,
         spaceAfter=4,
         wordWrap='CJK'
@@ -510,9 +510,15 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         # CKD Overview
         elements.append(Paragraph("CKD Overview", styles['CustomSectionHeader']))
         ckd_color, ckd_group = classify_status(patient.get('CKD_Group', 'Missing'), None, "CKD_Group")
+        # Create a new style for the colored KDIGO text
+        ckd_style = ParagraphStyle(
+            name='CKDStyle',
+            parent=styles['CustomNormalText'],
+            textColor=ckd_color
+        )
         kdigo_table = Table([
             [Paragraph("<b>KDIGO 2024 Classification</b>", styles['CustomNormalText'])],
-            [Paragraph(f"<b>{ckd_group}</b>", styles['CustomNormalText'], textColor=ckd_color)]
+            [Paragraph(f"<b>{ckd_group}</b>", ckd_style)]
         ], colWidths=[1.5*inch])
         kdigo_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -537,9 +543,9 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         ckd_inner_table.setStyle(TableStyle([
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),  # Reduced for better wrapping
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('PADDING', (0, 0), (-1, -1), 5),  # Reduced padding
+            ('PADDING', (0, 0), (-1, -1), 5),
             ('LEADING', (0, 0), (-1, -1), 12),
         ]))
         
@@ -896,7 +902,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ]
             for title, value, ignore_list in recommendations:
                 if value not in ignore_list:
-                    safe_value = format_value(value).replace('<', '&lt;').replace('>', '&gt;')
+                    safe_value = format_value(value).replace('<', '<').replace('>', '>')
                     final_recs.append([f"• <b>{title}:</b> {safe_value}"])
             final_recs_table = Table(final_recs, colWidths=[doc.width])
             final_recs_table.setStyle(TableStyle([
