@@ -12,6 +12,8 @@ from reportlab.lib.units import inch
 import qrcode
 from datetime import datetime
 from html import escape
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 # Setup logging
 logging.basicConfig(
@@ -249,21 +251,33 @@ def get_ckd_stage_acr_group(row):
         logging.debug("eGFR out of expected range, returning 'No Data'")
         return "No Data"
 
-# Function to create the stylesheet with adjusted sizes
+# Function to create the stylesheet with adjusted styles to match HTML
 def create_stylesheet():
     styles = getSampleStyleSheet()
+    # Register Arial font (if available, otherwise falls back to Helvetica)
+    try:
+        pdfmetrics.registerFont(TTFont('Arial', 'Arial.ttf'))
+        pdfmetrics.registerFont(TTFont('Arial-Bold', 'Arial-Bold.ttf'))
+    except:
+        logging.warning("Arial font not found; falling back to Helvetica.")
+        font_name = 'Helvetica'
+        font_name_bold = 'Helvetica-Bold'
+    else:
+        font_name = 'Arial'
+        font_name_bold = 'Arial-Bold'
+
     styles.add(ParagraphStyle(
         name='CustomTitle',
-        fontName='Helvetica-Bold',
-        fontSize=20,
+        fontName=font_name_bold,
+        fontSize=20,  # Matches script's h1
         leading=24,
         alignment=1,  # Center
         textColor=colors.black
     ))
     styles.add(ParagraphStyle(
         name='CustomSubTitle',
-        fontName='Helvetica-Bold',
-        fontSize=16,
+        fontName=font_name_bold,
+        fontSize=16,  # Matches script's h2
         leading=18,
         alignment=1,  # Center
         textColor=colors.black,
@@ -271,8 +285,8 @@ def create_stylesheet():
     ))
     styles.add(ParagraphStyle(
         name='CustomSectionHeader',
-        fontName='Helvetica-Bold',
-        fontSize=14,
+        fontName=font_name_bold,
+        fontSize=14,  # Matches script's h3
         leading=16,
         alignment=0,  # Left
         textColor=colors.black,
@@ -280,23 +294,23 @@ def create_stylesheet():
     ))
     styles.add(ParagraphStyle(
         name='CustomNormalText',
-        fontName='Helvetica',
-        fontSize=10,
+        fontName=font_name,
+        fontSize=10,  # Matches HTML body text (~14px ≈ 10.5pt)
         leading=12,
         spaceAfter=4,
         wordWrap='CJK'
     ))
     styles.add(ParagraphStyle(
         name='CustomSmallText',
-        fontName='Helvetica',
-        fontSize=9,
+        fontName=font_name,
+        fontSize=9,  # Matches HTML smaller text (~12px ≈ 9pt)
         leading=11,
         spaceAfter=4,
         wordWrap='CJK'
     ))
     styles.add(ParagraphStyle(
         name='CustomLongText',
-        fontName='Helvetica',
+        fontName=font_name,
         fontSize=9,
         leading=11,
         spaceAfter=4,
@@ -304,7 +318,7 @@ def create_stylesheet():
     ))
     styles.add(ParagraphStyle(
         name='CustomTableText',
-        fontName='Helvetica',
+        fontName=font_name,
         fontSize=10,
         leading=12,
         spaceAfter=4,
@@ -314,7 +328,7 @@ def create_stylesheet():
     ))
     styles.add(ParagraphStyle(
         name='CustomTableTitle',
-        fontName='Helvetica-Bold',
+        fontName=font_name_bold,
         fontSize=10,
         leading=12,
         spaceAfter=4,
@@ -322,10 +336,10 @@ def create_stylesheet():
     ))
     styles.add(ParagraphStyle(
         name='CustomCenterText',
-        fontName='Helvetica',
+        fontName=font_name,
         fontSize=10,
         leading=12,
-        alignment=1,
+        alignment=1,  # Center
         spaceAfter=4
     ))
     return styles
@@ -403,16 +417,18 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             elif 'stage 2' in emis_code.lower() and 'stage 2' not in ckd_stage.lower():
                 logging.warning(f"Patient HC_Number: {patient['HC_Number']}, EMIS_CKD_Code '{emis_code}' conflicts with computed CKD_Stage '{ckd_stage}'")
 
+        # Determine font names based on availability
+        font_name = 'Arial' if 'Arial' in pdfmetrics.getRegisteredFontNames() else 'Helvetica'
+        font_name_bold = 'Arial-Bold' if 'Arial-Bold' in pdfmetrics.getRegisteredFontNames() else 'Helvetica-Bold'
+
         # Header
         header_table = Table([
-            [Paragraph(f"{surgery_info.get('surgery_name', 'Unknown Surgery')}", styles['CustomTitle'])],
-            [Paragraph("Chronic Kidney Disease Review", styles['CustomSubTitle'])],
+            [Paragraph(f"{surgery_info.get('surgery_name', 'Unknown Surgery')}<br/>Chronic Kidney Disease Review", styles['CustomTitle'])],
         ], colWidths=[doc.width])
         header_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('BOTTOMPADDING', (0, 1), (-1, 1), 10),
         ]))
         elements.append(header_table)
         elements.append(Spacer(1, 0.3*inch))
@@ -442,7 +458,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         elements.append(Paragraph("Results Overview", styles['CustomSubTitle']))
         elements.append(Spacer(1, 0.3*inch))
 
-        # KDIGO 2024 Classification (Moved Here as a Separate Centered Box)
+        # KDIGO 2024 Classification (Centered Box)
         ckd_color, ckd_group = classify_status(patient.get('CKD_Group', 'Missing'), None, "CKD_Group")
         ckd_style = ParagraphStyle(name='CKDStyle', parent=styles['CustomTableText'], textColor=ckd_color)
         kdigo_table = Table([
@@ -455,7 +471,6 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('BOX', (0, 0), (-1, -1), 1, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 8),
         ]))
-        # Center the KDIGO table by wrapping it in another table
         centered_kdigo_table = Table([[kdigo_table]], colWidths=[doc.width], rowHeights=[None])
         centered_kdigo_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -474,7 +489,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         patient_info_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTNAME', (0, 0), (-1, -1), font_name),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('BOX', (0, 0), (-1, -1), 1, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 8),
@@ -501,7 +516,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         ckd_table = Table(ckd_data, colWidths=[doc.width])
         ckd_table.setStyle(TableStyle([
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTNAME', (0, 0), (-1, -1), font_name),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('BOX', (0, 0), (-1, -1), 1, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 8),
@@ -546,7 +561,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         bp_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTNAME', (0, 0), (-1, -1), font_name),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('BOX', (0, 0), (-1, -1), 1, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 8),
@@ -568,7 +583,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         anaemia_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTNAME', (0, 0), (-1, -1), font_name),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('BOX', (0, 0), (-1, -1), 1, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 8),
@@ -606,7 +621,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         mbd_inner_table = Table(mbd_data, colWidths=[doc.width])
         mbd_inner_table.setStyle(TableStyle([
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTNAME', (0, 0), (-1, -1), font_name),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('PADDING', (0, 0), (-1, -1), 8),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
@@ -623,8 +638,13 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('BOX', (0, 0), (-1, -1), 1, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 8),
         ]))
+        centered_mbd_status_table = Table([[mbd_status_table]], colWidths=[doc.width], rowHeights=[None])
+        centered_mbd_status_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
         
-        mbd_table = Table([[mbd_inner_table], [mbd_status_table]], colWidths=[doc.width])
+        mbd_table = Table([[mbd_inner_table], [centered_mbd_status_table]], colWidths=[doc.width])
         mbd_table.setStyle(TableStyle([
             ('ALIGN', (0, 1), (-1, 1), 'CENTER'),
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
@@ -645,7 +665,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         diabetes_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTNAME', (0, 0), (-1, -1), font_name),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('BOX', (0, 0), (-1, -1), 1, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 8),
@@ -667,7 +687,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         risk_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTNAME', (0, 0), (-1, -1), font_name),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('BOX', (0, 0), (-1, -1), 1, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 8),
@@ -695,7 +715,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         care_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTNAME', (0, 0), (-1, -1), font_name),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('BOX', (0, 0), (-1, -1), 1, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 8),
@@ -718,7 +738,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         med_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTNAME', (0, 0), (-1, -1), font_name),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('BOX', (0, 0), (-1, -1), 1, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 8),
@@ -737,7 +757,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         lifestyle_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTNAME', (0, 0), (-1, -1), font_name),
             ('FONTSIZE', (0, 0), (-1, -1), 9),
             ('BOX', (0, 0), (-1, -1), 1, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 8),
@@ -822,7 +842,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         nice_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTNAME', (0, 0), (-1, -1), font_name),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('BOX', (0, 0), (-1, -1), 1, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 8),
@@ -862,7 +882,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             final_recs_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
                 ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTNAME', (0, 0), (-1, -1), font_name),
                 ('FONTSIZE', (0, 0), (-1, -1), 10),
                 ('BOX', (0, 0), (-1, -1), 1, colors.grey),
                 ('PADDING', (0, 0), (-1, -1), 8),
@@ -873,10 +893,12 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             elements.append(Spacer(1, 0.3*inch))
 
         # QR Code with More Information (Combined into One Box)
-        qr_text = "More Information on Chronic Kidney Disease<br/>Scan this QR code with your phone to access trusted resources on <b>Chronic Kidney Disease (CKD)</b>, including <br/>guidance on managing your condition, lifestyle recommendations, and when to seek medical advice."
+        elements.append(Paragraph("More Information on Chronic Kidney Disease", styles['CustomSubTitle']))
+        elements.append(Spacer(1, 20))  # Match HTML margin: 20px
+        qr_text = "Scan this QR code with your phone to access trusted resources on <b>Chronic Kidney Disease (CKD)</b>, including <br/>guidance on managing your condition, lifestyle recommendations, and when to seek medical advice."
         qr_section = Table([
             [Image(qr_path, width=1.5*inch, height=1.5*inch) if qr_path else Paragraph("QR code unavailable", styles['CustomTableText'], encoding='utf-8')],
-            [Paragraph(qr_text, styles['CustomSmallText'], encoding='utf-8')]
+            [Paragraph(qr_text, styles['CustomSmallText'], encoding='utf-8', spaceBefore=10)]
         ], colWidths=[doc.width])
         qr_section.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -902,26 +924,31 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         surgery_contact_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTNAME', (0, 0), (-1, -1), font_name),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('BOX', (0, 0), (-1, -1), 1, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 8),
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
         ]))
-        elements.append(surgery_contact_table)
+        centered_surgery_contact_table = Table([[surgery_contact_table]], colWidths=[doc.width], rowHeights=[None])
+        centered_surgery_contact_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ]))
+        elements.append(centered_surgery_contact_table)
         elements.append(Spacer(1, 0.3*inch))
 
         # Build the PDF with header and footer
         def add_header_footer(canvas, doc):
             canvas.saveState()
-            canvas.setFont('Helvetica', 10)
+            canvas.setFont(font_name, 10)
             canvas.setFillColor(colors.black)
             canvas.drawString(doc.leftMargin, doc.pagesize[1] - doc.topMargin + 20, f"{surgery_info.get('surgery_name', 'Unknown Surgery')}")
             canvas.drawCentredString(doc.pagesize[0]/2, doc.pagesize[1] - doc.topMargin + 20, "Chronic Kidney Disease Review")
             canvas.drawRightString(doc.pagesize[0] - doc.rightMargin, doc.pagesize[1] - doc.topMargin + 20, f"Date: {datetime.now().strftime('%Y-%m-%d')}")
             canvas.line(doc.leftMargin, doc.pagesize[1] - doc.topMargin + 10, doc.pagesize[0] - doc.rightMargin, doc.pagesize[1] - doc.topMargin + 10)
             
-            canvas.setFont('Helvetica', 8)
+            canvas.setFont(font_name, 8)
             canvas.setFillColor(colors.grey)
             canvas.drawString(doc.leftMargin, doc.bottomMargin - 10, f"Page {doc.page}")
             canvas.drawRightString(doc.pagesize[0] - doc.rightMargin, doc.bottomMargin - 10, f"Tel: {surgery_info.get('surgery_phone', 'N/A')}")
