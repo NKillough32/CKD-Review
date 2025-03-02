@@ -474,16 +474,22 @@ def prioritize_patient(row):
 
     return "High" if score >= 3 else "Medium" if score >= 1 else "Low"
 
-# Get the base path
+# Replace the base path and file paths section with:
 if getattr(sys, 'frozen', False):
     base_path = sys._MEIPASS
 else:
-    # Use the directory of this script (CKD_core.py) and go up one level
     base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
-# File paths
-creatinine_file = os.path.join(base_path, "EMIS_Files", "Creatinine.csv")
-CKD_check_file = os.path.join(base_path, "EMIS_Files", "CKD_check.csv")
+# Get EMIS files path from environment variable
+emis_path = os.getenv('EMIS_FILES_PATH')
+if not emis_path:
+    raise EnvironmentError("EMIS_FILES_PATH environment variable not set")
+
+# File paths - use emis_path for EMIS files
+creatinine_file = os.path.join(emis_path, "Creatinine.csv")
+CKD_check_file = os.path.join(emis_path, "CKD_check.csv")
+
+# Other file paths remain unchanged
 CKD_review_file = os.path.join(base_path, "CKD_review.csv")
 contraindicated_drugs_file = os.path.join(base_path, "Dependencies", "contraindicated_drugs.csv")
 drug_adjustment_file = os.path.join(base_path, "Dependencies", "drug_adjustment.csv")

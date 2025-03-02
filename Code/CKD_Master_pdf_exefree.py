@@ -30,7 +30,7 @@ else:
 # Add EMIS path logging
 logging.info(f"Looking for EMIS files in: {emis_path}")
 
-# Set environment variable for other modules
+# Set environment variable for other modules BEFORE importing or executing CKD_core.py
 os.environ['EMIS_FILES_PATH'] = emis_path
 
 # Verify EMIS directory exists
@@ -45,7 +45,23 @@ try:
     logging.info(f"EMIS_Files contents: {emis_contents}")
 except Exception as e:
     logging.error(f"Failed to list EMIS_Files contents: {e}")
-    
+    sys.exit(1)
+
+# Required files check
+required_files = ['Creatinine.csv', 'CKD_check.csv']
+missing_files = []
+for file in required_files:
+    file_path = os.path.join(emis_path, file)
+    if not os.path.exists(file_path):
+        missing_files.append(file_path)
+
+if missing_files:
+    logging.error("The following required files are missing:")
+    for file in missing_files:
+        logging.error(f"  - {file}")
+    logging.error("\nPlease add the required files to the EMIS_Files directory.")
+    sys.exit(1)
+
 # Execute the main CKD processing logic
 print("Starting CKD Data Analysis Pipeline....")
 # Determine the path to CKD_core.py based on execution mode
