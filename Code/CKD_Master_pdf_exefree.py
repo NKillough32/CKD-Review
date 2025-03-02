@@ -23,9 +23,7 @@ if getattr(sys, 'frozen', False):
 else:
     base_path = os.getcwd()
     working_base_path = base_path
-
-# Add this after the base_path definition
-emis_path = os.path.join(os.getcwd(), "EMIS_Files")  # Always use local EMIS_Files directory
+    emis_path = os.path.join(os.getcwd(), "EMIS_Files")
 
 # Execute the main CKD processing logic
 print("Starting CKD Data Analysis Pipeline....")
