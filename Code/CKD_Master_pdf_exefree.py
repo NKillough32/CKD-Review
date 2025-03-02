@@ -15,16 +15,37 @@ logging.basicConfig(
 
 warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
 
-# Get the base path (works for both script and executable)
+# Update the base path handling at the start of the file
 if getattr(sys, 'frozen', False):
     base_path = sys._MEIPASS
     # Use the current working directory for saving output files
     working_base_path = os.getcwd()
+    # Always look for EMIS_Files in the same directory as the executable
+    emis_path = os.path.join(os.getcwd(), "EMIS_Files")
 else:
     base_path = os.getcwd()
     working_base_path = base_path
-    emis_path = os.path.join(os.getcwd(), "EMIS_Files")
+    emis_path = os.path.join(base_path, "EMIS_Files")
 
+# Add EMIS path logging
+logging.info(f"Looking for EMIS files in: {emis_path}")
+
+# Set environment variable for other modules
+os.environ['EMIS_FILES_PATH'] = emis_path
+
+# Verify EMIS directory exists
+if not os.path.exists(emis_path):
+    logging.error(f"EMIS_Files directory not found at: {emis_path}")
+    logging.error("Please ensure EMIS_Files directory is present alongside the executable")
+    sys.exit(1)
+
+# Log EMIS directory contents
+try:
+    emis_contents = os.listdir(emis_path)
+    logging.info(f"EMIS_Files contents: {emis_contents}")
+except Exception as e:
+    logging.error(f"Failed to list EMIS_Files contents: {e}")
+    
 # Execute the main CKD processing logic
 print("Starting CKD Data Analysis Pipeline....")
 # Determine the path to CKD_core.py based on execution mode
