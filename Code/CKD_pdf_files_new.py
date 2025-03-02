@@ -478,7 +478,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
     centered_table.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTER'), ('VALIGN', (0, 0), (-1, -1), 'MIDDLE')]))
     elements.append(Spacer(1, 0.02 * inch))
     elements.append(centered_table)
-    elements.append(Spacer(1, 0.4 * inch))
+    elements.append(Spacer(1, 0.35 * inch))
 
     # Results Title
     elements.append(safe_paragraph("Results Overview", styles['CustomSubTitle']))
@@ -511,7 +511,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         color=colors.grey
     )
     elements.append(patient_info_table)
-    elements.append(Spacer(1, 0.4 * inch))
+    elements.append(Spacer(1, 0.35 * inch))
 
     # CKD Overview
     ckd_title = safe_paragraph("<b>CKD Overview</b>", styles['CustomSectionHeader'])
@@ -526,27 +526,27 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
                         f"<font color='#{acr_color.hexval()[2:8]}'>{escape(acr_value)} mg/mmol</font> | "
                         f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date1')))}", styles['CustomTableText'])],
         [safe_paragraph(f"• <font face='{font_name_bold}'>Creatinine:</font>", styles['CustomTableText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>Current:</font> "
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>Current:</font> "
                         f"<font color='#{creatinine_color.hexval()[2:8]}'>{escape(creatinine_value)} µmol/L</font> | "
                         f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date')))}", styles['CustomTableText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>3 Months Prior:</font> "
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>3 Months Prior:</font> "
                         f"{escape(format_value(patient.get('Creatinine_3m_prior')))} µmol/L | "
                         f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date2')))}", styles['CustomTableText'])],
         [safe_paragraph(f"• <font face='{font_name_bold}'>eGFR:</font>", styles['CustomTableText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>Current:</font> "
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>Current:</font> "
                         f"<font color='#{egfr_color.hexval()[2:8]}'>{escape(egfr_value)} mL/min/1.73m²</font> | "
                         f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date')))}", styles['CustomTableText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>3 Months Prior:</font> "
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>3 Months Prior:</font> "
                         f"{escape(format_value(patient.get('eGFR_3m_prior')))} mL/min/1.73m² | "
                         f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date2')))}", styles['CustomTableText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>eGFR Trend:</font> "
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>eGFR Trend:</font> "
                         f"{escape(format_value(patient.get('eGFR_Trend')))}", styles['CustomTableText'])],
-        [Spacer(1, 0.1 * inch)],
+        [Spacer(1, 0.025 * inch)],
         [safe_paragraph("<i>The eGFR trend is assessed by comparing the most recent value with the reading from three months prior. The change is adjusted to an annualized rate based on the time interval between measurements.</i>", styles['CustomSmallText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;- <b>Rapid Decline:</b> A decrease of more than 5 mL/min/1.73m² per year or a relative drop of 25% or more.", styles['CustomSmallText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;- <b>Stable:</b> No significant decline.", styles['CustomSmallText'])],
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;- <b>Rapid Decline:</b> A decrease of more than 5 mL/min/1.73m² per year or a relative drop of 25% or more.", styles['CustomSmallText'])],
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;- <b>Stable:</b> No significant decline.", styles['CustomSmallText'])],
         [safe_paragraph("<i>A rapid decline may indicate progressive CKD, requiring closer monitoring or intervention.</i>", styles['CustomSmallText'])],
-        [Spacer(1, 0.2 * inch)]
+        [Spacer(1, 0.025 * inch)]
     ]
 
     ckd_table = create_boxed_table(
@@ -568,7 +568,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         color=colors.grey
     )
     elements.append(ckd_table)
-    elements.append(Spacer(1, 0.4 * inch))
+    elements.append(Spacer(1, 0.35 * inch))
 
     # Blood Pressure
     bp_title = safe_paragraph("<b>Blood Pressure</b>", styles['CustomSectionHeader'])
@@ -604,7 +604,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         color=colors.grey
     )
     elements.append(bp_table)
-    elements.append(Spacer(1, 0.4 * inch))
+    elements.append(Spacer(1, 0.35 * inch))
 
     # Anaemia Overview
     anaemia_title = safe_paragraph("<b>Anaemia Overview</b>", styles['CustomSectionHeader'])
@@ -638,7 +638,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         color=colors.grey
     )
     elements.append(anaemia_table)
-    elements.append(Spacer(1, 0.4 * inch))
+    elements.append(Spacer(1, 0.35 * inch))
 
     # Electrolyte and MBD Management
     mbd_title = safe_paragraph("<b>Electrolyte and Mineral Bone Disorder (MBD) Management</b>", styles['CustomSectionHeader'])
@@ -694,14 +694,14 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             [safe_paragraph("<b>MBD Status</b>", styles['CustomTableTitleCenter'])],
             [safe_paragraph(f"{escape(format_value(patient.get('CKD_MBD_Flag')))}", mbd_status_style)]
         ],
-        widths=[2.5 * inch],
+        widths=[2 * inch],
         style=TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
-            ('PADDING', (0, 0), (-1, -1), 8),
+            ('PADDING', (0, 0), (-1, -1), 6),
         ]),
         radius=10,
-        padding=6,
+        padding=4,
         color=colors.grey
     )
     mbd_status_wrapper = Table([[mbd_status_table]], colWidths=[doc.width - 0.15 * inch])
@@ -730,7 +730,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
     )
     logging.info(f"Appending MBD table for patient {patient['HC_Number']}")
     elements.append(mbd_table)
-    elements.append(Spacer(1, 0.4 * inch))
+    elements.append(Spacer(1, 0.35 * inch))
 
     # Diabetes and HbA1c Management
     diabetes_title = safe_paragraph("<b>Diabetes and HbA1c Management</b>", styles['CustomSectionHeader'])
@@ -762,7 +762,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         color=colors.grey
     )
     elements.append(diabetes_table)
-    elements.append(Spacer(1, 0.4 * inch))
+    elements.append(Spacer(1, 0.35 * inch))
 
     # Kidney Failure Risk
     risk_title = safe_paragraph("<b>Kidney Failure Risk</b>", styles['CustomSectionHeader'])
@@ -795,7 +795,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         color=colors.grey
     )
     elements.append(risk_table)
-    elements.append(Spacer(1, 0.4 * inch))
+    elements.append(Spacer(1, 0.35 * inch))
 
     # Care & Referrals
     care_title = safe_paragraph("<b>Care & Referrals</b>", styles['CustomSectionHeader'])
@@ -829,7 +829,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         color=colors.grey
     )
     elements.append(care_table)
-    elements.append(Spacer(1, 0.4 * inch))
+    elements.append(Spacer(1, 0.35 * inch))
 
     # Medication Review
     med_title = safe_paragraph("<b>Medication Review</b>", styles['CustomSectionHeader'])
@@ -864,7 +864,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         color=colors.grey
     )
     elements.append(KeepTogether(med_table))
-    elements.append(Spacer(1, 0.4 * inch))
+    elements.append(Spacer(1, 0.35 * inch))
 
     # Lifestyle and Preventative Advice
     lifestyle_title = safe_paragraph("<b>Lifestyle and Preventative Advice</b>", styles['CustomSectionHeader'])
@@ -892,7 +892,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         color=colors.grey
     )
     elements.append(lifestyle_table)
-    elements.append(Spacer(1, 0.4 * inch))
+    elements.append(Spacer(1, 0.35 * inch))
 
     # NICE Guideline Recommendations
     nice_title = safe_paragraph("<b>NICE Guideline Recommendations</b>", styles['CustomSubTitle'])
@@ -978,7 +978,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         color=colors.grey
     )
     elements.append(nice_table)
-    elements.append(Spacer(1, 0.4 * inch))
+    elements.append(Spacer(1, 0.35 * inch))
 
     # Final Clinical Recommendations
     show_recommendations = (
@@ -1024,7 +1024,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             color=colors.grey
         )
         elements.append(final_recs_table)
-        elements.append(Spacer(1, 0.4 * inch))
+        elements.append(Spacer(1, 0.35 * inch))
 
     # QR Code Section
     qr_title = safe_paragraph("<b>More Information on Chronic Kidney Disease</b>", styles['CustomSubTitle'])
@@ -1051,7 +1051,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         color=colors.grey
     )
     elements.append(KeepTogether(qr_section))
-    elements.append(Spacer(1, 0.4 * inch))
+    elements.append(Spacer(1, 0.35 * inch))
 
     # Surgery Contact
     surgery_title = safe_paragraph("<b>Surgery Contact Information</b>", styles['CustomTableTitleCenter'])
@@ -1089,7 +1089,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
     ]))
     elements.append(centered_surgery_contact_table)
-    elements.append(Spacer(1, 0.4 * inch))
+    elements.append(Spacer(1, 0.35 * inch))
 
     # Header and Footer
     def add_header_footer(canvas, doc):
