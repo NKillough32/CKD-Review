@@ -50,6 +50,19 @@ except Exception as e:
     logging.error(f"Failed to list EMIS_Files contents: {e}")
     sys.exit(1)
 
+# Add after imports, before logging setup
+def is_admin():
+    """Check if the script is running with admin privileges"""
+    try:
+        if platform.system() == 'Windows':
+            return ctypes.windll.shell32.IsUserAnAdmin()
+        elif platform.system() == 'Darwin':  # macOS
+            return os.geteuid() == 0
+        else:
+            return False
+    except Exception as e:
+        logging.warning(f"Failed to check admin status: {e}")
+        return False
 # Log admin status but don't attempt elevation—proceed without it if not present
 admin_status = is_admin()
 logging.info(f"Running with admin privileges: {admin_status}. Proceeding to test functionality...")
