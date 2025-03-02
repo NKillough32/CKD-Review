@@ -17,6 +17,23 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[logging.StreamHandler()]
 )
+# Set up EMIS_FILES_PATH before any imports that need it
+if getattr(sys, 'frozen', False):
+    base_path = sys._MEIPASS
+    # Use the current working directory for EMIS files
+    emis_path = os.path.join(os.getcwd(), "EMIS_Files")
+else:
+    base_path = os.getcwd()
+    emis_path = os.path.join(base_path, "EMIS_Files")
+
+# Set environment variable for other modules
+os.environ['EMIS_FILES_PATH'] = emis_path
+
+# Verify EMIS directory exists
+if not os.path.exists(emis_path):
+    logging.error(f"EMIS_Files directory not found at: {emis_path}")
+    logging.error("Please ensure EMIS_Files directory is present alongside the executable")
+    sys.exit(1)
 
 warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
 
