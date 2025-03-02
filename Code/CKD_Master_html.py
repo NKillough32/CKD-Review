@@ -12,23 +12,29 @@ logging.basicConfig(
     handlers=[logging.StreamHandler()]
 )
 
-# Set up EMIS_FILES_PATH before any imports that need it
+# Set up paths before any imports that need them
 if getattr(sys, 'frozen', False):
     base_path = sys._MEIPASS
-    # Use the current working directory for EMIS files
-    emis_path = os.path.join(os.getcwd(), "EMIS_Files")
+    # Use current working directory for dynamic files
+    working_base_path = os.getcwd()
+    emis_path = os.path.join(working_base_path, "EMIS_Files")
+    dependencies_path = os.path.join(working_base_path, "Dependencies")
 else:
     base_path = os.getcwd()
+    working_base_path = base_path
     emis_path = os.path.join(base_path, "EMIS_Files")
+    dependencies_path = os.path.join(base_path, "Dependencies")
 
-# Set environment variable for other modules
+# Set environment variables for other modules
 os.environ['EMIS_FILES_PATH'] = emis_path
+os.environ['DEPENDENCIES_PATH'] = dependencies_path
 
-# Verify EMIS directory exists
-if not os.path.exists(emis_path):
-    logging.error(f"EMIS_Files directory not found at: {emis_path}")
-    logging.error("Please ensure EMIS_Files directory is present alongside the executable")
-    sys.exit(1)
+# Verify directories exist
+for path, name in [(emis_path, "EMIS_Files"), (dependencies_path, "Dependencies")]:
+    if not os.path.exists(path):
+        logging.error(f"{name} directory not found at: {path}")
+        logging.error(f"Please ensure {name} directory is present alongside the executable")
+        sys.exit(1)
 
 # Log EMIS directory contents
 try:
@@ -38,9 +44,7 @@ except Exception as e:
     logging.error(f"Failed to list EMIS_Files contents: {e}")
     sys.exit(1)
 
-warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
-
-# Import the main CKD processing logic
+# Now import the main CKD processing logic
 from CKD_core import *
 
 # Detect the operating system and import the appropriate wkhtmltopdf setup file
