@@ -448,10 +448,12 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         elements.append(Spacer(1, 0.1 * inch))  # Larger space before the next section
 
         # Patient Information
-        elements.append(Paragraph("Patient Information", styles['CustomSectionHeader']))
         patient_info_data = [
-            [Paragraph(f"• <b>NHS Number:</b> {int(patient['HC_Number']) if pd.notna(patient['HC_Number']) else 'N/A'}", styles['CustomTableText'], encoding='utf-8')],
-            [Paragraph(f"• <b>Age:</b> {int(patient['Age']) if pd.notna(patient['Age']) else 'N/A'} | <b>Gender:</b> {escape(format_value(patient.get('Gender')))}", styles['CustomTableText'], encoding='utf-8')]
+            [Paragraph("Patient Information", styles['CustomSectionHeader'])],
+            [Paragraph("• NHS Number:", styles['CustomTableTitle']),
+            Paragraph(f"{int(patient['HC_Number']) if pd.notna(patient['HC_Number']) else 'N/A'}", styles['CustomTableText'])],
+            [Paragraph("• Age: | Gender:", styles['CustomTableTitle']),
+            Paragraph(f"{int(patient['Age']) if pd.notna(patient['Age']) else 'N/A'} | {escape(format_value(patient.get('Gender')))}", styles['CustomTableText'])]
         ]
         patient_info_table = Table(patient_info_data, colWidths=[doc.width])
         patient_info_table.setStyle(TableStyle([
@@ -463,6 +465,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             ('PADDING', (0, 0), (-1, -1), 8),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('LEADING', (0, 0), (-1, -1), 12),
+            ('ROUNDEDCORNERS', (0, 0), (-1, -1), 5),
         ]))
         elements.append(patient_info_table)
         elements.append(Spacer(1, 0.05*inch))
