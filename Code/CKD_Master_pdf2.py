@@ -11,47 +11,48 @@ import webbrowser  # For opening the installer file
 import urllib.request  # For downloading the installer
 import time  # For adding a small delay
 
-# Setup logging to match CKD_windows_core2
+# Setup logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[logging.StreamHandler()]
 )
-# Set up EMIS_FILES_PATH before any imports that need it
+
+# Set up paths before any imports that need them
 if getattr(sys, 'frozen', False):
     base_path = sys._MEIPASS
-    # Use the current working directory for EMIS files
-    emis_path = os.path.join(os.getcwd(), "EMIS_Files")
+    # Use current working directory for dynamic files
+    working_base_path = os.getcwd()
+    emis_path = os.path.join(working_base_path, "EMIS_Files")
+    dependencies_path = os.path.join(working_base_path, "Dependencies")
 else:
     base_path = os.getcwd()
+    working_base_path = base_path
     emis_path = os.path.join(base_path, "EMIS_Files")
+    dependencies_path = os.path.join(base_path, "Dependencies")
 
-# Set environment variable for other modules
+# Set environment variables for other modules
 os.environ['EMIS_FILES_PATH'] = emis_path
+os.environ['DEPENDENCIES_PATH'] = dependencies_path
 
-# Verify EMIS directory exists
-if not os.path.exists(emis_path):
-    logging.error(f"EMIS_Files directory not found at: {emis_path}")
-    logging.error("Please ensure EMIS_Files directory is present alongside the executable")
+# Verify directories exist
+for path, name in [(emis_path, "EMIS_Files"), (dependencies_path, "Dependencies")]:
+    if not os.path.exists(path):
+        logging.error(f"{name} directory not found at: {path}")
+        logging.error(f"Please ensure {name} directory is present alongside the executable")
+        sys.exit(1)
+
+# Log EMIS directory contents
+try:
+    emis_contents = os.listdir(emis_path)
+    logging.info(f"EMIS_Files contents: {emis_contents}")
+except Exception as e:
+    logging.error(f"Failed to list EMIS_Files contents: {e}")
     sys.exit(1)
-
-warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
-
-# Check admin status at the beginning (no elevation request anymore)
-def is_admin():
-    if platform.system() == "Windows":
-        try:
-            return ctypes.windll.shell32.IsUserAnAdmin()
-        except Exception:
-            return False
-    return True
 
 # Log admin status but don't attempt elevation—proceed without it if not present
 admin_status = is_admin()
 logging.info(f"Running with admin privileges: {admin_status}. Proceeding to test functionality...")
-
-# Get the current working directory
-current_dir = os.getcwd()
 
 # Import the main CKD processing logic
 from CKD_core import *
