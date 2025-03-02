@@ -474,7 +474,7 @@ def prioritize_patient(row):
 
     return "High" if score >= 3 else "Medium" if score >= 1 else "Low"
 
-# Replace the base path and file paths section with:
+# Replace this section:
 if getattr(sys, 'frozen', False):
     base_path = sys._MEIPASS
 else:
@@ -485,19 +485,35 @@ emis_path = os.getenv('EMIS_FILES_PATH')
 if not emis_path:
     raise EnvironmentError("EMIS_FILES_PATH environment variable not set")
 
+# Get Dependencies path from environment variable
+dependencies_path = os.getenv('DEPENDENCIES_PATH')
+if not dependencies_path:
+    raise EnvironmentError("DEPENDENCIES_PATH environment variable not set")
+
 # File paths - use emis_path for EMIS files
 creatinine_file = os.path.join(emis_path, "Creatinine.csv")
 CKD_check_file = os.path.join(emis_path, "CKD_check.csv")
 
-# Other file paths remain unchanged
-CKD_review_file = os.path.join(base_path, "CKD_review.csv")
-contraindicated_drugs_file = os.path.join(base_path, "Dependencies", "contraindicated_drugs.csv")
-drug_adjustment_file = os.path.join(base_path, "Dependencies", "drug_adjustment.csv")
-statins_file = os.path.join(base_path, "Dependencies", "statins.csv")
-template_dir = os.path.join(base_path, "Dependencies")
-output_dir = os.path.join(base_path, "Patient_Summaries")
-surgery_info_file = os.path.join(base_path, "Dependencies", "surgery_information.csv")
-check_files_exist(creatinine_file, CKD_check_file, contraindicated_drugs_file, drug_adjustment_file)
+# Use dependencies_path for all Dependencies files
+contraindicated_drugs_file = os.path.join(dependencies_path, "contraindicated_drugs.csv")
+drug_adjustment_file = os.path.join(dependencies_path, "drug_adjustment.csv")
+statins_file = os.path.join(dependencies_path, "statins.csv")
+surgery_info_file = os.path.join(dependencies_path, "surgery_information.csv")
+template_dir = dependencies_path  # Remove the redundant "Dependencies" subfolder
+
+# Output paths
+CKD_review_file = os.path.join(os.getcwd(), "CKD_review.csv")
+output_dir = os.path.join(os.getcwd(), "Patient_Summaries")
+
+# Remove duplicate path definitions and verify required files
+check_files_exist(
+    creatinine_file, 
+    CKD_check_file, 
+    contraindicated_drugs_file, 
+    drug_adjustment_file,
+    statins_file,
+    surgery_info_file
+)
 
 print("Starting CKD Data Analysis Pipeline....")
 
