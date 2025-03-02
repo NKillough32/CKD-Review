@@ -9,7 +9,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
-from reportlab.platypus import KeepTogether
+from reportlab.platypus import KeepTogether  # Still imported but not used
 from reportlab.platypus.flowables import Flowable
 from reportlab.pdfgen import canvas
 import qrcode
@@ -37,7 +37,7 @@ else:
 
 surgery_info_file = os.path.join(base_path, "Dependencies", "surgery_information.csv")
 
-# Function to load surgery information
+# Function definitions
 def load_surgery_info(csv_path=surgery_info_file):
     try:
         surgery_df = pd.read_csv(csv_path)
@@ -50,7 +50,6 @@ def load_surgery_info(csv_path=surgery_info_file):
         logging.error(f"Error reading surgery information: {str(e)}")
         return {}
 
-# Function to generate QR code linking to CKD patient information
 def generate_ckd_info_qr(output_path):
     try:
         qr = qrcode.QRCode(
@@ -62,17 +61,14 @@ def generate_ckd_info_qr(output_path):
         qr.add_data("https://patient.info/kidney-urinary-tract/chronic-kidney-disease-leaflet")
         qr.make(fit=True)
         qr_image = qr.make_image(fill_color="black", back_color="white")
-        
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         qr_image.save(output_path, format='PNG')
-        
         logging.info(f"QR code generated successfully at: {output_path}")
         return output_path
     except Exception as e:
         logging.error(f"Error generating QR code: {e}")
         return None
 
-# Helper function to format value
 def format_value(value, default="N/A"):
     if pd.isna(value) or value == "" or value == "Missing":
         return default
@@ -81,7 +77,6 @@ def format_value(value, default="N/A"):
         return "N/A"
     return formatted
 
-# Helper function to classify status and return color
 def classify_status(value, thresholds, field):
     if pd.isna(value) or value == "Missing":
         return colors.grey, "Missing"
@@ -159,7 +154,6 @@ def classify_status(value, thresholds, field):
         else: return colors.Color(0, 0.392, 0), formatted_value  # #006400
     return colors.black, str(value)
 
-# Function to compute review message based on clinical criteria
 def compute_review_message(patient):
     eGFR = patient.get('eGFR')
     ACR = patient.get('ACR')
@@ -210,7 +204,6 @@ def compute_review_message(patient):
 
     return review_message
 
-# Function to map review_message to a shorter folder name
 def map_review_message_to_folder(review_message):
     mapping = {
         "Review Required - CKD Stage 1-2 with ACR > 3": "Review_Stage1_2_ACR3",
@@ -225,17 +218,13 @@ def map_review_message_to_folder(review_message):
     }
     return mapping.get(review_message, "".join([c if c.isalnum() or c.isspace() else "_" for c in review_message]).replace(" ", "_"))
 
-# Function to compute CKD Group
 def get_ckd_stage_acr_group(row):
     eGFR = row.get('eGFR')
     ACR = row.get('ACR')
-
     logging.debug(f"Computing CKD_Group for eGFR: {eGFR}, ACR: {ACR}")
-
     if pd.isna(eGFR) or pd.isna(ACR):
         logging.debug("eGFR or ACR is NaN, returning 'No Data'")
         return "No Data"
-
     try:
         eGFR = float(eGFR)
         ACR = float(ACR)
@@ -248,7 +237,6 @@ def get_ckd_stage_acr_group(row):
     except (ValueError, TypeError) as e:
         logging.debug(f"Error converting eGFR or ACR to float: {e}, returning 'No Data'")
         return "No Data"
-
     if eGFR >= 90:
         if ACR < 3: return "Normal Function"
         elif ACR <= 30: return "Stage 1 A2"
@@ -277,170 +265,54 @@ def get_ckd_stage_acr_group(row):
         logging.debug("eGFR out of expected range, returning 'No Data'")
         return "No Data"
 
-# Function to create the stylesheet with adjusted styles to match HTML
 def create_stylesheet():
     styles = getSampleStyleSheet()
-    
-    # Register Arial font
     try:
         pdfmetrics.registerFont(TTFont('Arial', os.path.join(base_path, "Dependencies", 'Arial.ttf')))
         font_name = 'Arial'
     except Exception as e:
-        logging.warning(f"Failed to load Arial font from Dependencies folder: {str(e)}. Falling back to Helvetica.")
+        logging.warning(f"Failed to load Arial font: {str(e)}. Falling back to Helvetica.")
         font_name = 'Helvetica'
-
-    # Register Arial-Bold font
     try:
         pdfmetrics.registerFont(TTFont('Arial-Bold', os.path.join(base_path, "Dependencies", 'arialbd.ttf')))
         font_name_bold = 'Arial-Bold'
     except Exception as e:
-        logging.warning(f"Failed to load Arial-Bold font from Dependencies folder: {str(e)}. Falling back to Helvetica-Bold.")
+        logging.warning(f"Failed to load Arial-Bold font: {str(e)}. Falling back to Helvetica-Bold.")
         font_name_bold = 'Helvetica-Bold'
-
     logging.info(f"Using fonts - Regular: {font_name}, Bold: {font_name_bold}")
 
-    styles.add(ParagraphStyle(
-        name='CustomTitle',
-        fontName=font_name_bold,
-        fontSize=20,  # Matches script's h1
-        leading=24,
-        alignment=1,  # Center
-        textColor=colors.black
-    ))
-    styles.add(ParagraphStyle(
-        name='CustomSubTitle',
-        fontName=font_name_bold,
-        fontSize=16,  # Matches script's h2
-        leading=18,
-        alignment=1,  # Center
-        textColor=colors.black,
-        spaceAfter=12
-    ))
-    styles.add(ParagraphStyle(
-        name='CustomSectionHeader',
-        fontName=font_name_bold,
-        fontSize=12,  # Matches script's h3
-        leading=16,
-        alignment=0,  # Left
-        textColor=colors.black,
-        spaceAfter=8
-    ))
-    styles.add(ParagraphStyle(
-        name='CustomNormalText',
-        fontName=font_name,
-        fontSize=10,  # Matches HTML body text (~14px ≈ 10.5pt)
-        leading=12,
-        spaceAfter=4,
-        wordWrap='CJK'
-    ))
-    styles.add(ParagraphStyle(
-        name='CustomSmallText',
-        fontName=font_name,
-        fontSize=8,  # Matches HTML smaller text (~12px ≈ 9pt)
-        leading=11,
-        spaceAfter=4,
-        wordWrap='CJK'
-    ))
-    styles.add(ParagraphStyle(
-        name='CustomSmallTextCenter',
-        fontName=font_name,
-        fontSize=8,  # Matches HTML smaller text (~12px ≈ 9pt)
-        leading=11,
-        alignment=1, 
-        spaceAfter=4,
-        wordWrap='CJK'
-    ))
-    styles.add(ParagraphStyle(
-        name='CustomLongText',
-        fontName=font_name,
-        fontSize=9,
-        leading=11,
-        spaceAfter=4,
-        wordWrap='CJK'
-    ))
-    styles.add(ParagraphStyle(
-        name='CustomTableText',
-        fontName=font_name,
-        fontSize=10,
-        leading=12,
-        spaceAfter=4,
-        wordWrap='CJK',
-        allowWidows=1,
-        alignment=0
-    ))
-    styles.add(ParagraphStyle(
-        name='CustomTableTitle',
-        fontName=font_name_bold,
-        fontSize=10,
-        leading=12,
-        spaceAfter=4,
-        wordWrap='CJK'
-    ))
-    styles.add(ParagraphStyle(
-        name='CustomTableTitleCenter',
-        fontName=font_name_bold,
-        fontSize=12,  # Matches script's h3
-        leading=16,
-        alignment=1,  # Center (corrected from Left)
-        textColor=colors.black,
-        spaceAfter=8,
-        wordWrap='CJK'
-    ))
-    styles.add(ParagraphStyle(
-        name='CustomCenterText',
-        fontName=font_name,
-        fontSize=10,
-        leading=12,
-        alignment=1,  # Center
-        spaceAfter=4
-    ))
+    styles.add(ParagraphStyle(name='CustomTitle', fontName=font_name_bold, fontSize=20, leading=24, alignment=1, textColor=colors.black))
+    styles.add(ParagraphStyle(name='CustomSubTitle', fontName=font_name_bold, fontSize=16, leading=18, alignment=1, textColor=colors.black, spaceAfter=12))
+    styles.add(ParagraphStyle(name='CustomSectionHeader', fontName=font_name_bold, fontSize=12, leading=16, alignment=0, textColor=colors.black, spaceAfter=8))
+    styles.add(ParagraphStyle(name='CustomNormalText', fontName=font_name, fontSize=10, leading=12, spaceAfter=4, wordWrap='CJK'))
+    styles.add(ParagraphStyle(name='CustomSmallText', fontName=font_name, fontSize=8, leading=11, spaceAfter=4, wordWrap='CJK'))
+    styles.add(ParagraphStyle(name='CustomSmallTextCenter', fontName=font_name, fontSize=8, leading=11, alignment=1, spaceAfter=4, wordWrap='CJK'))
+    styles.add(ParagraphStyle(name='CustomLongText', fontName=font_name, fontSize=9, leading=11, spaceAfter=4, wordWrap='CJK'))
+    styles.add(ParagraphStyle(name='CustomTableText', fontName=font_name, fontSize=10, leading=12, spaceAfter=4, wordWrap='CJK', allowWidows=1, alignment=0))
+    styles.add(ParagraphStyle(name='CustomTableTitle', fontName=font_name_bold, fontSize=10, leading=12, spaceAfter=4, wordWrap='CJK'))
+    styles.add(ParagraphStyle(name='CustomTableTitleCenter', fontName=font_name_bold, fontSize=12, leading=16, alignment=1, textColor=colors.black, spaceAfter=8, wordWrap='CJK'))
+    styles.add(ParagraphStyle(name='CustomCenterText', fontName=font_name, fontSize=10, leading=12, alignment=1, spaceAfter=4))
     return styles, font_name, font_name_bold
 
-# Replace existing draw_rounded_box and wrap_table_with_rounded_box functions with these improved versions:
-
 def draw_rounded_box(canvas, x, y, width, height, radius=10, stroke_color=colors.grey, stroke_width=1.5, fill_color=colors.whitesmoke):
-    """
-    Draw a rounded rectangle with consistent positioning and fill color.
-    
-    Args:
-        canvas: PDF canvas
-        x, y: Bottom-left corner coordinates
-        width, height: Box dimensions
-        radius: Corner radius
-        stroke_color: Border color
-        stroke_width: Border width
-        fill_color: Background fill color
-    """
     canvas.saveState()
     canvas.setStrokeColor(stroke_color)
     canvas.setFillColor(fill_color)
     canvas.setLineWidth(stroke_width)
-    
     path = canvas.beginPath()
     path.moveTo(x + radius, y)
     path.lineTo(x + width - radius, y)
-    path.curveTo(x + width - radius/2, y,
-                 x + width, y + radius/2,
-                 x + width, y + radius)
+    path.curveTo(x + width - radius/2, y, x + width, y + radius/2, x + width, y + radius)
     path.lineTo(x + width, y + height - radius)
-    path.curveTo(x + width, y + height - radius/2,
-                 x + width - radius/2, y + height,
-                 x + width - radius, y + height)
+    path.curveTo(x + width, y + height - radius/2, x + width - radius/2, y + height, x + width - radius, y + height)
     path.lineTo(x + radius, y + height)
-    path.curveTo(x + radius/2, y + height,
-                 x, y + height - radius/2,
-                 x, y + height - radius)
+    path.curveTo(x + radius/2, y + height, x, y + height - radius/2, x, y + height - radius)
     path.lineTo(x, y + radius)
-    path.curveTo(x, y + radius/2,
-                 x + radius/2, y,
-                 x + radius, y)
-    
-    canvas.drawPath(path, stroke=1, fill=1)  # Changed fill to 1 to enable filling
+    path.curveTo(x, y + radius/2, x + radius/2, y, x + radius, y)
+    canvas.drawPath(path, stroke=1, fill=1)
     canvas.restoreState()
 
 class BoxedTable(Table):
-    """Table subclass that draws its own rounded box border."""
-    
     def __init__(self, *args, **kwargs):
         self.box_radius = kwargs.pop('box_radius', 10)
         self.box_padding = kwargs.pop('box_padding', 6)
@@ -453,43 +325,14 @@ class BoxedTable(Table):
     def draw(self):
         x = self.canv._x
         y = self.canv._y
-        
         box_x = x - self.box_padding
         box_y = y - self.box_padding
         box_width = self._width + (2 * self.box_padding)
         box_height = self._height + (2 * self.box_padding)
-        
-        draw_rounded_box(
-            self.canv, 
-            box_x, 
-            box_y,
-            box_width,
-            box_height,
-            radius=self.box_radius,
-            stroke_color=self.box_color,
-            fill_color=self.fill_color
-        )
-        
+        draw_rounded_box(self.canv, box_x, box_y, box_width, box_height, radius=self.box_radius, stroke_color=self.box_color, fill_color=self.fill_color)
         super().draw()
 
 def create_boxed_table(data, widths, style, radius=10, padding=6, color=colors.grey, fill_color=colors.whitesmoke):
-    """
-    Create a table with a rounded box border.
-    
-    Args:
-        data: Table data (list of lists)
-        widths: Column widths
-        style: TableStyle for the table
-        radius: Corner radius for the box
-        padding: Padding between table and box
-        color: Box border color
-        fill_color: Box fill color
-    """
-    new_style = TableStyle([
-        command for command in style._cmds 
-        if command[0] != 'BOX' and command[0] != 'GRID'
-    ])
-    
     table = BoxedTable(
         data,
         colWidths=widths,
@@ -498,42 +341,23 @@ def create_boxed_table(data, widths, style, radius=10, padding=6, color=colors.g
         box_color=color,
         fill_color=fill_color
     )
-    table.setStyle(new_style)
+    table.setStyle(style)
+    table_width, table_height = table.wrap(widths[0], 650)
+    logging.info(f"Table height: {table_height} for data: {[str(item)[:50] for item in data]}")
+    if table_height > 650 or table_height < 0:
+        logging.warning(f"Table height {table_height} invalid, forcing split. Full data: {[str(item)[:100] for item in data]}")
+        table.setStyle(TableStyle([('SPLITBYROW', (0, 0), (-1, -1), True)]))
     return table
 
-# Update wrap_table_with_rounded_box to track position via a callback
-def wrap_table_with_rounded_box(table, doc, radius=10):
-    """ Wraps a table with a rounded box and returns a flowable. """
-    # Compute the table's dimensions by calling wrap()
-    table_width, table_height = table.wrap(doc.width, doc.height)
+def safe_paragraph(text, style, max_length=500, encoding='utf-8'):
+    text_str = str(text)
+    if len(text_str) > max_length:
+        logging.warning(f"Truncating paragraph: {text_str[:50]}...")
+        text_str = text_str[:max_length] + " [Truncated]"
+    return Paragraph(text_str, style, encoding=encoding)
 
-    # Use a list to store the y position (since we need to modify it in a callback)
-    position = [None]
-
-    # Define a callback to record the y position after the table is drawn
-    def after_draw_handler(canvas, x, y, flowable):
-        position[0] = y - table_height  # Record the y position of the bottom of the table
-
-    # Attach the callback to the table
-    table._afterDraw = after_draw_handler
-
-    def draw_box(canvas, doc):
-        # Use the recorded y position
-        if position[0] is None:
-            # Fallback if position isn't set (e.g., rendering issue)
-            y = doc.bottomMargin
-        else:
-            y = position[0]
-        x = doc.leftMargin
-        draw_rounded_box(canvas, x, y, table_width, table_height, radius)
-    
-    # Return the table wrapped in KeepTogether and the draw function
-    return KeepTogether(table), draw_box
-
-# Moved generate_patient_pdf to the top level (previously nested inside create_patient_pdf)
 def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
     surgery_info = load_surgery_info()
-
     date_columns = [col for col in CKD_review.columns if "Date" in col]
     for date_col in date_columns:
         CKD_review[date_col] = pd.to_datetime(CKD_review[date_col], errors='coerce').dt.strftime("%Y-%m-%d")
@@ -541,44 +365,29 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         malformed_dates = CKD_review[date_col][CKD_review[date_col] == "N/A"]
         if not malformed_dates.empty:
             logging.warning(f"Found {len(malformed_dates)} malformed entries in {date_col}")
-
     logging.info(f"CKD_review columns: {list(CKD_review.columns)}")
-    
     if 'CKD_Group' not in CKD_review.columns:
         logging.warning("CKD_Group column not found in CKD_review, computing now...")
         CKD_review['CKD_Group'] = CKD_review.apply(get_ckd_stage_acr_group, axis=1)
-
-    # Initialize date_folder regardless of CKD_review state
     date_folder = os.path.join(output_dir, datetime.now().strftime("%Y-%m-%d"))
     os.makedirs(date_folder, exist_ok=True)
     logging.info(f"Created patient summary folder: {date_folder}")
-
-    # If CKD_review is empty, return early after creating the folder
     if CKD_review.empty:
         logging.warning("CKD_review DataFrame is empty. No PDFs will be generated.")
         return date_folder
-
-    # Generate QR code and handle potential failure
     qr_filename = "ckd_info_qr.png"
     qr_path_placeholder = os.path.join(base_path, "Dependencies", qr_filename)
     qr_path = generate_ckd_info_qr(qr_path_placeholder)
     if qr_path is None:
-        qr_path = ""  # Fallback to empty string if QR generation fails
+        qr_path = ""
         logging.warning("QR code generation failed; proceeding without QR code.")
-
     logging.info(f"QR Code Path: {qr_path}")
-
-    # Replace missing values in CKD_review
     CKD_review = CKD_review.replace({"": pd.NA, None: pd.NA, pd.NA: pd.NA, np.nan: pd.NA})
-
-    # Convert numeric columns
     numeric_columns = ['Phosphate', 'Calcium', 'Vitamin_D', 'Parathyroid', 'Bicarbonate', 'eGFR', 'Creatinine', 
                        'Systolic_BP', 'Diastolic_BP', 'haemoglobin', 'Potassium', 'HbA1c', 'risk_2yr', 'risk_5yr', 'ACR']
     for col in numeric_columns:
         if col in CKD_review.columns:
             CKD_review[col] = pd.to_numeric(CKD_review[col], errors='coerce')
-
-    # Initialize styles and fonts, with fallback
     try:
         styles, font_name, font_name_bold = create_stylesheet()
     except Exception as e:
@@ -586,32 +395,38 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         styles = getSampleStyleSheet()
         font_name = "Helvetica"
         font_name_bold = "Helvetica-Bold"
-
     for _, patient in CKD_review.iterrows():
         patient_data = patient.to_dict()
         patient_data.update(surgery_info)
-
         review_message = compute_review_message(patient_data)
         patient_data['review_message'] = review_message
-
         if patient_data.get('CKD_Group', "Missing") == "Missing" or pd.isna(patient_data.get('CKD_Group')):
             patient_data['CKD_Group'] = get_ckd_stage_acr_group(patient_data)
         logging.info(f"Patient HC_Number: {patient_data['HC_Number']}, CKD_Group: {patient_data.get('CKD_Group')}, eGFR: {patient_data.get('eGFR')}, ACR: {patient_data.get('ACR')}")
-
         sanitized_review_folder = map_review_message_to_folder(review_message)
-        review_folder = os.path.join(date_folder, sanitized_review_folder)  # type: ignore
+        review_folder = os.path.join(date_folder, sanitized_review_folder)
         os.makedirs(review_folder, exist_ok=True)
         logging.info(f"Created review subfolder: {review_folder}")
-        
         file_name = os.path.join(review_folder, f"Patient_Summary_{patient['HC_Number']}.pdf")
         create_patient_pdf(patient_data, surgery_info, file_name, qr_path, styles, font_name, font_name_bold)
-
         logging.info(f"Report saved as Patient_Summary_{patient['HC_Number']}.pdf in {review_folder}")
-
-    # PyLance warning suppressed: date_folder is guaranteed to be defined here
-    return date_folder  # type: ignore
+    return date_folder
 
 def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font_name, font_name_bold):
+    for key in patient:
+        if isinstance(patient[key], str) and len(patient[key]) > 1000:
+            logging.warning(f"Truncating {key} for patient {patient['HC_Number']}: {patient[key][:50]}...")
+            patient[key] = patient[key][:1000] + " [Truncated]"
+
+    patient['review_message'] = compute_review_message(patient)
+    if len(str(patient['review_message'])) > 1000:
+        patient['review_message'] = patient['review_message'][:1000] + " [Truncated]"
+
+    if patient.get('CKD_Group', "Missing") == "Missing" or pd.isna(patient.get('CKD_Group')):
+        patient['CKD_Group'] = get_ckd_stage_acr_group(patient)
+    if len(str(patient['CKD_Group'])) > 1000:
+        patient['CKD_Group'] = patient['CKD_Group'][:1000] + " [Truncated]"
+
     doc = SimpleDocTemplate(
         output_path,
         pagesize=letter,
@@ -622,53 +437,32 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
     )
     elements = []
 
-    patient['review_message'] = compute_review_message(patient)
-
-    if patient.get('CKD_Group', "Missing") == "Missing" or pd.isna(patient.get('CKD_Group')):
-        patient['CKD_Group'] = get_ckd_stage_acr_group(patient)
-    logging.info(f"Patient HC_Number: {patient['HC_Number']}, CKD_Group: {patient.get('CKD_Group')}, eGFR: {patient.get('eGFR')}, ACR: {patient.get('ACR')}")
-
-    emis_code = patient.get('EMIS_CKD_Code', '')
-    if emis_code is None:
-        logging.warning(f"Patient HC_Number: {patient['HC_Number']}, EMIS_CKD_Code is None")
-        emis_code = ''
-    ckd_stage = patient.get('CKD_Stage', '')
-    if emis_code.lower().find('stage') != -1 and ckd_stage != 'Unknown':
-        if 'stage 3' in emis_code.lower() and 'stage 3' not in ckd_stage.lower():
-            logging.warning(f"Patient HC_Number: {patient['HC_Number']}, EMIS_CKD_Code '{emis_code}' conflicts with computed CKD_Stage '{ckd_stage}'")
-        elif 'stage 2' in emis_code.lower() and 'stage 2' not in ckd_stage.lower():
-            logging.warning(f"Patient HC_Number: {patient['HC_Number']}, EMIS_CKD_Code '{emis_code}' conflicts with computed CKD_Stage '{ckd_stage}'")
-
-    # Header Section as Paragraphs
-    elements.append(Paragraph(f"{surgery_info.get('surgery_name', 'Unknown Surgery')}", styles['CustomTitle']))
+    # Header Section
+    elements.append(safe_paragraph(f"{surgery_info.get('surgery_name', 'Unknown Surgery')}", styles['CustomTitle']))
     elements.append(Spacer(1, 0.05 * inch))
-    elements.append(Paragraph("Chronic Kidney Disease Review", styles['CustomTitle']))
+    elements.append(safe_paragraph("Chronic Kidney Disease Review", styles['CustomTitle']))
     elements.append(Spacer(1, 0.1 * inch))
-    elements.append(Paragraph(f"<b>Review Status:</b> {escape(format_value(patient.get('review_message', 'Uncategorized')))}", styles['CustomCenterText']))
+    elements.append(safe_paragraph(f"<b>Review Status:</b> {escape(format_value(patient.get('review_message', 'Uncategorized')))}", styles['CustomCenterText']))
     elements.append(Spacer(1, 0.025 * inch))
-    elements.append(Paragraph(f"<b>Current EMIS Status:</b> {escape(format_value(patient.get('EMIS_CKD_Code', 'N/A')))}", styles['CustomCenterText']))
+    elements.append(safe_paragraph(f"<b>Current EMIS Status:</b> {escape(format_value(patient.get('EMIS_CKD_Code', 'N/A')))}", styles['CustomCenterText']))
     elements.append(Spacer(1, 0.05 * inch))
-
     if format_value(patient.get('Transplant_Kidney')) != "N/A":
-        elements.append(Paragraph(f"<b>Transplant:</b> {escape(format_value(patient.get('Transplant_Kidney')))}", styles['CustomCenterText']))
+        elements.append(safe_paragraph(f"<b>Transplant:</b> {escape(format_value(patient.get('Transplant_Kidney')))}", styles['CustomCenterText']))
         elements.append(Spacer(1, 0.05 * inch))
-
     if format_value(patient.get('Dialysis')) != "N/A":
-        elements.append(Paragraph(f"<b>Dialysis:</b> {escape(format_value(patient.get('Dialysis')))}", styles['CustomCenterText']))
+        elements.append(safe_paragraph(f"<b>Dialysis:</b> {escape(format_value(patient.get('Dialysis')))}", styles['CustomCenterText']))
         elements.append(Spacer(1, 0.1 * inch))
-    
-    # KDIGO 2024 Classification (Centered Box)
+
+    # KDIGO 2024 Classification
     ckd_color, ckd_group = classify_status(patient.get('CKD_Group', 'Missing'), None, "CKD_Group")
     title_style = ParagraphStyle(name='BoldTitle', parent=styles['CustomTableText'], fontName=font_name_bold, alignment=1)
     ckd_style = ParagraphStyle(name='CKDStyle', parent=styles['CustomTableText'], textColor=ckd_color, alignment=1)
-    kdigo_title = Paragraph("KDIGO 2024 Classification", title_style)
-    kdigo_status = Paragraph(f"<b>{escape(ckd_group)}</b>", ckd_style)
-    box_width = 150
-    row_height = 15
+    kdigo_title = safe_paragraph("KDIGO 2024 Classification", title_style)
+    kdigo_status = safe_paragraph(f"<b>{escape(ckd_group)}</b>", ckd_style)
     kdigo_data = [[kdigo_title], [kdigo_status]]
     kdigo_table = create_boxed_table(
         data=kdigo_data,
-        widths=[box_width],
+        widths=[150],
         style=TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
@@ -683,27 +477,23 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
     centered_table = Table([[kdigo_table]], colWidths=[doc.width])
     centered_table.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTER'), ('VALIGN', (0, 0), (-1, -1), 'MIDDLE')]))
     elements.append(Spacer(1, 0.02 * inch))
-    elements.append(KeepTogether([centered_table]))
+    elements.append(centered_table)
     elements.append(Spacer(1, 0.4 * inch))
 
     # Results Title
-    elements.append(Paragraph("Results Overview", styles['CustomSubTitle']))
+    elements.append(safe_paragraph("Results Overview", styles['CustomSubTitle']))
     elements.append(Spacer(1, 0.025 * inch))
 
-    # Patient Information (with rounded box)
-    patient_info_content = """
-    • <font face="{bold_font}">NHS Number:</font> {nhs_number}
-    • <font face="{bold_font}">Age:</font> {age} | <font face="{bold_font}">Gender:</font> {gender}
-    """.format(
-        bold_font=font_name_bold,
-        nhs_number=int(patient['HC_Number']) if pd.notna(patient['HC_Number']) else "N/A",
-        age=int(patient['Age']) if pd.notna(patient['Age']) else "N/A",
-        gender=escape(format_value(patient.get('Gender', 'N/A')))
-    )
-    patient_info_paragraph = Paragraph(patient_info_content, styles['CustomTableText'])
+    # Patient Information
+    nhs_content = f"""• <font face="{font_name_bold}">NHS Number:</font> {int(patient['HC_Number']) if pd.notna(patient['HC_Number']) else 'N/A'}"""
+    age_content = f"""• <font face="{font_name_bold}">Age:</font> {int(patient['Age']) if pd.notna(patient['Age']) else 'N/A'}"""
+    gender_content = f"""• <font face="{font_name_bold}">Gender:</font> {escape(format_value(patient.get('Gender', 'N/A')))}"""
+    
     patient_info_data = [
-        [Paragraph("<font face='{bold_font}'>Patient Information</font>".format(bold_font=font_name_bold), styles['CustomSectionHeader'])],
-        [patient_info_paragraph]
+        [safe_paragraph(f"<font face='{font_name_bold}'>Patient Information</font>", styles['CustomSectionHeader'])],
+        [safe_paragraph(nhs_content, styles['CustomTableText'])],
+        [safe_paragraph(age_content, styles['CustomTableText'])],
+        [safe_paragraph(gender_content, styles['CustomTableText'])]
     ]
     patient_info_table = create_boxed_table(
         data=patient_info_data,
@@ -723,38 +513,42 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
     elements.append(patient_info_table)
     elements.append(Spacer(1, 0.4 * inch))
 
-    # CKD Overview (with rounded box)
-    ckd_title = Paragraph("<b>CKD Overview</b>", styles['CustomSectionHeader'])
+    # CKD Overview
+    ckd_title = safe_paragraph("<b>CKD Overview</b>", styles['CustomSectionHeader'])
+    acr_color, acr_value = classify_status(patient.get('ACR', 'Missing'), None, 'ACR')
+    creatinine_color, creatinine_value = classify_status(patient.get('Creatinine', 'Missing'), None, 'Creatinine')
+    egfr_color, egfr_value = classify_status(patient.get('eGFR', 'Missing'), None, 'eGFR')
     ckd_data = [
         [ckd_title],
-        [Paragraph(f"• <font face='{font_name_bold}'>Stage:</font> {escape(format_value(patient.get('CKD_Stage')))} | "
-                f"<font face='{font_name_bold}'>ACR Criteria:</font> {escape(format_value(patient.get('CKD_ACR')))}", styles['CustomTableText'])],
-        [Paragraph(f"• <font face='{font_name_bold}'>Albumin-Creatinine Ratio (ACR):</font> "
-                f"<font color='#{classify_status(patient.get('ACR', 'Missing'), None, 'ACR')[0].hexval()[2:8]}'>{escape(format_value(patient.get('ACR')))} mg/mmol</font> | "
-                f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date1')))}", styles['CustomTableText'])],
-        [Paragraph(f"• <font face='{font_name_bold}'>Creatinine:</font>", styles['CustomTableText'])],
-        [Paragraph(f"&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>Current:</font> "
-                f"<font color='#{classify_status(patient.get('Creatinine', 'Missing'), None, 'Creatinine')[0].hexval()[2:8]}'>{escape(format_value(patient.get('Creatinine')))} µmol/L</font> | "
-                f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date')))}", styles['CustomTableText'])],
-        [Paragraph(f"&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>3 Months Prior:</font> "
-                f"{escape(format_value(patient.get('Creatinine_3m_prior')))} µmol/L | "
-                f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date2')))}", styles['CustomTableText'])],
-        [Paragraph(f"• <font face='{font_name_bold}'>eGFR:</font>", styles['CustomTableText'])],
-        [Paragraph(f"&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>Current:</font> "
-                f"<font color='#{classify_status(patient.get('eGFR', 'Missing'), None, 'eGFR')[0].hexval()[2:8]}'>{escape(format_value(patient.get('eGFR')))} mL/min/1.73m²</font> | "
-                f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date')))}", styles['CustomTableText'])],
-        [Paragraph(f"&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>3 Months Prior:</font> "
-                f"{escape(format_value(patient.get('eGFR_3m_prior')))} mL/min/1.73m² | "
-                f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date2')))}", styles['CustomTableText'])],
-        [Paragraph(f"&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>eGFR Trend:</font> "
-                f"{escape(format_value(patient.get('eGFR_Trend')))}", styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Stage:</font> {escape(format_value(patient.get('CKD_Stage')))} | "
+                        f"<font face='{font_name_bold}'>ACR Criteria:</font> {escape(format_value(patient.get('CKD_ACR')))}", styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Albumin-Creatinine Ratio (ACR):</font> "
+                        f"<font color='#{acr_color.hexval()[2:8]}'>{escape(acr_value)} mg/mmol</font> | "
+                        f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date1')))}", styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Creatinine:</font>", styles['CustomTableText'])],
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>Current:</font> "
+                        f"<font color='#{creatinine_color.hexval()[2:8]}'>{escape(creatinine_value)} µmol/L</font> | "
+                        f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date')))}", styles['CustomTableText'])],
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>3 Months Prior:</font> "
+                        f"{escape(format_value(patient.get('Creatinine_3m_prior')))} µmol/L | "
+                        f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date2')))}", styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>eGFR:</font>", styles['CustomTableText'])],
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>Current:</font> "
+                        f"<font color='#{egfr_color.hexval()[2:8]}'>{escape(egfr_value)} mL/min/1.73m²</font> | "
+                        f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date')))}", styles['CustomTableText'])],
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>3 Months Prior:</font> "
+                        f"{escape(format_value(patient.get('eGFR_3m_prior')))} mL/min/1.73m² | "
+                        f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date2')))}", styles['CustomTableText'])],
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>eGFR Trend:</font> "
+                        f"{escape(format_value(patient.get('eGFR_Trend')))}", styles['CustomTableText'])],
         [Spacer(1, 0.1 * inch)],
-        [Paragraph("<i>The eGFR trend is assessed by comparing the most recent value with the reading from three months prior. The change is adjusted to an annualized rate based on the time interval between measurements.</i>", styles['CustomSmallText'])],
-        [Paragraph(f"&nbsp;&nbsp;&nbsp;- <b>Rapid Decline:</b> A decrease of more than 5 mL/min/1.73m² per year or a relative drop of 25% or more.", styles['CustomSmallText'])],
-        [Paragraph(f"&nbsp;&nbsp;&nbsp;- <b>Stable:</b> No significant decline.", styles['CustomSmallText'])],
-        [Paragraph("<i>A rapid decline may indicate progressive CKD, requiring closer monitoring or intervention.</i>", styles['CustomSmallText'])],
+        [safe_paragraph("<i>The eGFR trend is assessed by comparing the most recent value with the reading from three months prior. The change is adjusted to an annualized rate based on the time interval between measurements.</i>", styles['CustomSmallText'])],
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;- <b>Rapid Decline:</b> A decrease of more than 5 mL/min/1.73m² per year or a relative drop of 25% or more.", styles['CustomSmallText'])],
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;- <b>Stable:</b> No significant decline.", styles['CustomSmallText'])],
+        [safe_paragraph("<i>A rapid decline may indicate progressive CKD, requiring closer monitoring or intervention.</i>", styles['CustomSmallText'])],
         [Spacer(1, 0.2 * inch)]
     ]
+
     ckd_table = create_boxed_table(
         data=ckd_data,
         widths=[doc.width - 0.15 * inch],
@@ -764,10 +558,10 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
             ('FONTNAME', (0, 0), (-1, -1), font_name),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('BOX', (0, 0), (-1, -1), 1, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 8),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEADING', (0, 0), (-1, -1), 12)
+            ('LEADING', (0, 0), (-1, -1), 12),
+            ('SPLITBYROW', (0, 0), (-1, -1), True)
         ]),
         radius=10,
         padding=6,
@@ -776,20 +570,20 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
     elements.append(ckd_table)
     elements.append(Spacer(1, 0.4 * inch))
 
-    # Blood Pressure (with rounded box)
-    bp_title = Paragraph("<b>Blood Pressure</b>", styles['CustomSectionHeader'])
+    # Blood Pressure
+    bp_title = safe_paragraph("<b>Blood Pressure</b>", styles['CustomSectionHeader'])
     bp_color_sys, bp_value_sys = classify_status(patient.get('Systolic_BP', 'Missing'), None, 'Systolic_BP')
     bp_color_dia, bp_value_dia = classify_status(patient.get('Diastolic_BP', 'Missing'), None, 'Diastolic_BP')
     bp_data = [
         [bp_title],
-        [Paragraph(f"• <font face='{font_name_bold}'>Classification:</font> {escape(format_value(patient.get('BP_Classification')))} | "
-                f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date3')))}", styles['CustomTableText'])],
-        [Paragraph(f"• <font face='{font_name_bold}'>Systolic:</font> "
-                f"<font color='#{bp_color_sys.hexval()[2:8]}'>{escape(bp_value_sys)} mmHg</font>", styles['CustomTableText'])],
-        [Paragraph(f"• <font face='{font_name_bold}'>Diastolic:</font> "
-                f"<font color='#{bp_color_dia.hexval()[2:8]}'>{escape(bp_value_dia)} mmHg</font>", styles['CustomTableText'])],
-        [Paragraph(f"• <font face='{font_name_bold}'>Target BP:</font> {escape(format_value(patient.get('BP_Target')))} | "
-                f"<font face='{font_name_bold}'>BP Status:</font> {escape(format_value(patient.get('BP_Flag')))}", styles['CustomTableText'])]
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Classification:</font> {escape(format_value(patient.get('BP_Classification')))} | "
+                        f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date3')))}", styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Systolic:</font> "
+                        f"<font color='#{bp_color_sys.hexval()[2:8]}'>{escape(bp_value_sys)} mmHg</font>", styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Diastolic:</font> "
+                        f"<font color='#{bp_color_dia.hexval()[2:8]}'>{escape(bp_value_dia)} mmHg</font>", styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Target BP:</font> {escape(format_value(patient.get('BP_Target')))} | "
+                        f"<font face='{font_name_bold}'>BP Status:</font> {escape(format_value(patient.get('BP_Flag')))}", styles['CustomTableText'])]
     ]
     bp_table = create_boxed_table(
         data=bp_data,
@@ -802,7 +596,8 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('PADDING', (0, 0), (-1, -1), 8),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEADING', (0, 0), (-1, -1), 12)
+            ('LEADING', (0, 0), (-1, -1), 12),
+            ('SPLITBYROW', (0, 0), (-1, -1), True)
         ]),
         radius=10,
         padding=6,
@@ -811,18 +606,18 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
     elements.append(bp_table)
     elements.append(Spacer(1, 0.4 * inch))
 
-    # Anaemia Overview (with rounded box)
-    anaemia_title = Paragraph("<b>Anaemia Overview</b>", styles['CustomSectionHeader'])
+    # Anaemia Overview
+    anaemia_title = safe_paragraph("<b>Anaemia Overview</b>", styles['CustomSectionHeader'])
     haemoglobin_color, haemoglobin_value = classify_status(patient.get('haemoglobin', 'Missing'), None, 'haemoglobin')
     anaemia_data = [
         [anaemia_title],
-        [Paragraph(f"• <font face='{font_name_bold}'>Haemoglobin:</font> "
-                f"<font color='#{haemoglobin_color.hexval()[2:8]}'>{escape(haemoglobin_value)} g/L</font> | "
-                f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date5')))}", styles['CustomTableText'])],
-        [Paragraph(f"• <font face='{font_name_bold}'>Current Status:</font> "
-                f"{escape(format_value(patient.get('Anaemia_Classification')))}", styles['CustomTableText'])],
-        [Paragraph(f"• <font face='{font_name_bold}'>Anaemia Management:</font> "
-                f"{escape(format_value(patient.get('Anaemia_Flag')))}", styles['CustomTableText'])]
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Haemoglobin:</font> "
+                        f"<font color='#{haemoglobin_color.hexval()[2:8]}'>{escape(haemoglobin_value)} g/L</font> | "
+                        f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date5')))}", styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Current Status:</font> "
+                        f"{escape(format_value(patient.get('Anaemia_Classification')))}", styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Anaemia Management:</font> "
+                        f"{escape(format_value(patient.get('Anaemia_Flag')))}", styles['CustomTableText'])]
     ]
     anaemia_table = create_boxed_table(
         data=anaemia_data,
@@ -835,7 +630,8 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('PADDING', (0, 0), (-1, -1), 8),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEADING', (0, 0), (-1, -1), 12)
+            ('LEADING', (0, 0), (-1, -1), 12),
+            ('SPLITBYROW', (0, 0), (-1, -1), True)
         ]),
         radius=10,
         padding=6,
@@ -844,8 +640,13 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
     elements.append(anaemia_table)
     elements.append(Spacer(1, 0.4 * inch))
 
-    # Electrolyte and MBD Management (with rounded box)
-    mbd_title = Paragraph("<b>Electrolyte and Mineral Bone Disorder (MBD) Management</b>", styles['CustomSectionHeader'])
+    # Electrolyte and MBD Management
+    mbd_title = safe_paragraph("<b>Electrolyte and Mineral Bone Disorder (MBD) Management</b>", styles['CustomSectionHeader'])
+    potassium_color, potassium_value = classify_status(patient.get('Potassium', 'Missing'), None, 'Potassium')
+    bicarbonate_color, bicarbonate_value = classify_status(patient.get('Bicarbonate', 'Missing'), None, 'Bicarbonate')
+    parathyroid_color, parathyroid_value = classify_status(patient.get('Parathyroid', 'Missing'), None, 'Parathyroid')
+    phosphate_color, phosphate_value = classify_status(patient.get('Phosphate', 'Missing'), None, 'Phosphate')
+    calcium_color, calcium_value = classify_status(patient.get('Calcium', 'Missing'), None, 'Calcium')
     vitamin_d_entries = [(patient.get('Vitamin_D', 'Missing'), patient.get('Vitamin_D_Flag', 'Missing'), patient.get('Sample_Date10', 'Missing'))]
     seen_vitamin_d = set()
     unique_vitamin_d = []
@@ -856,42 +657,42 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             unique_vitamin_d.append(entry)
         else:
             logging.warning(f"Patient HC_Number: {patient['HC_Number']}, duplicate or invalid Vitamin D entry: {value}, {flag}, {date}")
-
     mbd_data = [
         [mbd_title],
-        [Paragraph(f"• <font face='{font_name_bold}'>Potassium:</font> "
-                f"<font color='#{classify_status(patient.get('Potassium', 'Missing'), None, 'Potassium')[0].hexval()[2:8]}'>{escape(format_value(patient.get('Potassium')))} mmol/L</font> | "
-                f"<font face='{font_name_bold}'>Status:</font> {escape(format_value(patient.get('Potassium_Flag')))} | "
-                f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date7')))}", styles['CustomTableText'])],
-        [Paragraph(f"• <font face='{font_name_bold}'>Bicarbonate:</font> "
-                f"<font color='#{classify_status(patient.get('Bicarbonate', 'Missing'), None, 'Bicarbonate')[0].hexval()[2:8]}'>{escape(format_value(patient.get('Bicarbonate')))} mmol/L</font> | "
-                f"<font face='{font_name_bold}'>Status:</font> {escape(format_value(patient.get('Bicarbonate_Flag')))} | "
-                f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date13')))}", styles['CustomTableText'])],
-        [Paragraph(f"• <font face='{font_name_bold}'>Parathyroid Hormone (PTH):</font> "
-                f"<font color='#{classify_status(patient.get('Parathyroid', 'Missing'), None, 'Parathyroid')[0].hexval()[2:8]}'>{escape(format_value(patient.get('Parathyroid')))} pg/mL</font> | "
-                f"<font face='{font_name_bold}'>Status:</font> {escape(format_value(patient.get('Parathyroid_Flag')))} | "
-                f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date12')))}", styles['CustomTableText'])],
-        [Paragraph(f"• <font face='{font_name_bold}'>Phosphate:</font> "
-                f"<font color='#{classify_status(patient.get('Phosphate', 'Missing'), None, 'Phosphate')[0].hexval()[2:8]}'>{escape(format_value(patient.get('Phosphate')))} mmol/L</font> | "
-                f"<font face='{font_name_bold}'>Status:</font> {escape(format_value(patient.get('Phosphate_Flag')))} | "
-                f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date8')))}", styles['CustomTableText'])],
-        [Paragraph(f"• <font face='{font_name_bold}'>Calcium:</font> "
-                f"<font color='#{classify_status(patient.get('Calcium', 'Missing'), None, 'Calcium')[0].hexval()[2:8]}'>{escape(format_value(patient.get('Calcium')))} mmol/L</font> | "
-                f"<font face='{font_name_bold}'>Status:</font> {escape(format_value(patient.get('Calcium_Flag')))} | "
-                f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date9')))}", styles['CustomTableText'])]
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Potassium:</font> "
+                        f"<font color='#{potassium_color.hexval()[2:8]}'>{escape(potassium_value)} mmol/L</font> | "
+                        f"<font face='{font_name_bold}'>Status:</font> {escape(format_value(patient.get('Potassium_Flag')))} | "
+                        f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date7')))}", styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Bicarbonate:</font> "
+                        f"<font color='#{bicarbonate_color.hexval()[2:8]}'>{escape(bicarbonate_value)} mmol/L</font> | "
+                        f"<font face='{font_name_bold}'>Status:</font> {escape(format_value(patient.get('Bicarbonate_Flag')))} | "
+                        f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date13')))}", styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Parathyroid Hormone (PTH):</font> "
+                        f"<font color='#{parathyroid_color.hexval()[2:8]}'>{escape(parathyroid_value)} pg/mL</font> | "
+                        f"<font face='{font_name_bold}'>Status:</font> {escape(format_value(patient.get('Parathyroid_Flag')))} | "
+                        f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date12')))}", styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Phosphate:</font> "
+                        f"<font color='#{phosphate_color.hexval()[2:8]}'>{escape(phosphate_value)} mmol/L</font> | "
+                        f"<font face='{font_name_bold}'>Status:</font> {escape(format_value(patient.get('Phosphate_Flag')))} | "
+                        f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date8')))}", styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Calcium:</font> "
+                        f"<font color='#{calcium_color.hexval()[2:8]}'>{escape(calcium_value)} mmol/L</font> | "
+                        f"<font face='{font_name_bold}'>Status:</font> {escape(format_value(patient.get('Calcium_Flag')))} | "
+                        f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date9')))}", styles['CustomTableText'])]
     ]
     for value, flag, date in unique_vitamin_d:
+        vit_d_color, vit_d_value = classify_status(value, None, 'Vitamin_D')
         mbd_data.append(
-            [Paragraph(f"• <font face='{font_name_bold}'>Vitamin D Level:</font> "
-                    f"<font color='#{classify_status(value, None, 'Vitamin_D')[0].hexval()[2:8]}'>{escape(format_value(value))} ng/mL</font> | "
-                    f"<font face='{font_name_bold}'>Status:</font> {escape(format_value(flag))} | "
-                    f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(date))}", styles['CustomTableText'])]
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Vitamin D Level:</font> "
+                            f"<font color='#{vit_d_color.hexval()[2:8]}'>{escape(vit_d_value)} ng/mL</font> | "
+                            f"<font face='{font_name_bold}'>Status:</font> {escape(format_value(flag))} | "
+                            f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(date))}", styles['CustomTableText'])]
         )
     mbd_status_style = ParagraphStyle(name='MBDStatusStyle', parent=styles['CustomTableText'], alignment=1)
     mbd_status_table = create_boxed_table(
         data=[
-            [Paragraph("<b>MBD Status</b>", styles['CustomTableTitleCenter'], encoding='utf-8')],
-            [Paragraph(f"{escape(format_value(patient.get('CKD_MBD_Flag')))}", mbd_status_style, encoding='utf-8')]
+            [safe_paragraph("<b>MBD Status</b>", styles['CustomTableTitleCenter'])],
+            [safe_paragraph(f"{escape(format_value(patient.get('CKD_MBD_Flag')))}", mbd_status_style)]
         ],
         widths=[2.5 * inch],
         style=TableStyle([
@@ -920,25 +721,27 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('PADDING', (0, 0), (-1, -1), 8),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEADING', (0, 0), (-1, -1), 12)
+            ('LEADING', (0, 0), (-1, -1), 12),
+            ('SPLITBYROW', (0, 0), (-1, -1), True)
         ]),
         radius=10,
         padding=6,
         color=colors.grey
     )
+    logging.info(f"Appending MBD table for patient {patient['HC_Number']}")
     elements.append(mbd_table)
     elements.append(Spacer(1, 0.4 * inch))
 
-    # Diabetes and HbA1c Management (with rounded box)
-    diabetes_title = Paragraph("<b>Diabetes and HbA1c Management</b>", styles['CustomSectionHeader'])
+    # Diabetes and HbA1c Management
+    diabetes_title = safe_paragraph("<b>Diabetes and HbA1c Management</b>", styles['CustomSectionHeader'])
     hba1c_color, hba1c_value = classify_status(patient.get('HbA1c', 'Missing'), None, 'HbA1c')
     diabetes_data = [
         [diabetes_title],
-        [Paragraph(f"• <font face='{font_name_bold}'>HbA1c Level:</font> "
-                f"<font color='#{hba1c_color.hexval()[2:8]}'>{escape(hba1c_value)} mmol/mol</font> | "
-                f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date6')))}", styles['CustomTableText'])],
-        [Paragraph(f"• <font face='{font_name_bold}'>HbA1c Management:</font> "
-                f"{escape(format_value(patient.get('HbA1c_Target')))}", styles['CustomTableText'])]
+        [safe_paragraph(f"• <font face='{font_name_bold}'>HbA1c Level:</font> "
+                        f"<font color='#{hba1c_color.hexval()[2:8]}'>{escape(hba1c_value)} mmol/mol</font> | "
+                        f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date6')))}", styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>HbA1c Management:</font> "
+                        f"{escape(format_value(patient.get('HbA1c_Target')))}", styles['CustomTableText'])]
     ]
     diabetes_table = create_boxed_table(
         data=diabetes_data,
@@ -951,7 +754,8 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('PADDING', (0, 0), (-1, -1), 8),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEADING', (0, 0), (-1, -1), 12)
+            ('LEADING', (0, 0), (-1, -1), 12),
+            ('SPLITBYROW', (0, 0), (-1, -1), True)
         ]),
         radius=10,
         padding=6,
@@ -960,21 +764,17 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
     elements.append(diabetes_table)
     elements.append(Spacer(1, 0.4 * inch))
 
-    # Kidney Failure Risk (with rounded box, including explanatory text)
-    risk_title = Paragraph("<b>Kidney Failure Risk</b>", styles['CustomSectionHeader'])
+    # Kidney Failure Risk
+    risk_title = safe_paragraph("<b>Kidney Failure Risk</b>", styles['CustomSectionHeader'])
     risk_2yr_color, risk_2yr_value = classify_status(patient.get('risk_2yr', 'Missing'), None, 'risk_2yr')
     risk_5yr_color, risk_5yr_value = classify_status(patient.get('risk_5yr', 'Missing'), None, 'risk_5yr')
     risk_data = [
         [risk_title],
-        [Paragraph(f"• <font face='{font_name_bold}'>2-Year Risk:</font> "
-                f"<font color='#{risk_2yr_color.hexval()[2:8]}'>{escape(risk_2yr_value)}%</font>", styles['CustomTableText'])],
-        [Paragraph(f"• <font face='{font_name_bold}'>5-Year Risk:</font> "
-                f"<font color='#{risk_5yr_color.hexval()[2:8]}'>{escape(risk_5yr_value)}%</font>", styles['CustomTableText'])],
-        [Paragraph(
-            "<i>The patient's 2- and 5-year kidney failure risk scores estimate the likelihood that their kidney disease will progress to kidney failure within the next 2 or 5 years. These scores are calculated based on the patient's current kidney function and other risk factors such as age, blood pressure, and existing health conditions. Understanding these risk scores helps in predicting disease progression and planning appropriate treatment strategies.</i>",
-            styles['CustomSmallText'],
-            encoding='utf-8'
-        )]
+        [safe_paragraph(f"• <font face='{font_name_bold}'>2-Year Risk:</font> "
+                        f"<font color='#{risk_2yr_color.hexval()[2:8]}'>{escape(risk_2yr_value)}%</font>", styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>5-Year Risk:</font> "
+                        f"<font color='#{risk_5yr_color.hexval()[2:8]}'>{escape(risk_5yr_value)}%</font>", styles['CustomTableText'])],
+        [safe_paragraph("<i>The patient's 2- and 5-year kidney failure risk scores estimate the likelihood that their kidney disease will progress to kidney failure within the next 2 or 5 years. These scores are calculated based on the patient's current kidney function and other risk factors such as age, blood pressure, and existing health conditions. Understanding these risk scores helps in predicting disease progression and planning appropriate treatment strategies.</i>", styles['CustomSmallText'])]
     ]
     risk_table = create_boxed_table(
         data=risk_data,
@@ -985,30 +785,30 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
             ('FONTNAME', (0, 0), (-1, -1), font_name),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('BOX', (0, 0), (-1, -1), 1, colors.grey),
             ('PADDING', (0, 0), (-1, -1), 8),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEADING', (0, 0), (-1, -1), 12)
+            ('LEADING', (0, 0), (-1, -1), 12),
+            ('SPLITBYROW', (0, 0), (-1, -1), True)
         ]),
         radius=10,
         padding=6,
         color=colors.grey
     )
     elements.append(risk_table)
-    elements.append(Spacer(1, 0.4 * inch))  # Increased spacing after the table
+    elements.append(Spacer(1, 0.4 * inch))
 
-    # Care & Referrals (with rounded box)
-    care_title = Paragraph("<b>Care & Referrals</b>", styles['CustomSectionHeader'])
+    # Care & Referrals
+    care_title = safe_paragraph("<b>Care & Referrals</b>", styles['CustomSectionHeader'])
     care_data = [
         [care_title],
-        [Paragraph(f"• <font face='{font_name_bold}'>Multidisciplinary Care:</font> "
-                f"{escape(format_value(patient.get('Multidisciplinary_Care')))}", styles['CustomTableText'])],
-        [Paragraph(f"• <font face='{font_name_bold}'>Modality Education:</font> "
-                f"{escape(format_value(patient.get('Modality_Education')))}", styles['CustomTableText'])],
-        [Paragraph(f"• <font face='{font_name_bold}'>Nephrology Referral:</font> "
-                f"{escape(format_value(patient.get('Nephrology_Referral')))}", styles['CustomTableText'])],
-        [Paragraph(f"• <font face='{font_name_bold}'>Persistent Proteinuria:</font> "
-                f"{escape(format_value(patient.get('Proteinuria_Flag')))}", styles['CustomTableText'])]
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Multidisciplinary Care:</font> "
+                        f"{escape(format_value(patient.get('Multidisciplinary_Care')))}", styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Modality Education:</font> "
+                        f"{escape(format_value(patient.get('Modality_Education')))}", styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Nephrology Referral:</font> "
+                        f"{escape(format_value(patient.get('Nephrology_Referral')))}", styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Persistent Proteinuria:</font> "
+                        f"{escape(format_value(patient.get('Proteinuria_Flag')))}", styles['CustomTableText'])]
     ]
     care_table = create_boxed_table(
         data=care_data,
@@ -1021,7 +821,8 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('PADDING', (0, 0), (-1, -1), 8),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEADING', (0, 0), (-1, -1), 12)
+            ('LEADING', (0, 0), (-1, -1), 12),
+            ('SPLITBYROW', (0, 0), (-1, -1), True)
         ]),
         radius=10,
         padding=6,
@@ -1030,20 +831,20 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
     elements.append(care_table)
     elements.append(Spacer(1, 0.4 * inch))
 
-    # Medication Review (with rounded box)
-    med_title = Paragraph("<b>Medication Review</b>", styles['CustomSectionHeader'])
+    # Medication Review
+    med_title = safe_paragraph("<b>Medication Review</b>", styles['CustomSectionHeader'])
     med_data = [
         [med_title],
-        [Paragraph(f"• <font face='{font_name_bold}'>Current Medication:</font> "
-                f"{escape(format_value(patient.get('Medications', 'None')))}", styles['CustomTableText'])],
-        [Paragraph(f"• <font face='{font_name_bold}'>Review Medications:</font> "
-                f"{escape(format_value(patient.get('dose_adjustment_prescribed')))}", styles['CustomTableText'])],
-        [Paragraph(f"• <font face='{font_name_bold}'>Contraindicated Medications:</font> "
-                f"{escape(format_value(patient.get('contraindicated_prescribed')))}", styles['CustomTableText'])],
-        [Paragraph(f"• <font face='{font_name_bold}'>Suggested Medications:</font> "
-                f"{escape(format_value(patient.get('Recommended_Medications', 'None')))}", styles['CustomLongText'])],
-        [Paragraph(f"• <font face='{font_name_bold}'>Statin Recommendation:</font> "
-                f"{escape(format_value(patient.get('Statin_Recommendation')))}", styles['CustomTableText'])]
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Current Medication:</font> "
+                        f"{escape(format_value(patient.get('Medications', 'None')))}", styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Review Medications:</font> "
+                        f"{escape(format_value(patient.get('dose_adjustment_prescribed')))}", styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Contraindicated Medications:</font> "
+                        f"{escape(format_value(patient.get('contraindicated_prescribed')))}", styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Suggested Medications:</font> "
+                        f"{escape(format_value(patient.get('Recommended_Medications', 'None')))}", styles['CustomLongText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Statin Recommendation:</font> "
+                        f"{escape(format_value(patient.get('Statin_Recommendation')))}", styles['CustomTableText'])]
     ]
     med_table = create_boxed_table(
         data=med_data,
@@ -1062,15 +863,15 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         padding=6,
         color=colors.grey
     )
-    elements.append(med_table)
+    elements.append(KeepTogether(med_table))
     elements.append(Spacer(1, 0.4 * inch))
 
-    # Lifestyle and Preventative Advice (with rounded box)
-    lifestyle_title = Paragraph("<b>Lifestyle and Preventative Advice</b>", styles['CustomSectionHeader'])
+    # Lifestyle and Preventative Advice
+    lifestyle_title = safe_paragraph("<b>Lifestyle and Preventative Advice</b>", styles['CustomSectionHeader'])
     lifestyle_data = [
         [lifestyle_title],
-        [Paragraph(f"• <font face='{font_name_bold}'>Lifestyle Recommendations:</font> "
-                f"{escape(format_value(patient.get('Lifestyle_Advice', 'No specific advice available.')))}", styles['CustomLongText'])]
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Lifestyle Recommendations:</font> "
+                        f"{escape(format_value(patient.get('Lifestyle_Advice', 'No specific advice available.')))}", styles['CustomLongText'])]
     ]
     lifestyle_table = create_boxed_table(
         data=lifestyle_data,
@@ -1083,7 +884,8 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('PADDING', (0, 0), (-1, -1), 8),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEADING', (0, 0), (-1, -1), 12)
+            ('LEADING', (0, 0), (-1, -1), 12),
+            ('SPLITBYROW', (0, 0), (-1, -1), True)
         ]),
         radius=10,
         padding=6,
@@ -1092,77 +894,71 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
     elements.append(lifestyle_table)
     elements.append(Spacer(1, 0.4 * inch))
 
-    # NICE Guideline Recommendations (with rounded box)
-    nice_title = Paragraph("<b>NICE Guideline Recommendations</b>", styles['CustomSubTitle'])
+    # NICE Guideline Recommendations
+    nice_title = safe_paragraph("<b>NICE Guideline Recommendations</b>", styles['CustomSubTitle'])
     nice_data = [
         [nice_title],
-        [Paragraph(
-            "For detailed guidance, refer to <a href='https://www.nice.org.uk/guidance/ng203'>NICE NG203 guideline on Chronic Kidney Disease</a>.",
-            styles['CustomTableText'],
-            encoding='utf-8'
-        )]
+        [safe_paragraph("For detailed guidance, refer to <a href='https://www.nice.org.uk/guidance/ng203' color='#00008B'><font color='#00008B'>NICE NG203 guideline on Chronic Kidney Disease</font></a>.", styles['CustomTableText'])]
     ]
     ckd_stage = patient.get('CKD_Stage', 'Unknown')
     if ckd_stage == "Normal Function":
         nice_data.extend([
-            [Paragraph(f"<font face='{font_name_bold}'>Recommendations for Normal Kidney Function</font>", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>General Health Maintenance:</font> Encourage a balanced diet and regular physical activity. Avoid excessive use of NSAIDs and other nephrotoxic agents. Regular monitoring is not required unless risk factors are present.", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Risk Factor Management:</font> Monitor blood pressure and maintain within normal ranges. Screen for diabetes and manage blood glucose levels if necessary.", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Preventive Measures:</font> Encourage smoking cessation and limit alcohol intake. Stay hydrated and maintain a healthy weight.", styles['CustomTableText'])]
+            [safe_paragraph(f"<font face='{font_name_bold}'>Recommendations for Normal Kidney Function</font>", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>General Health Maintenance:</font> Encourage a balanced diet and regular physical activity. Avoid excessive use of NSAIDs and other nephrotoxic agents. Regular monitoring is not required unless risk factors are present.", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Risk Factor Management:</font> Monitor blood pressure and maintain within normal ranges. Screen for diabetes and manage blood glucose levels if necessary.", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Preventive Measures:</font> Encourage smoking cessation and limit alcohol intake. Stay hydrated and maintain a healthy weight.", styles['CustomTableText'])]
         ])
     elif ckd_stage == "Stage 1":
         nice_data.extend([
-            [Paragraph(f"<font face='{font_name_bold}'>CKD Stage G1 Recommendations</font>", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Initial Assessment:</font> Perform Urine Albumin-to-Creatinine Ratio (ACR) testing to detect proteinuria, conduct haematuria screening, and monitor blood pressure (BP). Confirm stable renal function by reviewing prior estimated glomerular filtration rate (eGFR) results; if unavailable, re-evaluate renal function within 14 days.", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Management and Monitoring:</font> Manage in primary care with annual monitoring if ACR is greater than 3 mg/mmol (indicative of microalbuminuria). If ACR is less than 3 mg/mmol, consider reducing the frequency of monitoring based on individual risk factors.", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Lifestyle and Preventive Measures:</font> Encourage regular physical activity, smoking cessation, and maintaining a healthy weight. Aim for BP targets of less than 140/90 mmHg generally, or less than 130/80 mmHg if the patient has diabetes or an ACR greater than 70 mg/mmol (significant proteinuria).", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Medication:</font> Assess cardiovascular risk and consider initiating statin therapy if appropriate, following current guidelines.", styles['CustomTableText'])]
+            [safe_paragraph(f"<font face='{font_name_bold}'>CKD Stage G1 Recommendations</font>", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Initial Assessment:</font> Perform Urine Albumin-to-Creatinine Ratio (ACR) testing to detect proteinuria, conduct haematuria screening, and monitor blood pressure (BP). Confirm stable renal function by reviewing prior estimated glomerular filtration rate (eGFR) results; if unavailable, re-evaluate renal function within 14 days.", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Management and Monitoring:</font> Manage in primary care with annual monitoring if ACR is greater than 3 mg/mmol (indicative of microalbuminuria). If ACR is less than 3 mg/mmol, consider reducing the frequency of monitoring based on individual risk factors.", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Lifestyle and Preventive Measures:</font> Encourage regular physical activity, smoking cessation, and maintaining a healthy weight. Aim for BP targets of less than 140/90 mmHg generally, or less than 130/80 mmHg if the patient has diabetes or an ACR greater than 70 mg/mmol (significant proteinuria).", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Medication:</font> Assess cardiovascular risk and consider initiating statin therapy if appropriate, following current guidelines.", styles['CustomTableText'])]
         ])
     elif ckd_stage == "Stage 2":
         nice_data.extend([
-            [Paragraph(f"<font face='{font_name_bold}'>CKD Stage G2 Recommendations</font>", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Initial Assessment:</font> Repeat Urine ACR testing, haematuria screening, and BP monitoring as per Stage G1. Confirm stable renal function by reviewing previous eGFR results or retest within 14 days if necessary.", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Management and Monitoring:</font> Continue primary care management with annual monitoring if ACR is greater than 3 mg/mmol. Reduce monitoring frequency if ACR is less than 3 mg/mmol and no additional risk factors are present.", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Lifestyle and Preventive Measures:</font> Promote lifestyle interventions such as regular exercise, smoking cessation, and weight management. Maintain BP targets of less than 140/90 mmHg, or less than 130/80 mmHg for patients with diabetes or significant proteinuria (ACR >70 mg/mmol).", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Medication:</font> Evaluate cardiovascular risk and consider statin therapy as per guidelines. If proteinuria is present, consider initiating an ACE inhibitor or angiotensin receptor blocker (ARB) to reduce proteinuria and slow CKD progression.", styles['CustomTableText'])]
+            [safe_paragraph(f"<font face='{font_name_bold}'>CKD Stage G2 Recommendations</font>", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Initial Assessment:</font> Repeat Urine ACR testing, haematuria screening, and BP monitoring as per Stage G1. Confirm stable renal function by reviewing previous eGFR results or retest within 14 days if necessary.", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Management and Monitoring:</font> Continue primary care management with annual monitoring if ACR is greater than 3 mg/mmol. Reduce monitoring frequency if ACR is less than 3 mg/mmol and no additional risk factors are present.", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Lifestyle and Preventive Measures:</font> Promote lifestyle interventions such as regular exercise, smoking cessation, and weight management. Maintain BP targets of less than 140/90 mmHg, or less than 130/80 mmHg for patients with diabetes or significant proteinuria (ACR >70 mg/mmol).", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Medication:</font> Evaluate cardiovascular risk and consider statin therapy as per guidelines. If proteinuria is present, consider initiating an ACE inhibitor or angiotensin receptor blocker (ARB) to reduce proteinuria and slow CKD progression.", styles['CustomTableText'])]
         ])
     elif ckd_stage == "Stage 3A":
         nice_data.extend([
-            [Paragraph(f"<font face='{font_name_bold}'>CKD Stage G3a Recommendations</font>", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Monitoring and Risk Assessment:</font> Manage in primary care with at least annual renal function tests; increase monitoring to every 6 months if ACR is greater than 3 mg/mmol. Use the Kidney Failure Risk Equation (KFRE) at each assessment to estimate progression risk; refer to nephrology if the 5-year risk is greater than 5%.", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Referral Criteria:</font> Refer to nephrology if ACR is greater than 70 mg/mmol, there’s a sustained decrease in eGFR of 25% or more over 12 months, or if significant proteinuria or haematuria is present.", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Lifestyle and Preventive Measures:</font> Intensify cardiovascular risk management, including prescribing Atorvastatin 20 mg unless contraindicated. Maintain BP targets as per guidelines: less than 140/90 mmHg generally, or less than 130/80 mmHg if the patient has diabetes or significant proteinuria.", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Medication:</font> Initiate or optimize ACE inhibitor or ARB therapy if proteinuria is present, unless contraindicated.", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Patient Education:</font> Educate on CKD progression, importance of medication adherence, and regular monitoring.", styles['CustomTableText'])]
+            [safe_paragraph(f"<font face='{font_name_bold}'>CKD Stage G3a Recommendations</font>", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Monitoring and Risk Assessment:</font> Manage in primary care with at least annual renal function tests; increase monitoring to every 6 months if ACR is greater than 3 mg/mmol. Use the Kidney Failure Risk Equation (KFRE) at each assessment to estimate progression risk; refer to nephrology if the 5-year risk is greater than 5%.", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Referral Criteria:</font> Refer to nephrology if ACR is greater than 70 mg/mmol, there’s a sustained decrease in eGFR of 25% or more over 12 months, or if significant proteinuria or haematuria is present.", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Lifestyle and Preventive Measures:</font> Intensify cardiovascular risk management, including prescribing Atorvastatin 20 mg unless contraindicated. Maintain BP targets as per guidelines: less than 140/90 mmHg generally, or less than 130/80 mmHg if the patient has diabetes or significant proteinuria.", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Medication:</font> Initiate or optimize ACE inhibitor or ARB therapy if proteinuria is present, unless contraindicated.", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Patient Education:</font> Educate on CKD progression, importance of medication adherence, and regular monitoring.", styles['CustomTableText'])]
         ])
     elif ckd_stage == "Stage 3B":
         nice_data.extend([
-            [Paragraph(f"<font face='{font_name_bold}'>CKD Stage G3b Recommendations</font>", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Monitoring and Risk Management:</font> Continue primary care management with renal function tests every 6 months, or more frequently if ACR is greater than 3 mg/mmol. Use the KFRE to assess progression risk; refer to nephrology if the 5-year risk exceeds 5% or if there’s a rapid decline in eGFR.", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Referral Considerations:</font> Consider nephrology referral for further evaluation and management, especially if complications like anaemia, electrolyte imbalances, or bone mineral disorders arise.", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Lifestyle and Preventive Measures:</font> Aggressively manage BP and cardiovascular risk factors. Optimize dosing of ACE inhibitors or ARBs. Continue statin therapy as indicated.", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Patient Education:</font> Reinforce the importance of lifestyle modifications and adherence to treatment plans to slow CKD progression.", styles['CustomTableText'])]
+            [safe_paragraph(f"<font face='{font_name_bold}'>CKD Stage G3b Recommendations</font>", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Monitoring and Risk Management:</font> Continue primary care management with renal function tests every 6 months, or more frequently if ACR is greater than 3 mg/mmol. Use the KFRE to assess progression risk; refer to nephrology if the 5-year risk exceeds 5% or if there’s a rapid decline in eGFR.", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Referral Considerations:</font> Consider nephrology referral for further evaluation and management, especially if complications like anaemia, electrolyte imbalances, or bone mineral disorders arise.", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Lifestyle and Preventive Measures:</font> Aggressively manage BP and cardiovascular risk factors. Optimize dosing of ACE inhibitors or ARBs. Continue statin therapy as indicated.", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Patient Education:</font> Reinforce the importance of lifestyle modifications and adherence to treatment plans to slow CKD progression.", styles['CustomTableText'])]
         ])
     elif ckd_stage == "Stage 4":
         nice_data.extend([
-            [Paragraph(f"<font face='{font_name_bold}'>CKD Stage G4 Recommendations</font>", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Specialist Management and Referral:</font> Routine referral to nephrology for co-management and preparation for potential renal replacement therapy. Regularly monitor eGFR, ACR, potassium, calcium, phosphate, and haemoglobin levels. Perform renal ultrasound if structural abnormalities or obstruction are suspected.", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Management of Complications:</font> Monitor and manage anaemia, electrolyte imbalances, acidosis, and bone mineral disorders. Adjust medications that are renally excreted. Maintain BP targets as per guidelines.", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Lifestyle and Preventive Measures:</font> Continue statin therapy (Atorvastatin 20 mg) for cardiovascular risk reduction. Provide vaccinations including influenza, pneumococcal, and COVID-19 as indicated. Regularly review medications to avoid nephrotoxic drugs and adjust dosages. Discontinue metformin if eGFR is less than 30 mL/min/1.73 m².", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Patient Education:</font> Discuss potential need for renal replacement therapy and available options. Provide guidance on diet, fluid intake, and symptom management.", styles['CustomTableText'])]
+            [safe_paragraph(f"<font face='{font_name_bold}'>CKD Stage G4 Recommendations</font>", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Specialist Management and Referral:</font> Routine referral to nephrology for co-management and preparation for potential renal replacement therapy. Regularly monitor eGFR, ACR, potassium, calcium, phosphate, and haemoglobin levels. Perform renal ultrasound if structural abnormalities or obstruction are suspected.", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Management of Complications:</font> Monitor and manage anaemia, electrolyte imbalances, acidosis, and bone mineral disorders. Adjust medications that are renally excreted. Maintain BP targets as per guidelines.", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Lifestyle and Preventive Measures:</font> Continue statin therapy (Atorvastatin 20 mg) for cardiovascular risk reduction. Provide vaccinations including influenza, pneumococcal, and COVID-19 as indicated. Regularly review medications to avoid nephrotoxic drugs and adjust dosages. Discontinue metformin if eGFR is less than 30 mL/min/1.73 m².", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Patient Education:</font> Discuss potential need for renal replacement therapy and available options. Provide guidance on diet, fluid intake, and symptom management.", styles['CustomTableText'])]
         ])
     elif ckd_stage == "Stage 5":
         nice_data.extend([
-            [Paragraph(f"<font face='{font_name_bold}'>CKD Stage G5 Recommendations</font>", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Specialist Management and Comprehensive Care Plan:</font> Under specialist nephrology care with preparation for renal replacement therapy (dialysis or transplantation) as needed. Regularly monitor renal function and labs including electrolytes, bicarbonate, calcium, phosphate, haemoglobin, and fluid status.", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Management of Complications:</font> Actively manage hyperkalaemia, metabolic acidosis, and anaemia (with iron supplementation and erythropoiesis-stimulating agents). Adjust or discontinue medications contraindicated in advanced CKD.", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Lifestyle and Preventive Measures:</font> Continue statin therapy unless contraindicated. Provide comprehensive lifestyle guidance, including dietary advice (e.g., potassium and phosphate restrictions) and fluid management. Ensure all appropriate immunizations are up to date.", styles['CustomTableText'])],
-            [Paragraph(f"• <font face='{font_name_bold}'>Patient Support and Education:</font> Offer psychological support and counseling. Educate the patient and family about end-stage renal disease management options and advance care planning.", styles['CustomTableText'])]
+            [safe_paragraph(f"<font face='{font_name_bold}'>CKD Stage G5 Recommendations</font>", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Specialist Management and Comprehensive Care Plan:</font> Under specialist nephrology care with preparation for renal replacement therapy (dialysis or transplantation) as needed. Regularly monitor renal function and labs including electrolytes, bicarbonate, calcium, phosphate, haemoglobin, and fluid status.", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Management of Complications:</font> Actively manage hyperkalaemia, metabolic acidosis, and anaemia (with iron supplementation and erythropoiesis-stimulating agents). Adjust or discontinue medications contraindicated in advanced CKD.", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Lifestyle and Preventive Measures:</font> Continue statin therapy unless contraindicated. Provide comprehensive lifestyle guidance, including dietary advice (e.g., potassium and phosphate restrictions) and fluid management. Ensure all appropriate immunizations are up to date.", styles['CustomTableText'])],
+            [safe_paragraph(f"• <font face='{font_name_bold}'>Patient Support and Education:</font> Offer psychological support and counseling. Educate the patient and family about end-stage renal disease management options and advance care planning.", styles['CustomTableText'])]
         ])
     else:
-        nice_data.append(
-            [Paragraph(f"<font face='{font_name_bold}'>No specific recommendations available for this CKD stage.</font>", styles['CustomTableText'])]
-        )
+        nice_data.append([safe_paragraph(f"<font face='{font_name_bold}'>No specific recommendations available for this CKD stage.</font>", styles['CustomTableText'])])
     nice_table = create_boxed_table(
         data=nice_data,
         widths=[doc.width - 0.15 * inch],
@@ -1174,7 +970,8 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('PADDING', (0, 0), (-1, -1), 8),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEADING', (0, 0), (-1, -1), 12)
+            ('LEADING', (0, 0), (-1, -1), 12),
+            ('SPLITBYROW', (0, 0), (-1, -1), True)
         ]),
         radius=10,
         padding=6,
@@ -1183,7 +980,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
     elements.append(nice_table)
     elements.append(Spacer(1, 0.4 * inch))
 
-    # Final Clinical Recommendations (with rounded box if shown)
+    # Final Clinical Recommendations
     show_recommendations = (
         patient.get('review_message', '').startswith("Review Required") or
         patient.get('Nephrology_Referral') not in ["Not Indicated", "N/A", "Missing", None] or
@@ -1193,10 +990,10 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         patient.get('BP_Flag') not in ["On Target", "N/A", "Missing", None]
     )
     if show_recommendations:
-        final_title = Paragraph("<b>Final Clinical Recommendations</b>", styles['CustomSectionHeader'])
+        final_title = safe_paragraph("<b>Final Clinical Recommendations</b>", styles['CustomSectionHeader'])
         final_recs = [[final_title]]
         if patient.get('review_message', '').startswith("Review Required"):
-            final_recs.append([Paragraph(f"• <font face='{font_name_bold}'>Renal Function Review Needed:</font> Yes", styles['CustomTableText'])])
+            final_recs.append([safe_paragraph(f"• <font face='{font_name_bold}'>Renal Function Review Needed:</font> Yes", styles['CustomTableText'])])
         recommendations = [
             ("Nephrology Referral", patient.get('Nephrology_Referral'), ["Not Indicated", "N/A", "Missing", None]),
             ("Medication Adjustments Required", patient.get('dose_adjustment_prescribed'), ["No adjustments needed", "N/A", "Missing", None]),
@@ -1207,7 +1004,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         for title, value, ignore_list in recommendations:
             if value not in ignore_list:
                 safe_value = escape(format_value(value))
-                final_recs.append([Paragraph(f"• <font face='{font_name_bold}'>{title}:</font> {safe_value}", styles['CustomTableText'])])
+                final_recs.append([safe_paragraph(f"• <font face='{font_name_bold}'>{title}:</font> {safe_value}", styles['CustomTableText'])])
         final_recs_table = create_boxed_table(
             data=final_recs,
             widths=[doc.width - 0.15 * inch],
@@ -1219,7 +1016,8 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
                 ('FONTSIZE', (0, 0), (-1, -1), 10),
                 ('PADDING', (0, 0), (-1, -1), 8),
                 ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('LEADING', (0, 0), (-1, -1), 12)
+                ('LEADING', (0, 0), (-1, -1), 12),
+                ('SPLITBYROW', (0, 0), (-1, -1), True)
             ]),
             radius=10,
             padding=6,
@@ -1228,13 +1026,13 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         elements.append(final_recs_table)
         elements.append(Spacer(1, 0.4 * inch))
 
-    # QR Code Section (with rounded box)
-    qr_title = Paragraph("<b>More Information on Chronic Kidney Disease</b>", styles['CustomSubTitle'])
+    # QR Code Section
+    qr_title = safe_paragraph("<b>More Information on Chronic Kidney Disease</b>", styles['CustomSubTitle'])
     qr_text = "Scan this QR code with your phone to access trusted resources on <b>Chronic Kidney Disease (CKD)</b>, including <br/>guidance on managing your condition, lifestyle recommendations, and when to seek medical advice."
     qr_data = [
         [qr_title],
-        [Image(qr_path, width=1.5 * inch, height=1.5 * inch) if qr_path else Paragraph("QR code unavailable", styles['CustomTableText'], encoding='utf-8')],
-        [Paragraph(qr_text, styles['CustomSmallTextCenter'], encoding='utf-8')]
+        [Image(qr_path, width=1.5 * inch, height=1.5 * inch) if qr_path else safe_paragraph("QR code unavailable", styles['CustomTableText'])],
+        [safe_paragraph(qr_text, styles['CustomSmallTextCenter'])]
     ]
     qr_section = create_boxed_table(
         data=qr_data,
@@ -1252,20 +1050,20 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         padding=6,
         color=colors.grey
     )
-    elements.append(qr_section)
+    elements.append(KeepTogether(qr_section))
     elements.append(Spacer(1, 0.4 * inch))
 
-    # Surgery Contact (with rounded box)
-    surgery_title = Paragraph("<b>Surgery Contact Information</b>", styles['CustomTableTitleCenter'])
+    # Surgery Contact
+    surgery_title = safe_paragraph("<b>Surgery Contact Information</b>", styles['CustomTableTitleCenter'])
     centered_table_text = ParagraphStyle(name="CustomCenterTableText", parent=styles["CustomTableText"], alignment=1)
     surgery_contact_data = [
         [surgery_title],
-        [Paragraph(f"{surgery_info.get('surgery_name', 'Unknown Surgery')}", centered_table_text)],
-        [Paragraph(f"{surgery_info.get('surgery_address_line1', 'N/A')}", centered_table_text)],
-        [Paragraph(f"{surgery_info.get('surgery_address_line2', 'N/A')}" if surgery_info.get('surgery_address_line2') else "", centered_table_text)],
-        [Paragraph(f"{surgery_info.get('surgery_city', 'N/A')}", centered_table_text)],
-        [Paragraph(f"{surgery_info.get('surgery_postcode', 'N/A')}", centered_table_text)],
-        [Paragraph(f"<font face='{font_name_bold}'>Tel:</font> {escape(surgery_info.get('surgery_phone', 'N/A'))}", centered_table_text)]
+        [safe_paragraph(f"{surgery_info.get('surgery_name', 'Unknown Surgery')}", centered_table_text)],
+        [safe_paragraph(f"{surgery_info.get('surgery_address_line1', 'N/A')}", centered_table_text)],
+        [safe_paragraph(f"{surgery_info.get('surgery_address_line2', 'N/A')}" if surgery_info.get('surgery_address_line2') else "", centered_table_text)],
+        [safe_paragraph(f"{surgery_info.get('surgery_city', 'N/A')}", centered_table_text)],
+        [safe_paragraph(f"{surgery_info.get('surgery_postcode', 'N/A')}", centered_table_text)],
+        [safe_paragraph(f"<font face='{font_name_bold}'>Tel:</font> {escape(surgery_info.get('surgery_phone', 'N/A'))}", centered_table_text)]
     ]
     surgery_contact_table = create_boxed_table(
         data=surgery_contact_data,
@@ -1278,7 +1076,8 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('PADDING', (0, 0), (-1, -1), 8),
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEADING', (0, 0), (-1, -1), 12)
+            ('LEADING', (0, 0), (-1, -1), 12),
+            ('SPLITBYROW', (0, 0), (-1, -1), True)
         ]),
         radius=10,
         padding=6,
@@ -1292,7 +1091,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
     elements.append(centered_surgery_contact_table)
     elements.append(Spacer(1, 0.4 * inch))
 
-    # Build the PDF with header and footer (no rounded boxes to draw separately)
+    # Header and Footer
     def add_header_footer(canvas, doc):
         canvas.saveState()
         canvas.setFont(font_name, 10)
@@ -1311,13 +1110,11 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
     doc.build(elements, onFirstPage=add_header_footer, onLaterPages=add_header_footer)
     logging.info(f"PDF generated successfully at {output_path}")
 
-# Main execution block
 if __name__ == "__main__":
     try:
         input_file = os.path.join(base_path, "CKD_review.csv")
         CKD_review = pd.read_csv(input_file)
-        # PyLance warning suppressed: generate_patient_pdf is defined above
-        output_folder = generate_patient_pdf(CKD_review)  # type: ignore
+        output_folder = generate_patient_pdf(CKD_review)
         logging.info(f"All patient summaries generated in: {output_folder}")
     except FileNotFoundError:
         logging.error(f"Input file not found: {input_file}. Please ensure CKD_review.csv is generated by the pipeline.")
