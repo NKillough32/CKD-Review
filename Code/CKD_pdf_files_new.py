@@ -1064,7 +1064,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
 
     # Surgery Contact
     surgery_title = safe_paragraph("<b>Surgery Contact Information</b>", styles['CustomTableTitleCenter'])
-    centered_table_text = ParagraphStyle(name="CustomCenterTableText", parent=styles["CustomTableTexttight"], alignment=1)
+    centered_table_text = ParagraphStyle(name="CustomCenterTableText", parent=styles["CustomTableText"], alignment=1)
     surgery_contact_data = [
         [surgery_title],
         [safe_paragraph(f"{surgery_info.get('surgery_name', 'Unknown Surgery')}", centered_table_text)],
