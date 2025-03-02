@@ -55,7 +55,7 @@ jobs:
 
       - name: Build with PyInstaller (Windows)
         run: |
-          python -m PyInstaller --onefile --name=NephroPath_win_pdf --icon=Dependencies/NephroPath_installer_icon.ico --add-data "Code/CKD_core.py;." --add-data "Code/CKD_pdf_files_new.py;." --add-data "Dependencies;Dependencies" --add-data "EMIS_Files;EMIS_Files" --hidden-import CKD_pdf_files_new --log-level DEBUG Code/CKD_Master_pdf_exefree.py
+          python -m PyInstaller --onefile --name=NephroPath_win_pdf --icon=Dependencies/NephroPath_installer_icon.ico --add-data "Code/CKD_core.py;." --add-data "Code/CKD_pdf_files_new.py;." --add-data "Dependencies;Dependencies" --hidden-import CKD_pdf_files_new --log-level DEBUG Code/CKD_Master_pdf_exefree.py
 
       - name: Debug dist directory
         shell: cmd
@@ -133,7 +133,7 @@ jobs:
 
       - name: Build with PyInstaller (macOS)
         run: |
-          python -m PyInstaller --onefile --name=NephroPath_mac_pdf --add-data "Code/CKD_core.py:." --add-data "Code/CKD_pdf_files_new.py:." --add-data "Dependencies:Dependencies" --add-data "EMIS_Files:EMIS_Files" --hidden-import CKD_pdf_files_new --log-level DEBUG Code/CKD_Master_pdf_exefree.py
+          python -m PyInstaller --onefile --name=NephroPath_mac_pdf --add-data "Code/CKD_core.py:." --add-data "Code/CKD_pdf_files_new.py:." --add-data "Dependencies:Dependencies" --hidden-import CKD_pdf_files_new --log-level DEBUG Code/CKD_Master_pdf_exefree.py
 
       - name: Debug dist directory
         run: |
