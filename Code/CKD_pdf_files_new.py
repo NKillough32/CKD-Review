@@ -297,6 +297,7 @@ def create_stylesheet():
     styles.add(ParagraphStyle(name='CustomSmallTextCenter', fontName=font_name, fontSize=8, leading=11, alignment=1, spaceAfter=4, wordWrap='CJK'))
     styles.add(ParagraphStyle(name='CustomLongText', fontName=font_name, fontSize=9, leading=11, spaceAfter=4, wordWrap='CJK'))
     styles.add(ParagraphStyle(name='CustomTableText', fontName=font_name, fontSize=10, leading=12, spaceAfter=4, wordWrap='CJK', allowWidows=1, alignment=0))
+    styles.add(ParagraphStyle(name='CustomTableTexttight', fontName=font_name, fontSize=10, leading=12, spaceAfter=2, wordWrap='CJK', allowWidows=1, alignment=0))
     styles.add(ParagraphStyle(name='CustomTableTitle', fontName=font_name_bold, fontSize=10, leading=12, spaceAfter=4, wordWrap='CJK'))
     styles.add(ParagraphStyle(name='CustomTableTitleCenter', fontName=font_name_bold, fontSize=12, leading=16, alignment=1, textColor=colors.black, spaceAfter=8, wordWrap='CJK'))
     styles.add(ParagraphStyle(name='CustomCenterText', fontName=font_name, fontSize=10, leading=12, alignment=1, spaceAfter=4))
@@ -1063,7 +1064,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
 
     # Surgery Contact
     surgery_title = safe_paragraph("<b>Surgery Contact Information</b>", styles['CustomTableTitleCenter'])
-    centered_table_text = ParagraphStyle(name="CustomCenterTableText", parent=styles["CustomTableText"], alignment=1)
+    centered_table_text = ParagraphStyle(name="CustomCenterTableText", parent=styles["CustomTableTexttight"], alignment=1)
     surgery_contact_data = [
         [surgery_title],
         [safe_paragraph(f"{surgery_info.get('surgery_name', 'Unknown Surgery')}", centered_table_text)],
