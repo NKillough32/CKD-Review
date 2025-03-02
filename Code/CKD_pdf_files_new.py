@@ -93,11 +93,19 @@ def classify_status(value, thresholds, field):
         elif value < 90: return colors.Color(0, 0, 0.545), formatted_value  # #00008B
         else: return colors.Color(0, 0.392, 0), formatted_value  # #006400
     elif field == "Systolic_BP":
+        if pd.isna(value) or value == "Missing":
+            return colors.grey, "Missing"
+        value = int(float(value))  # Convert to integer
+        formatted_value = str(value)
         if value >= 180: return colors.Color(0.69, 0, 0.125), formatted_value  # #B00020
         elif 140 <= value < 180: return colors.Color(0.827, 0.329, 0), formatted_value  # #D35400
         elif value < 90: return colors.Color(0, 0, 0.545), formatted_value  # #00008B
         else: return colors.Color(0, 0.392, 0), formatted_value  # #006400
     elif field == "Diastolic_BP":
+        if pd.isna(value) or value == "Missing":
+            return colors.grey, "Missing"
+        value = int(float(value))  # Convert to integer
+        formatted_value = str(value)
         if value >= 120: return colors.Color(0.69, 0, 0.125), formatted_value  # #B00020
         elif 90 <= value < 120: return colors.Color(0.827, 0.329, 0), formatted_value  # #D35400
         elif value < 60: return colors.Color(0, 0, 0.545), formatted_value  # #00008B
