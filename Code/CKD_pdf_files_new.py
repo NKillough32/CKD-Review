@@ -447,9 +447,9 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         elements.append(Paragraph("Results Overview", styles['CustomSubTitle']))
         elements.append(Spacer(1, 0.1 * inch))  # Larger space before the next section
 
-        # Define Patient Information Table
+        # Define Patient Information Table with Proper Structure
         patient_info_data = [
-            [Paragraph("Patient Information", styles['CustomSectionHeader']), ""],  # Header row
+            [Paragraph("Patient Information", styles['CustomSectionHeader']), ""],  # Header row with merged cells
             [Paragraph("NHS Number:", styles['CustomTableTitle']),
             Paragraph(f"{int(patient['HC_Number']) if pd.notna(patient['HC_Number']) else 'N/A'}", styles['CustomTableText'])],
             [Paragraph("Age:", styles['CustomTableTitle']),
@@ -458,29 +458,31 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
             Paragraph(escape(format_value(patient.get('Gender', 'N/A'))), styles['CustomTableText'])]
         ]
 
-        # Define column widths (adjust as needed)
-        col_widths = [1.5 * inch, 3.5 * inch]  # Adjusting to make sure columns are properly aligned
+        # Define Column Widths for Proper Spacing
+        col_widths = [1.5 * inch, 3.5 * inch]  # First column for labels, second column for values
 
-        # Create the table
+        # Create Table with Proper Layout
         patient_info_table = Table(patient_info_data, colWidths=col_widths)
 
-        # Apply Table Styling
+        # Apply Table Styling for Improved Layout
         patient_info_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.whitesmoke),  # Header row background
-            ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
-            ('FONTNAME', (0, 0), (-1, -1), font_name),
+            ('SPAN', (0, 0), (-1, 0)),  # Merge first row across all columns for header
+            ('BACKGROUND', (0, 0), (-1, 0), colors.whitesmoke),  # Header background
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+            ('FONTNAME', (0, 0), (-1, -1), font_name),  # Standard font
             ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('BOX', (0, 0), (-1, -1), 1, colors.grey),
-            ('PADDING', (0, 0), (-1, -1), 6),  # Reduce padding slightly for better fit
+            ('BOX', (0, 0), (-1, -1), 1, colors.grey),  # Border for entire table
+            ('PADDING', (0, 0), (-1, -1), 6),  # Padding for readability
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('LEADING', (0, 0), (-1, -1), 12),
-            ('GRID', (0, 1), (-1, -1), 0.5, colors.lightgrey),  # Add grid for readability
-            ('ALIGN', (1, 1), (-1, -1), 'LEFT')  # Align second column text to the left
+            ('GRID', (0, 1), (-1, -1), 0.5, colors.lightgrey),  # Gridlines for clarity
+            ('ALIGN', (1, 1), (-1, -1), 'LEFT'),  # Align text in value column to left
+            ('ROUNDEDCORNERS', (0, 0), (-1, -1), 5)  # Rounded corners
         ]))
 
         # Append to document
         elements.append(patient_info_table)
-        elements.append(Spacer(1, 0.1 * inch))  # Add some space after the table
+        elements.append(Spacer(1, 0.1 * inch))  # Add spacing after table
 
         # KDIGO 2024 Classification (Centered Box)
         ckd_color, ckd_group = classify_status(patient.get('CKD_Group', 'Missing'), None, "CKD_Group")
