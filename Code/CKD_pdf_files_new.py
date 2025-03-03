@@ -300,7 +300,9 @@ def create_stylesheet():
     styles.add(ParagraphStyle(name='CustomTableTexttight', fontName=font_name, fontSize=10, leading=12, spaceAfter=2, wordWrap='CJK', allowWidows=1, alignment=0))
     styles.add(ParagraphStyle(name='CustomTableTitle', fontName=font_name_bold, fontSize=10, leading=12, spaceAfter=4, wordWrap='CJK'))
     styles.add(ParagraphStyle(name='CustomTableTitleCenter', fontName=font_name_bold, fontSize=12, leading=16, alignment=1, textColor=colors.black, spaceAfter=8, wordWrap='CJK'))
-    styles.add(ParagraphStyle(name='CustomCenterText', fontName=font_name, fontSize=10, leading=12, alignment=1, spaceAfter=4))
+    styles.add(ParagraphStyle(name='CustomCenterText', fontName=font_name, fontSize=10, leading=12, alignment=1, spaceAfter=4))#
+    styles.add(ParagraphStyle(name='CustomCenterTableText2',parent=styles['CustomTableText'],alignment=1
+))
     return styles, font_name, font_name_bold
 
 def draw_rounded_box(canvas, x, y, width, height, radius=10, stroke_color=colors.grey, stroke_width=1.5, fill_color=colors.whitesmoke):
