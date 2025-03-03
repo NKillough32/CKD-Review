@@ -20,13 +20,13 @@ The NephroPath program is a tool designed to streamline the creation of Chronic 
 - **NephroPath.exe:** Full version with PDF report generation (Windows version)
 - **NephroPath_mac:** Full version with PDF report generation (macOS version)
 - **Alternative Versions**
-    - **NephroPath.exe:** Full version with PDF report generation with wkhtmltopdf dependency (MAC version avilable)  
-    - **NephroPath_html.exe:** Lightweight version that produces HTML reports only (MAC version avilable) 
+    - **NephroPath.exe:** Full version with PDF report generation with wkhtmltopdf dependency (macOS version available)  
+    - **NephroPath_html.exe:** Lightweight version that produces HTML reports only (macOS version available) 
 
 ### 2. PDF Generation (Full Version Only):
 - PDF generation is now integrated into the application
 - No external dependencies required
-- Previous wkhtmltopdf requirement has been removed from the main program but is still a requirment of the Alternaitve version.
+- Previous wkhtmltopdf requirement has been removed from the main program but is still a requirement of the Alternative version.
 - (Project maintained by Ashish Kulkarni, originally developed by Jakob Truelsen.)
 
 ### 3. Required Data Files:
