@@ -4,8 +4,8 @@ on:
   push:
     branches: [main]
     paths-ignore:
-      - 'NephroPath_win_pdf.exe'
-      - 'NephroPath_mac_pdf'
+      - 'NephroPath.exe'
+      - 'NephroPath_mac'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -55,7 +55,7 @@ jobs:
 
       - name: Build with PyInstaller (Windows)
         run: |
-          python -m PyInstaller --onefile --name=NephroPath_win_pdf --icon=Dependencies/NephroPath_installer_icon.ico --add-data "Code/CKD_core.py;." --add-data "Code/CKD_pdf_files_new.py;." --hidden-import CKD_pdf_files_new --log-level DEBUG Code/CKD_Master_pdf_exefree.py
+          python -m PyInstaller --onefile --name=NephroPath --icon=Dependencies/NephroPath_installer_icon.ico --add-data "Code/CKD_core.py;." --add-data "Code/CKD_pdf_files_new.py;." --hidden-import CKD_pdf_files_new --log-level DEBUG Code/CKD_Master_pdf_exefree.py
 
       - name: Debug dist directory
         shell: cmd
@@ -64,28 +64,28 @@ jobs:
 
       - name: Move release
         run: |
-          if (-not (Test-Path "dist\NephroPath_win_pdf.exe")) {
-            Write-Error "dist\NephroPath_win_pdf.exe not found. PyInstaller build may have failed."
+          if (-not (Test-Path "dist\NephroPath.exe")) {
+            Write-Error "dist\NephroPath.exe not found. PyInstaller build may have failed."
             exit 1
           }
-          Move-Item dist\NephroPath_win_pdf.exe .\NephroPath_win_pdf.exe -Force
+          Move-Item dist\NephroPath.exe .\NephroPath.exe -Force
 
-      - name: Test NephroPath_win_pdf.exe
+      - name: Test NephroPath.exe
         shell: pwsh
         run: |
-          .\NephroPath_win_pdf.exe
+          .\NephroPath.exe
           if ($LASTEXITCODE -ne 0) {
-            Write-Error "Test run of NephroPath_win_pdf.exe failed with exit code $LASTEXITCODE"
+            Write-Error "Test run of NephroPath.exe failed with exit code $LASTEXITCODE"
             exit 1
           }
-          Write-Host "NephroPath_win_pdf.exe ran successfully"
+          Write-Host "NephroPath.exe ran successfully"
 
       - name: Commit and push changes
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          git add -f NephroPath_win_pdf.exe
-          git commit -m "Update built NephroPath_win_pdf.exe" || echo "No changes to commit"
+          git add -f NephroPath.exe
+          git commit -m "Update built NephroPath.exe" || echo "No changes to commit"
           git fetch origin main
           git pull --rebase origin main || (git rebase --abort && echo "Rebase failed, aborting" && exit 1)
           git push origin main
@@ -93,8 +93,8 @@ jobs:
       - name: Upload Windows executable
         uses: actions/upload-artifact@v4
         with:
-          name: NephroPath_win_pdf-Windows
-          path: NephroPath_win_pdf.exe
+          name: NephroPath-Windows
+          path: NephroPath.exe
 
   build-macos:
     runs-on: macos-latest
@@ -133,7 +133,7 @@ jobs:
 
       - name: Build with PyInstaller (macOS)
         run: |
-          python -m PyInstaller --onefile --name=NephroPath_mac_pdf --add-data "Code/CKD_core.py:." --add-data "Code/CKD_pdf_files_new.py:." --hidden-import CKD_pdf_files_new --log-level DEBUG Code/CKD_Master_pdf_exefree.py
+          python -m PyInstaller --onefile --name=NephroPath_mac --add-data "Code/CKD_core.py:." --add-data "Code/CKD_pdf_files_new.py:." --hidden-import CKD_pdf_files_new --log-level DEBUG Code/CKD_Master_pdf_exefree.py
 
       - name: Debug dist directory
         run: |
@@ -141,27 +141,27 @@ jobs:
 
       - name: Move release
         run: |
-          if [ ! -f "dist/NephroPath_mac_pdf" ]; then
-            echo "Error: dist/NephroPath_mac_pdf not found. PyInstaller build may have failed." >&2
+          if [ ! -f "dist/NephroPath_mac" ]; then
+            echo "Error: dist/NephroPath_mac not found. PyInstaller build may have failed." >&2
             exit 1
           fi
-          mv dist/NephroPath_mac_pdf ./NephroPath_mac_pdf
+          mv dist/NephroPath_mac ./NephroPath_mac
 
-      - name: Test NephroPath_mac_pdf
+      - name: Test NephroPath_mac
         run: |
-          ./NephroPath_mac_pdf
+          ./NephroPath_mac
           if [ $? -ne 0 ]; then
-            echo "Error: Test run of NephroPath_mac_pdf failed" >&2
+            echo "Error: Test run of NephroPath_mac failed" >&2
             exit 1
           fi
-          echo "NephroPath_mac_pdf ran successfully"
+          echo "NephroPath_mac ran successfully"
 
       - name: Commit and push changes
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          git add -f NephroPath_mac_pdf
-          git commit -m "Update built NephroPath_mac_pdf" || echo "No changes to commit"
+          git add -f NephroPath_mac
+          git commit -m "Update built NephroPath_mac" || echo "No changes to commit"
           git fetch origin main
           git pull --rebase origin main || (git rebase --abort && echo "Rebase failed, aborting" && exit 1)
           git push origin main
@@ -169,5 +169,5 @@ jobs:
       - name: Upload macOS executable
         uses: actions/upload-artifact@v4
         with:
-          name: NephroPath_mac_pdf-macOS
-          path: NephroPath_mac_pdf
+          name: NephroPath_mac-macOS
+          path: NephroPath_mac
