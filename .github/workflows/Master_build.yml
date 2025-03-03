@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths-ignore:
+      - 'Alternative_versions/**'
       - 'NephroPath.exe'
       - 'NephroPath_html.exe'
       - 'NephroPath_mac'
@@ -75,23 +76,24 @@ jobs:
 
       - name: Move release
         run: |
-          Move-Item dist\${{ matrix.output }} .\${{ matrix.output }} -Force
-
+          New-Item -ItemType Directory -Force -Path .\Alternative_versions
+          Move-Item dist\${{ matrix.output }} .\Alternative_versions\${{ matrix.output }} -Force
+  
       - name: Test ${{ matrix.output }}
         shell: pwsh
         run: |
-          .\${{ matrix.output }}
-          if ($LASTEXITCODE -ne 0) {
-            Write-Error "Test run of ${{ matrix.output }} failed with exit code $LASTEXITCODE"
-            exit 1
-          }
-          Write-Host "${{ matrix.output }} ran successfully"
-
+            .\Alternative_versions\${{ matrix.output }}
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "Test run of ${{ matrix.output }} failed with exit code $LASTEXITCODE"
+              exit 1
+            }
+            Write-Host "${{ matrix.output }} ran successfully"
+  
       - name: Commit and push changes
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          git add -f ${{ matrix.output }}
+          git add -f Alternative_versions/${{ matrix.output }}
           git commit -m "Update built ${{ matrix.output }}" || echo "No changes to commit"
           git stash
           git fetch origin main
@@ -103,7 +105,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}-Windows
-          path: ${{ matrix.output }}
+          path: Alternative_versions/${{ matrix.output }}
 
   build-macos:
     runs-on: macos-latest
@@ -160,11 +162,12 @@ jobs:
 
       - name: Move release
         run: |
-          mv dist/${{ matrix.output }} ./${{ matrix.output }}
+          mkdir -p ./Alternative_versions
+          mv dist/${{ matrix.output }} ./Alternative_versions/${{ matrix.output }}
 
       - name: Test ${{ matrix.output }}
         run: |
-          ./${{ matrix.output }}
+          ./Alternative_versions/${{ matrix.output }}
           if [ $? -ne 0 ]; then
             echo "Error: Test run of ${{ matrix.output }} failed" >&2
             exit 1
@@ -175,7 +178,7 @@ jobs:
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          git add -f ${{ matrix.output }}
+          git add -f Alternative_versions/${{ matrix.output }}
           git commit -m "Update built ${{ matrix.output }}" || echo "No changes to commit"
           git stash
           git fetch origin main
@@ -187,4 +190,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}-macOS
-          path: ${{ matrix.output }}
+          path: Alternative_versions/${{ matrix.output }}
