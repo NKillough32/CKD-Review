@@ -165,7 +165,8 @@ def print_results(stats):
         print(f"{category}: {count} patients ({(count/stats['total_patients']*100):.1f}%)")
     
     print("\nBP Classification:")
-    for bp_class, count in sorted(stats['bp_classification'].items()):
+    bp_items = [(str(bp_class), count) for bp_class, count in stats['bp_classification'].items()]
+    for bp_class, count in sorted(bp_items):
         print(f"{bp_class}: {count} patients ({(count/stats['total_patients']*100):.1f}%)")
     
     print("\nPriority Distribution:")
@@ -217,9 +218,10 @@ def save_results(stats, output_path):
             f.write(f"{category}: {count} patients ({(count/stats['total_patients']*100):.1f}%)\n")
         
         f.write("\nBP Classification:\n")
-        for bp_class, count in sorted(stats['bp_classification'].items()):
+        bp_items = [(str(bp_class), count) for bp_class, count in stats['bp_classification'].items()]
+        for bp_class, count in sorted(bp_items):
             f.write(f"{bp_class}: {count} patients ({(count/stats['total_patients']*100):.1f}%)\n")
-        
+    
         f.write("\nPriority Distribution:\n")
         for priority, count in sorted(stats['priority_distribution'].items()):
             f.write(f"{priority}: {count} patients ({(count/stats['total_patients']*100):.1f}%)\n")
