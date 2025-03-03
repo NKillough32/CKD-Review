@@ -156,8 +156,6 @@ data = pd.read_csv(file_path)
 data['risk_2yr'] = pd.to_numeric(data['risk_2yr'], errors='coerce')
 data['risk_5yr'] = pd.to_numeric(data['risk_5yr'], errors='coerce')
 
-data['EMIS_CKD_Code'] = data['EMIS_CKD_Code'].replace(['', None], 'EMIS CKD entry missing')
-
 # Define review message based on NICE guideline criteria
 def ckd_review(row):
     # Parse 'Sample_Date' to ensure it's in datetime format if not already

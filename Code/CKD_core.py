@@ -601,6 +601,8 @@ print("Preprocessing data and performing CKD metrics calculations...")
 CKD_review['Date'] = pd.to_datetime(CKD_review['Date'], errors='coerce')
 CKD_review['Date.2'] = pd.to_datetime(CKD_review['Date.2'], errors='coerce')
 
+CKD_review['EMIS_CKD_Code'] = CKD_review['EMIS_CKD_Code'].replace(['', None], 'EMIS CKD entry missing')
+
 # Rename columns for clarity and consistency in the dataset
 CKD_review.rename(
     columns={
