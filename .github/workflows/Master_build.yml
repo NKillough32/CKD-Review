@@ -72,7 +72,7 @@ jobs:
 
       - name: Build with PyInstaller
         run: |
-          python -m PyInstaller --onefile --name=${{ matrix.name }} --icon=Dependencies/NephroPath_installer_icon.ico --add-data "EMIS_Files;EMIS_Files" --add-data "Dependencies;Dependencies" --log-level DEBUG ${{ matrix.script }}
+          python -m PyInstaller --onefile --name=${{ matrix.name }} --icon=Dependencies/NephroPath_installer_icon.ico --log-level DEBUG ${{ matrix.script }}
 
       - name: Move release
         run: |
@@ -158,7 +158,7 @@ jobs:
 
       - name: Build with PyInstaller
         run: |
-          python -m PyInstaller --onefile --name=${{ matrix.name }} --icon=Dependencies/NephroPath_installer_icon.icns --add-data "EMIS_Files:EMIS_Files" --add-data "Dependencies:Dependencies" --log-level DEBUG ${{ matrix.script }}
+          python -m PyInstaller --onefile --name=${{ matrix.name }} --icon=Dependencies/NephroPath_installer_icon.icns --log-level DEBUG ${{ matrix.script }}
 
       - name: Move release
         run: |
