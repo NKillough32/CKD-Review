@@ -17,15 +17,16 @@ The NephroPath program is a tool designed to streamline the creation of Chronic 
 
 ## Prerequisites
 ### 1. Executable Files:
-- **NephroPath.exe:** Full version with PDF report generation without dependencies capabilities (MAC version avilable)
+- **NephroPath.exe:** Full version with PDF report generation (Windows version)
+- **NephroPath_mac:** Full version with PDF report generation (macOS version)
 - **Alternative Versions**
-    - **NephroPath.exe:** Full version with PDF report generation with dependencies capabilities (MAC version avilable)  
+    - **NephroPath.exe:** Full version with PDF report generation with wkhtmltopdf dependency (MAC version avilable)  
     - **NephroPath_html.exe:** Lightweight version that produces HTML reports only (MAC version avilable) 
 
 ### 2. PDF Generation (Full Version Only):
-- Required: `wkhtmltopdf` for PDF generation
-- The program will attempt automatic installation
-- Manual installation may be required if automatic installation fails
+- PDF generation is now integrated into the application
+- No external dependencies required
+- Previous wkhtmltopdf requirement has been removed from the main program but is still a requirment of the Alternaitve version.
 - (Project maintained by Ashish Kulkarni, originally developed by Jakob Truelsen.)
 
 ### 3. Required Data Files:
@@ -44,7 +45,8 @@ The NephroPath program is a tool designed to streamline the creation of Chronic 
 1. Download the latest release from:  
    [https://github.com/NKillough32/CKD-Review/releases](https://github.com/NKillough32/CKD-Review/releases)
 2. Extract the ZIP file to a location of your choice
-3. Copy your EMIS exports (`Creatinine.csv`, `CKD_check.csv`) to the same folder as NephroPath.exe (e.g., `/CKD-Review`).
+3. Copy your EMIS exports (`Creatinine.csv`, `CKD_check.csv`) to the `EMIS_Files` folder
+
 
 ### Option 2: Clone the Repository
 1. Open Bash:  
