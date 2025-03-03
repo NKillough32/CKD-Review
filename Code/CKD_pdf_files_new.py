@@ -44,28 +44,58 @@ logging.basicConfig(
 
 warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
 
-# Get the base path
+# Update the path setup near the top of the file
 if getattr(sys, 'frozen', False):
     base_path = sys._MEIPASS
-    output_dir = os.path.join(os.getcwd(), "Patient_Summaries")
+    working_base_path = os.getcwd()
+    output_dir = os.path.join(working_base_path, "Patient_Summaries")
+    dependencies_path = os.path.join(working_base_path, "Dependencies")
+    surgery_info_file = os.path.join(dependencies_path, "surgery_information.csv")
 else:
     base_path = os.getcwd()
+    working_base_path = base_path
     output_dir = os.path.join(base_path, "Patient_Summaries")
+    dependencies_path = os.path.join(base_path, "Dependencies")
+    surgery_info_file = os.path.join(dependencies_path, "surgery_information.csv")
 
-surgery_info_file = os.path.join(base_path, "Dependencies", "surgery_information.csv")
-
-# Function definitions
+# Update the load_surgery_info function
 def load_surgery_info(csv_path=surgery_info_file):
+    """Load surgery information from CSV file."""
+    default_info = {
+        'surgery_name': 'Unknown Surgery',
+        'surgery_address_line1': 'N/A',
+        'surgery_address_line2': 'N/A',
+        'surgery_city': 'N/A',
+        'surgery_postcode': 'N/A',
+        'surgery_phone': 'N/A'
+    }
+    
     try:
+        logging.info(f"Attempting to load surgery info from: {csv_path}")
+        
+        if not os.path.exists(csv_path):
+            logging.error(f"Surgery information file not found at: {csv_path}")
+            return default_info
+
         surgery_df = pd.read_csv(csv_path)
+        if surgery_df.empty:
+            logging.error("Surgery information file is empty")
+            return default_info
+            
         surgery_info = surgery_df.iloc[0].to_dict()
+        
+        # Ensure all required fields are present
+        for field in default_info.keys():
+            if field not in surgery_info or pd.isna(surgery_info[field]):
+                surgery_info[field] = default_info[field]
+                logging.warning(f"Missing or empty field '{field}' in surgery info, using default value")
+        
+        logging.info(f"Successfully loaded surgery info: {surgery_info}")
         return surgery_info
-    except FileNotFoundError:
-        logging.warning(f"Surgery information file not found at {csv_path}")
-        return {}
+        
     except Exception as e:
         logging.error(f"Error reading surgery information: {str(e)}")
-        return {}
+        return default_info
 
 def generate_ckd_info_qr(output_path):
     try:
