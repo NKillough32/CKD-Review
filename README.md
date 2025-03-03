@@ -17,8 +17,10 @@ The NephroPath program is a tool designed to streamline the creation of Chronic 
 
 ## Prerequisites
 ### 1. Executable Files:
-- **NephroPath.exe:** Full version with PDF report generation capabilities (MAC version avilable) 
-- **NephroPath_html.exe:** Lightweight version that produces HTML reports only (MAC version avilable) 
+- **NephroPath.exe:** Full version with PDF report generation without dependencies capabilities (MAC version avilable)
+- **Alternative Versions**
+    - **NephroPath.exe:** Full version with PDF report generation with dependencies capabilities (MAC version avilable)  
+    - **NephroPath_html.exe:** Lightweight version that produces HTML reports only (MAC version avilable) 
 
 ### 2. PDF Generation (Full Version Only):
 - Required: `wkhtmltopdf` for PDF generation
