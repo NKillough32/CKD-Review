@@ -124,27 +124,28 @@ def analyze_ckd_data(filepath):
 def print_results(stats):
     """Print analysis results to console"""
     print("\n=== CKD Patient Analysis Results ===")
-    print(f"Total number of patients: {stats['total_patients']}")
+    total = stats['total_patients']
+    print(f"Total number of patients: {total}")
     
     print("\nStaging Discrepancies:")
-    print(f"Number of patients with EMIS staging mismatch: {stats['staging_mismatch']}")
-    print(f"Number of patients with uncoded CKD: {stats['uncoded_ckd']}")
+    print(f"Number of patients with EMIS staging mismatch: {stats['staging_mismatch']} ({(stats['staging_mismatch']/total*100):.1f}%)")
+    print(f"Number of patients with uncoded CKD: {stats['uncoded_ckd']} ({(stats['uncoded_ckd']/total*100):.1f}%)")
     
     print("\nCKD Stage Distribution:")
     for stage, count in sorted(stats['stage_distribution'].items()):
-        print(f"{stage}: {count} patients ({(count/stats['total_patients']*100):.1f}%)")
+        print(f"{stage}: {count} patients ({(count/total*100):.1f}%)")
     
     print("\nClinical Indicators:")
-    print(f"Patients with BP above target: {stats['bp_not_at_target']}")
-    print(f"Patients with Anaemia: {stats['anaemia_count']}")
-    print(f"Patients with Vitamin D deficiency: {stats['vitamin_d_deficient']}")
-    print(f"Patients with high CV risk: {stats['high_cv_risk']}")
-    print(f"Patients needing nephrology referral: {stats['referral_needed']}")
-    print(f"Patients with AKI: {stats['aki_cases']}")
+    print(f"Patients with BP above target: {stats['bp_not_at_target']} ({(stats['bp_not_at_target']/total*100):.1f}%)")
+    print(f"Patients with Anaemia: {stats['anaemia_count']} ({(stats['anaemia_count']/total*100):.1f}%)")
+    print(f"Patients with Vitamin D deficiency: {stats['vitamin_d_deficient']} ({(stats['vitamin_d_deficient']/total*100):.1f}%)")
+    print(f"Patients with high CV risk: {stats['high_cv_risk']} ({(stats['high_cv_risk']/total*100):.1f}%)")
+    print(f"Patients needing nephrology referral: {stats['referral_needed']} ({(stats['referral_needed']/total*100):.1f}%)")
+    print(f"Patients with AKI: {stats['aki_cases']} ({(stats['aki_cases']/total*100):.1f}%)")
     
     print("\nMedication Issues:")
-    print(f"Patients on contraindicated medications: {stats['contraindicated_drugs']}")
-    print(f"Patients requiring medication dose adjustments: {stats['dose_adjustment_needed']}")
+    print(f"Patients on contraindicated medications: {stats['contraindicated_drugs']} ({(stats['contraindicated_drugs']/total*100):.1f}%)")
+    print(f"Patients requiring medication dose adjustments: {stats['dose_adjustment_needed']} ({(stats['dose_adjustment_needed']/total*100):.1f}%)")
     
     print("\nAge Statistics:")
     print(f"Mean age: {stats['age_stats']['mean']:.1f}")
@@ -175,30 +176,27 @@ def print_results(stats):
 
 def save_results(stats, output_path):
     """Save analysis results to a text file"""
+    total = stats['total_patients']
     with open(output_path, 'w') as f:
         f.write("=== CKD Patient Analysis Results ===\n")
-        f.write(f"Total number of patients: {stats['total_patients']}\n")
+        f.write(f"Total number of patients: {total}\n")
         
         f.write("\nStaging Discrepancies:\n")
-        f.write(f"Number of patients with EMIS staging mismatch: {stats['staging_mismatch']}\n")
-        f.write(f"Number of patients with uncoded CKD: {stats['uncoded_ckd']}\n")
-        
-        f.write("\nCKD Stage Distribution:\n")
-        for stage, count in sorted(stats['stage_distribution'].items()):
-            f.write(f"{stage}: {count} patients ({(count/stats['total_patients']*100):.1f}%)\n")
+        f.write(f"Number of patients with EMIS staging mismatch: {stats['staging_mismatch']} ({(stats['staging_mismatch']/total*100):.1f}%)\n")
+        f.write(f"Number of patients with uncoded CKD: {stats['uncoded_ckd']} ({(stats['uncoded_ckd']/total*100):.1f}%)\n")
         
         f.write("\nClinical Indicators:\n")
-        f.write(f"Patients with BP above target: {stats['bp_not_at_target']}\n")
-        f.write(f"Patients with Anaemia: {stats['anaemia_count']}\n")
-        f.write(f"Patients with Vitamin D deficiency: {stats['vitamin_d_deficient']}\n")
-        f.write(f"Patients with high CV risk: {stats['high_cv_risk']}\n")
-        f.write(f"Patients needing nephrology referral: {stats['referral_needed']}\n")
-        f.write(f"Patients with AKI: {stats['aki_cases']}\n")
+        f.write(f"Patients with BP above target: {stats['bp_not_at_target']} ({(stats['bp_not_at_target']/total*100):.1f}%)\n")
+        f.write(f"Patients with Anaemia: {stats['anaemia_count']} ({(stats['anaemia_count']/total*100):.1f}%)\n")
+        f.write(f"Patients with Vitamin D deficiency: {stats['vitamin_d_deficient']} ({(stats['vitamin_d_deficient']/total*100):.1f}%)\n")
+        f.write(f"Patients with high CV risk: {stats['high_cv_risk']} ({(stats['high_cv_risk']/total*100):.1f}%)\n")
+        f.write(f"Patients needing nephrology referral: {stats['referral_needed']} ({(stats['referral_needed']/total*100):.1f}%)\n")
+        f.write(f"Patients with AKI: {stats['aki_cases']} ({(stats['aki_cases']/total*100):.1f}%)\n")
         
         f.write("\nMedication Issues:\n")
-        f.write(f"Patients on contraindicated medications: {stats['contraindicated_drugs']}\n")
-        f.write(f"Patients requiring medication dose adjustments: {stats['dose_adjustment_needed']}\n")
-        
+        f.write(f"Patients on contraindicated medications: {stats['contraindicated_drugs']} ({(stats['contraindicated_drugs']/total*100):.1f}%)\n")
+        f.write(f"Patients requiring medication dose adjustments: {stats['dose_adjustment_needed']} ({(stats['dose_adjustment_needed']/total*100):.1f}%)\n")
+             
         f.write("\nAge Statistics:\n")
         f.write(f"Mean age: {stats['age_stats']['mean']:.1f}\n")
         f.write(f"Median age: {stats['age_stats']['median']:.1f}\n")
