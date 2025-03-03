@@ -17,6 +17,23 @@ from datetime import datetime
 from html import escape
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+from datetime import datetime
+
+def format_date(date_str):
+    if not date_str or pd.isna(date_str) or date_str == "Missing" or date_str == "N/A":
+        return "N/A"
+    try:
+        formats = ["%Y-%m-%d", "%d-%m-%Y", "%d/%m/%Y", "%Y/%m/%d", "%m/%d/%Y", "%Y.%m.%d", "%d.%m.%Y", "%d-%b-%Y", "%d %b %Y", "%b %d, %Y", "%B %d, %Y", "%d-%B-%Y", "%Y-%b-%d"]
+        for fmt in formats:
+            try:
+                return datetime.strptime(str(date_str), fmt).strftime("%d-%m-%Y")
+            except ValueError:
+                continue
+        parsed_date = pd.to_datetime(date_str, errors='raise')
+        return parsed_date.strftime("%d-%m-%Y")
+    except (ValueError, TypeError) as e:
+        logging.warning(f"Could not parse date: {date_str}, Error: {str(e)}")
+        return "N/A"
 
 # Setup logging
 logging.basicConfig(
@@ -297,12 +314,11 @@ def create_stylesheet():
     styles.add(ParagraphStyle(name='CustomSmallTextCenter', fontName=font_name, fontSize=8, leading=11, alignment=1, spaceAfter=4, wordWrap='CJK'))
     styles.add(ParagraphStyle(name='CustomLongText', fontName=font_name, fontSize=9, leading=11, spaceAfter=4, wordWrap='CJK'))
     styles.add(ParagraphStyle(name='CustomTableText', fontName=font_name, fontSize=10, leading=12, spaceAfter=4, wordWrap='CJK', allowWidows=1, alignment=0))
-    styles.add(ParagraphStyle(name='CustomTableTexttight', fontName=font_name, fontSize=10, leading=12, spaceAfter=2, wordWrap='CJK', allowWidows=1, alignment=0))
+    styles.add(ParagraphStyle(name='CustomTableTexttight', fontName=font_name, fontSize=10, leading=11, spaceAfter=0, wordWrap='CJK', allowWidows=1, alignment=1))
     styles.add(ParagraphStyle(name='CustomTableTitle', fontName=font_name_bold, fontSize=10, leading=12, spaceAfter=4, wordWrap='CJK'))
     styles.add(ParagraphStyle(name='CustomTableTitleCenter', fontName=font_name_bold, fontSize=12, leading=16, alignment=1, textColor=colors.black, spaceAfter=8, wordWrap='CJK'))
     styles.add(ParagraphStyle(name='CustomCenterText', fontName=font_name, fontSize=10, leading=12, alignment=1, spaceAfter=4))#
-    styles.add(ParagraphStyle(name='CustomCenterTableText2',parent=styles['CustomTableText'],alignment=1
-))
+    styles.add(ParagraphStyle(name='CustomCenterTableTexttight',parent=styles['CustomTableTexttight'],alignment=1))
     return styles, font_name, font_name_bold
 
 def draw_rounded_box(canvas, x, y, width, height, radius=10, stroke_color=colors.grey, stroke_width=1.5, fill_color=colors.whitesmoke):
@@ -453,15 +469,15 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
     elements.append(Spacer(1, 0.05 * inch))
     elements.append(safe_paragraph("Chronic Kidney Disease Review", styles['CustomTitle']))
     elements.append(Spacer(1, 0.1 * inch))
-    elements.append(safe_paragraph(f"<b>Review Status:</b> {escape(format_value(patient.get('review_message', 'Uncategorized')))}", styles['CustomCenterText']))
+    elements.append(safe_paragraph(f"<font face='{font_name_bold}'>Review Status:</font> {escape(format_value(patient.get('review_message', 'Uncategorized')))}", styles['CustomCenterText']))
     elements.append(Spacer(1, 0.025 * inch))
-    elements.append(safe_paragraph(f"<b>Current EMIS Status:</b> {escape(format_value(patient.get('EMIS_CKD_Code', 'N/A')))}", styles['CustomCenterText']))
+    elements.append(safe_paragraph(f"<font face='{font_name_bold}'>Current EMIS Status:</font> {escape(format_value(patient.get('EMIS_CKD_Code', 'N/A')))}", styles['CustomCenterText']))
     elements.append(Spacer(1, 0.05 * inch))
     if format_value(patient.get('Transplant_Kidney')) != "N/A":
-        elements.append(safe_paragraph(f"<b>Transplant:</b> {escape(format_value(patient.get('Transplant_Kidney')))}", styles['CustomCenterText']))
+        elements.append(safe_paragraph(f"<font face='{font_name_bold}'>Transplant:</font> {escape(format_value(patient.get('Transplant_Kidney')))}", styles['CustomCenterText']))
         elements.append(Spacer(1, 0.05 * inch))
     if format_value(patient.get('Dialysis')) != "N/A":
-        elements.append(safe_paragraph(f"<b>Dialysis:</b> {escape(format_value(patient.get('Dialysis')))}", styles['CustomCenterText']))
+        elements.append(safe_paragraph(f"<font face='{font_name_bold}'>Dialysis:</font> {escape(format_value(patient.get('Dialysis')))}", styles['CustomCenterText']))
         elements.append(Spacer(1, 0.1 * inch))
 
     # KDIGO 2024 Classification
@@ -469,7 +485,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
     title_style = ParagraphStyle(name='BoldTitle', parent=styles['CustomTableText'], fontName=font_name_bold, alignment=1)
     ckd_style = ParagraphStyle(name='CKDStyle', parent=styles['CustomTableText'], textColor=ckd_color, alignment=1)
     kdigo_title = safe_paragraph("KDIGO 2024 Classification", title_style)
-    kdigo_status = safe_paragraph(f"<b>{escape(ckd_group)}</b>", ckd_style)
+    kdigo_status = safe_paragraph(f"<font face='{font_name_bold}'>{escape(ckd_group)}</font>", ckd_style)
     kdigo_data = [[kdigo_title], [kdigo_status]]
     kdigo_table = create_boxed_table(
         data=kdigo_data,
@@ -554,11 +570,10 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
                         f"{escape(format_value(patient.get('eGFR_Trend')))}", styles['CustomTableText'])],
         [Spacer(1, 0.025 * inch)],
         [safe_paragraph("<i>The eGFR trend is assessed by comparing the most recent value with the reading from three months prior. The change is adjusted to an annualized rate based on the time interval between measurements.</i>", styles['CustomSmallText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;- <b>Rapid Decline:</b> A decrease of more than 5 mL/min/1.73m² per year or a relative drop of 25% or more.", styles['CustomSmallText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;- <b>Stable:</b> No significant decline.", styles['CustomSmallText'])],
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>Rapid Decline:</font> A decrease of more than 5 mL/min/1.73m² per year or a relative drop of 25% or more.", styles['CustomSmallText'])],
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>Stable:</font> No significant decline.", styles['CustomSmallText'])],
         [safe_paragraph("<i>A rapid decline may indicate progressive CKD, requiring closer monitoring or intervention.</i>", styles['CustomSmallText'])],
-        [Spacer(1, 0.025 * inch)]
-    ]
+        [Spacer(1, 0.025 * inch)]]
 
     ckd_table = create_boxed_table(
         data=ckd_data,
@@ -1066,7 +1081,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
 
     # Surgery Contact
     surgery_title = safe_paragraph("<b>Surgery Contact Information</b>", styles['CustomTableTitleCenter'])
-    centered_table_text = ParagraphStyle(name="CustomCenterTableText", parent=styles["CustomTableText"], alignment=1)
+    centered_table_text = styles['CustomCenterTableTexttight'] 
     surgery_contact_data = [
         [surgery_title],
         [safe_paragraph(f"{surgery_info.get('surgery_name', 'Unknown Surgery')}", centered_table_text)],
@@ -1078,20 +1093,20 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
     ]
     surgery_contact_table = create_boxed_table(
         data=surgery_contact_data,
-        widths=[doc.width - 4 * inch],
+        widths=[doc.width - 5 * inch],
         style=TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
             ('FONTNAME', (0, 0), (-1, -1), font_name),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
-            ('PADDING', (0, 0), (-1, -1), 8),
+            ('PADDING', (0, 0), (-1, -1), 4),
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEADING', (0, 0), (-1, -1), 12),
+            ('LEADING', (0, 0), (-1, -1), 10),
             ('SPLITBYROW', (0, 0), (-1, -1), True)
         ]),
         radius=10,
-        padding=6,
+        padding=4,
         color=colors.grey
     )
     centered_surgery_contact_table = Table([[surgery_contact_table]], colWidths=[doc.width - 0.15 * inch], rowHeights=[None])
