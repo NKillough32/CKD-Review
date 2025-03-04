@@ -814,7 +814,7 @@ CKD_review.loc[:, 'Proteinuria_Flag'] = CKD_review.apply(
     lambda row: (
         "Immediate Referral - Severe Proteinuria (ACR ≥70)" if pd.notna(row['ACR']) and row['ACR'] >= 70 
         else "High Proteinuria - Urgent Referral (ACR 30-69)" if pd.notna(row['ACR']) and row['ACR'] >= 30 
-        else "Persistent Proteinuria - Consider Referral (ACR 3-29)" if pd.notna(row['ACR']) and row['ACR'] >= 3 
+        else "Raised Proteinuria - Consider Referral (ACR 3-29)" if pd.notna(row['ACR']) and row['ACR'] >= 3 
         else "Review Required (ACR Missing)" if pd.notna(row['ACR']) and row['ACR'] == 0.019 
         else "Review Required (ACR Missing)" if pd.isna(row['ACR'])  
         else "No Referral Needed"

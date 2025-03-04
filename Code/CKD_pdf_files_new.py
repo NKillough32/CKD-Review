@@ -323,24 +323,32 @@ def get_ckd_stage_acr_group(row):
 def create_stylesheet():
     styles = getSampleStyleSheet()
     try:
+        # Register regular Arial
         pdfmetrics.registerFont(TTFont('Arial', os.path.join(base_path, "Dependencies", 'Arial.ttf')))
         font_name = 'Arial'
-    except Exception as e:
-        logging.warning(f"Failed to load Arial font: {str(e)}. Falling back to Helvetica.")
-        font_name = 'Helvetica'
-    try:
+        
+        # Register Arial Bold
         pdfmetrics.registerFont(TTFont('Arial-Bold', os.path.join(base_path, "Dependencies", 'arialbd.ttf')))
         font_name_bold = 'Arial-Bold'
+        
+        # Register Arial Italic
+        pdfmetrics.registerFont(TTFont('Arial-Italic', os.path.join(base_path, "Dependencies", 'ariali.ttf')))
+        font_name_italic = 'Arial-Italic'
+        
     except Exception as e:
-        logging.warning(f"Failed to load Arial-Bold font: {str(e)}. Falling back to Helvetica-Bold.")
+        logging.warning(f"Failed to load Arial fonts: {str(e)}. Falling back to Helvetica.")
+        font_name = 'Helvetica'
         font_name_bold = 'Helvetica-Bold'
-    logging.info(f"Using fonts - Regular: {font_name}, Bold: {font_name_bold}")
+        font_name_italic = 'Helvetica-Oblique'
+    
+    logging.info(f"Using fonts - Regular: {font_name}, Bold: {font_name_bold}, Italic: {font_name_italic}")
 
     styles.add(ParagraphStyle(name='CustomTitle', fontName=font_name_bold, fontSize=20, leading=24, alignment=1, textColor=colors.black))
     styles.add(ParagraphStyle(name='CustomSubTitle', fontName=font_name_bold, fontSize=16, leading=18, alignment=1, textColor=colors.black, spaceAfter=12))
     styles.add(ParagraphStyle(name='CustomSectionHeader', fontName=font_name_bold, fontSize=12, leading=16, alignment=0, textColor=colors.black, spaceAfter=8))
     styles.add(ParagraphStyle(name='CustomNormalText', fontName=font_name, fontSize=10, leading=12, spaceAfter=4, wordWrap='CJK'))
     styles.add(ParagraphStyle(name='CustomSmallText', fontName=font_name, fontSize=8, leading=11, spaceAfter=4, wordWrap='CJK'))
+    styles.add(ParagraphStyle(name='CustomSmallTextItalics', fontName=font_name_italic, fontSize=8, leading=11, spaceAfter=4, wordWrap='CJK'))
     styles.add(ParagraphStyle(name='CustomSmallTextCenter', fontName=font_name, fontSize=8, leading=11, alignment=1, spaceAfter=4, wordWrap='CJK'))
     styles.add(ParagraphStyle(name='CustomLongText', fontName=font_name, fontSize=9, leading=11, spaceAfter=4, wordWrap='CJK'))
     styles.add(ParagraphStyle(name='CustomTableText', fontName=font_name, fontSize=10, leading=12, spaceAfter=4, wordWrap='CJK', allowWidows=1, alignment=0))
@@ -349,9 +357,9 @@ def create_stylesheet():
     styles.add(ParagraphStyle(name='CustomTableTitleCenter', fontName=font_name_bold, fontSize=12, leading=16, alignment=1, textColor=colors.black, spaceAfter=8, wordWrap='CJK'))
     styles.add(ParagraphStyle(name='CustomCenterText', fontName=font_name, fontSize=10, leading=12, alignment=1, spaceAfter=4))#
     styles.add(ParagraphStyle(name='CustomCenterTableTexttight',parent=styles['CustomTableTexttight'],alignment=1))
-    return styles, font_name, font_name_bold
+    return styles, font_name, font_name_bold, font_name_italic
 
-def draw_rounded_box(canvas, x, y, width, height, radius=10, stroke_color=colors.grey, stroke_width=1.5, fill_color=colors.whitesmoke):
+def draw_rounded_box(canvas, x, y, width, height, radius=5, stroke_color=colors.grey, stroke_width=1.5, fill_color=colors.whitesmoke):
     canvas.saveState()
     canvas.setStrokeColor(stroke_color)
     canvas.setFillColor(fill_color)
@@ -389,7 +397,7 @@ class BoxedTable(Table):
         draw_rounded_box(self.canv, box_x, box_y, box_width, box_height, radius=self.box_radius, stroke_color=self.box_color, fill_color=self.fill_color)
         super().draw()
 
-def create_boxed_table(data, widths, style, radius=10, padding=6, color=colors.grey, fill_color=colors.whitesmoke):
+def create_boxed_table(data, widths, style, radius=5, padding=6, color=colors.grey, fill_color=colors.whitesmoke):
     table = BoxedTable(
         data,
         colWidths=widths,
@@ -527,7 +535,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('PADDING', (0, 0), (-1, -1), 12),
             ('LEADING', (0, 0), (-1, -1), 16),
         ]),
-        radius=10,
+        radius=5,
         padding=6,
         color=colors.grey
     )
@@ -563,7 +571,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('LEADING', (0, 0), (-1, -1), 14),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT')
         ]),
-        radius=10,
+        radius=5,
         padding=6,
         color=colors.grey
     )
@@ -583,26 +591,26 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
                         f"<font color='#{acr_color.hexval()[2:8]}'>{escape(acr_value)} mg/mmol</font> | "
                         f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date1')))}", styles['CustomTableText'])],
         [safe_paragraph(f"• <font face='{font_name_bold}'>Creatinine:</font>", styles['CustomTableText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>Current:</font> "
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;▪ <font face='{font_name_bold}'>Current:</font> "
                         f"<font color='#{creatinine_color.hexval()[2:8]}'>{escape(creatinine_value)} µmol/L</font> | "
                         f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date')))}", styles['CustomTableText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>3 Months Prior:</font> "
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;▪ <font face='{font_name_bold}'>3 Months Prior:</font> "
                         f"{escape(format_value(patient.get('Creatinine_3m_prior')))} µmol/L | "
                         f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date2')))}", styles['CustomTableText'])],
         [safe_paragraph(f"• <font face='{font_name_bold}'>eGFR:</font>", styles['CustomTableText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>Current:</font> "
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;▪ <font face='{font_name_bold}'>Current:</font> "
                         f"<font color='#{egfr_color.hexval()[2:8]}'>{escape(egfr_value)} mL/min/1.73m²</font> | "
                         f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date')))}", styles['CustomTableText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>3 Months Prior:</font> "
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;▪ <font face='{font_name_bold}'>3 Months Prior:</font> "
                         f"{escape(format_value(patient.get('eGFR_3m_prior')))} mL/min/1.73m² | "
                         f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date2')))}", styles['CustomTableText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>eGFR Trend:</font> "
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;▪ <font face='{font_name_bold}'>eGFR Trend:</font> "
                         f"{escape(format_value(patient.get('eGFR_Trend')))}", styles['CustomTableText'])],
         [Spacer(1, 0.025 * inch)],
-        [safe_paragraph("<i>The eGFR trend is assessed by comparing the most recent value with the reading from three months prior. The change is adjusted to an annualized rate based on the time interval between measurements.</i>", styles['CustomSmallText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>Rapid Decline:</font> A decrease of more than 5 mL/min/1.73m² per year or a relative drop of 25% or more.", styles['CustomSmallText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;- <font face='{font_name_bold}'>Stable:</font> No significant decline.", styles['CustomSmallText'])],
-        [safe_paragraph("<i>A rapid decline may indicate progressive CKD, requiring closer monitoring or intervention.</i>", styles['CustomSmallText'])],
+        [safe_paragraph("The eGFR trend is assessed by comparing the most recent value with the reading from three months prior. The change is adjusted to an annualized rate based on the time interval between measurements.", styles['CustomSmallTextItalics'])],
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;▪ <font face='{font_name_bold}'>Rapid Decline:</font> A decrease of more than 5 mL/min/1.73m² per year or a relative drop of 25% or more.", styles['CustomSmallText'])],
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;▪ <font face='{font_name_bold}'>Stable:</font> No significant decline.", styles['CustomSmallText'])],
+        [safe_paragraph("A rapid decline may indicate progressive CKD, requiring closer monitoring or intervention.", styles['CustomSmallTextItalics'])],
         [Spacer(1, 0.025 * inch)]]
 
     ckd_table = create_boxed_table(
@@ -619,7 +627,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('LEADING', (0, 0), (-1, -1), 12),
             ('SPLITBYROW', (0, 0), (-1, -1), True)
         ]),
-        radius=10,
+        radius=5,
         padding=6,
         color=colors.grey
     )
@@ -634,9 +642,9 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         [bp_title],
         [safe_paragraph(f"• <font face='{font_name_bold}'>Classification:</font> {escape(format_value(patient.get('BP_Classification')))} | "
                         f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date3')))}", styles['CustomTableText'])],
-        [safe_paragraph(f"• <font face='{font_name_bold}'>Systolic:</font> "
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;▪ <font face='{font_name_bold}'>Systolic:</font> "
                         f"<font color='#{bp_color_sys.hexval()[2:8]}'>{escape(bp_value_sys)} mmHg</font>", styles['CustomTableText'])],
-        [safe_paragraph(f"• <font face='{font_name_bold}'>Diastolic:</font> "
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;▪ <font face='{font_name_bold}'>Diastolic:</font> "
                         f"<font color='#{bp_color_dia.hexval()[2:8]}'>{escape(bp_value_dia)} mmHg</font>", styles['CustomTableText'])],
         [safe_paragraph(f"• <font face='{font_name_bold}'>Target BP:</font> {escape(format_value(patient.get('BP_Target')))} | "
                         f"<font face='{font_name_bold}'>BP Status:</font> {escape(format_value(patient.get('BP_Flag')))}", styles['CustomTableText'])]
@@ -655,7 +663,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('LEADING', (0, 0), (-1, -1), 12),
             ('SPLITBYROW', (0, 0), (-1, -1), True)
         ]),
-        radius=10,
+        radius=5,
         padding=6,
         color=colors.grey
     )
@@ -689,7 +697,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('LEADING', (0, 0), (-1, -1), 12),
             ('SPLITBYROW', (0, 0), (-1, -1), True)
         ]),
-        radius=10,
+        radius=5,
         padding=6,
         color=colors.grey
     )
@@ -756,7 +764,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('BACKGROUND', (0, 0), (-1, -1), colors.whitesmoke),
             ('PADDING', (0, 0), (-1, -1), 6),
         ]),
-        radius=10,
+        radius=5,
         padding=4,
         color=colors.grey
     )
@@ -780,7 +788,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('LEADING', (0, 0), (-1, -1), 12),
             ('SPLITBYROW', (0, 0), (-1, -1), True)
         ]),
-        radius=10,
+        radius=5,
         padding=6,
         color=colors.grey
     )
@@ -813,7 +821,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('LEADING', (0, 0), (-1, -1), 12),
             ('SPLITBYROW', (0, 0), (-1, -1), True)
         ]),
-        radius=10,
+        radius=5,
         padding=6,
         color=colors.grey
     )
@@ -830,7 +838,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
                         f"<font color='#{risk_2yr_color.hexval()[2:8]}'>{escape(risk_2yr_value)}%</font>", styles['CustomTableText'])],
         [safe_paragraph(f"• <font face='{font_name_bold}'>5-Year Risk:</font> "
                         f"<font color='#{risk_5yr_color.hexval()[2:8]}'>{escape(risk_5yr_value)}%</font>", styles['CustomTableText'])],
-        [safe_paragraph("<i>The patient's 2- and 5-year kidney failure risk scores estimate the likelihood that their kidney disease will progress to kidney failure within the next 2 or 5 years. These scores are calculated based on the patient's current kidney function and other risk factors such as age, blood pressure, and existing health conditions. Understanding these risk scores helps in predicting disease progression and planning appropriate treatment strategies.</i>", styles['CustomSmallText'])]
+        [safe_paragraph("The patient's 2- and 5-year kidney failure risk scores estimate the likelihood that their kidney disease will progress to kidney failure within the next 2 or 5 years. These scores are calculated based on the patient's current kidney function and other risk factors such as age, blood pressure, and existing health conditions. Understanding these risk scores helps in predicting disease progression and planning appropriate treatment strategies.", styles['CustomSmallTextItalics'])]
     ]
     risk_table = create_boxed_table(
         data=risk_data,
@@ -846,7 +854,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('LEADING', (0, 0), (-1, -1), 12),
             ('SPLITBYROW', (0, 0), (-1, -1), True)
         ]),
-        radius=10,
+        radius=5,
         padding=6,
         color=colors.grey
     )
@@ -863,7 +871,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
                         f"{escape(format_value(patient.get('Modality_Education')))}", styles['CustomTableText'])],
         [safe_paragraph(f"• <font face='{font_name_bold}'>Nephrology Referral:</font> "
                         f"{escape(format_value(patient.get('Nephrology_Referral')))}", styles['CustomTableText'])],
-        [safe_paragraph(f"• <font face='{font_name_bold}'>Persistent Proteinuria:</font> "
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Proteinuria:</font> "
                         f"{escape(format_value(patient.get('Proteinuria_Flag')))}", styles['CustomTableText'])]
     ]
     care_table = create_boxed_table(
@@ -880,7 +888,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('LEADING', (0, 0), (-1, -1), 12),
             ('SPLITBYROW', (0, 0), (-1, -1), True)
         ]),
-        radius=10,
+        radius=5,
         padding=6,
         color=colors.grey
     )
@@ -893,7 +901,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         [med_title],
         [safe_paragraph(f"• <font face='{font_name_bold}'>Current Medication:</font> "
                         f"{escape(format_value(patient.get('Medications', 'None')))}", styles['CustomTableText'])],
-        [safe_paragraph(f"• <font face='{font_name_bold}'>Review Medications:</font> "
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Dose Adjustment Medications:</font> "
                         f"{escape(format_value(patient.get('dose_adjustment_prescribed')))}", styles['CustomTableText'])],
         [safe_paragraph(f"• <font face='{font_name_bold}'>Contraindicated Medications:</font> "
                         f"{escape(format_value(patient.get('contraindicated_prescribed')))}", styles['CustomTableText'])],
@@ -915,7 +923,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('LEADING', (0, 0), (-1, -1), 12)
         ]),
-        radius=10,
+        radius=5,
         padding=6,
         color=colors.grey
     )
@@ -943,7 +951,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('LEADING', (0, 0), (-1, -1), 12),
             ('SPLITBYROW', (0, 0), (-1, -1), True)
         ]),
-        radius=10,
+        radius=5,
         padding=6,
         color=colors.grey
     )
@@ -1029,7 +1037,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('LEADING', (0, 0), (-1, -1), 12),
             ('SPLITBYROW', (0, 0), (-1, -1), True)
         ]),
-        radius=10,
+        radius=5,
         padding=6,
         color=colors.grey
     )
@@ -1075,7 +1083,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
                 ('LEADING', (0, 0), (-1, -1), 12),
                 ('SPLITBYROW', (0, 0), (-1, -1), True)
             ]),
-            radius=10,
+            radius=5,
             padding=6,
             color=colors.grey
         )
@@ -1102,7 +1110,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('PADDING', (0, 0), (-1, -1), 8),
             ('BOTTOMPADDING', (0, 1), (-1, 1), 5),
         ]),
-        radius=10,
+        radius=5,
         padding=6,
         color=colors.grey
     )
@@ -1135,7 +1143,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('LEADING', (0, 0), (-1, -1), 10),
             ('SPLITBYROW', (0, 0), (-1, -1), True)
         ]),
-        radius=10,
+        radius=5,
         padding=4,
         color=colors.grey
     )
