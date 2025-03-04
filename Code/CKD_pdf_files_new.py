@@ -454,7 +454,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         if col in CKD_review.columns:
             CKD_review[col] = pd.to_numeric(CKD_review[col], errors='coerce')
     try:
-        styles, font_name, font_name_bold = create_stylesheet()
+        styles, font_name, font_name_bold, font_name_italic = create_stylesheet()
     except Exception as e:
         logging.error(f"Failed to create stylesheet: {str(e)}. Using default Helvetica fonts.")
         styles = getSampleStyleSheet()
@@ -473,11 +473,11 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         os.makedirs(review_folder, exist_ok=True)
         logging.info(f"Created review subfolder: {review_folder}")
         file_name = os.path.join(review_folder, f"Patient_Summary_{patient['HC_Number']}.pdf")
-        create_patient_pdf(patient_data, surgery_info, file_name, qr_path, styles, font_name, font_name_bold)
+        create_patient_pdf(patient_data, surgery_info, file_name, qr_path, styles, font_name, font_name_bold, font_name_italic)
         logging.info(f"Report saved as Patient_Summary_{patient['HC_Number']}.pdf in {review_folder}")
     return date_folder
 
-def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font_name, font_name_bold):
+def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font_name, font_name_bold, font_name_italic):
     for key in patient:
         if isinstance(patient[key], str) and len(patient[key]) > 1000:
             logging.warning(f"Truncating {key} for patient {patient['HC_Number']}: {patient[key][:50]}...")
