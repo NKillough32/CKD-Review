@@ -37,12 +37,6 @@ jobs:
           pip install -r Dependencies/requirements.txt
           pip install reportlab pyinstaller qrcode
 
-      - name: Debug directory structure
-        shell: cmd
-        run: |
-          dir
-          dir Code
-
       - name: Verify CKD_core.py exists
         shell: cmd
         run: |
@@ -55,12 +49,7 @@ jobs:
 
       - name: Build with PyInstaller (Windows)
         run: |
-          python -m PyInstaller --onefile --name=NephroPath --icon=Dependencies/NephroPath_installer_icon.ico --add-data "Code/CKD_core.py;." --add-data "Code/CKD_pdf_files_new.py;." --hidden-import CKD_pdf_files_new --log-level DEBUG Code/CKD_Master_pdf_exefree.py
-
-      - name: Debug dist directory
-        shell: cmd
-        run: |
-          dir dist
+          python -m PyInstaller --onefile --name=NephroPath --icon=Dependencies/NephroPath_installer_icon.ico --add-data "Code/CKD_core.py;." --add-data "Code/CKD_pdf_files_new.py;." --hidden-import CKD_pdf_files_new Code/CKD_Master_pdf_exefree.py
 
       - name: Move release
         run: |
@@ -118,10 +107,6 @@ jobs:
           pip install -r Dependencies/requirements.txt
           pip install reportlab pyinstaller qrcode
 
-      - name: Debug directory structure
-        run: |
-          ls -R
-
       - name: Verify CKD_core.py exists
         run: |
           if [ ! -f "Code/CKD_core.py" ]; then
@@ -133,11 +118,7 @@ jobs:
 
       - name: Build with PyInstaller (macOS)
         run: |
-          python -m PyInstaller --onefile --name=NephroPath_mac --add-data "Code/CKD_core.py:." --add-data "Code/CKD_pdf_files_new.py:." --hidden-import CKD_pdf_files_new --log-level DEBUG Code/CKD_Master_pdf_exefree.py
-
-      - name: Debug dist directory
-        run: |
-          ls -R dist
+          python -m PyInstaller --onefile --name=NephroPath_mac --add-data "Code/CKD_core.py:." --add-data "Code/CKD_pdf_files_new.py:." --hidden-import CKD_pdf_files_new Code/CKD_Master_pdf_exefree.py
 
       - name: Move release
         run: |
