@@ -417,7 +417,7 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
     surgery_info = load_surgery_info()
     date_columns = [col for col in CKD_review.columns if "Date" in col]
     for date_col in date_columns:
-        CKD_review[date_col] = pd.to_datetime(CKD_review[date_col], errors='coerce').dt.strftime("%Y-%m-%d")
+        CKD_review[date_col] = pd.to_datetime(CKD_review[date_col], errors='coerce').dt.strftime("%d-%m-%Y")
         CKD_review[date_col] = CKD_review[date_col].apply(lambda x: "N/A" if pd.isna(x) or len(str(x)) < 10 else x)
         malformed_dates = CKD_review[date_col][CKD_review[date_col] == "N/A"]
         if not malformed_dates.empty:
@@ -1154,7 +1154,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         canvas.setFillColor(colors.black)
         canvas.drawString(doc.leftMargin, doc.pagesize[1] - doc.topMargin + 20, f"{surgery_info.get('surgery_name', 'Unknown Surgery')}")
         canvas.drawCentredString(doc.pagesize[0]/2, doc.pagesize[1] - doc.topMargin + 20, "Chronic Kidney Disease Review")
-        canvas.drawRightString(doc.pagesize[0] - doc.rightMargin, doc.pagesize[1] - doc.topMargin + 20, f"Date: {datetime.now().strftime('%Y-%m-%d')}")
+        canvas.drawRightString(doc.pagesize[0] - doc.rightMargin, doc.pagesize[1] - doc.topMargin + 20, f"Date: {datetime.now().strftime('%d-%m-%Y')}")
         canvas.line(doc.leftMargin, doc.pagesize[1] - doc.topMargin + 10, doc.pagesize[0] - doc.rightMargin, doc.pagesize[1] - doc.topMargin + 10)
         canvas.setFont(font_name, 8)
         canvas.setFillColor(colors.grey)
