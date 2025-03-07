@@ -435,12 +435,25 @@ def ensure_closed_tags(text):
     return text
 
 def safe_paragraph(text, style, max_length=500, encoding='utf-8'):
+    """
+    Creates a safe paragraph with properly closed HTML tags
+    """
     text_str = str(text)
     if len(text_str) > max_length:
         logging.warning(f"Truncating paragraph: {text_str[:50]}...")
         text_str = text_str[:max_length] + " [Truncated]"
-    text_str = ensure_closed_tags(text_str)
-    return Paragraph(text_str, style, encoding=encoding)
+    
+    # Ensure font tags are properly closed
+    if "<font" in text_str and not text_str.endswith("</font>"):
+        text_str = ensure_closed_tags(text_str)
+    
+    try:
+        return Paragraph(text_str, style, encoding=encoding)
+    except Exception as e:
+        logging.error(f"Error creating paragraph: {str(e)}")
+        # Fallback to plain text if HTML parsing fails
+        clean_text = text_str.replace('<font', '').replace('</font>', '').replace('<b>', '').replace('</b>', '')
+        return Paragraph(clean_text, style, encoding=encoding)
 
 def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
     surgery_info = load_surgery_info()
@@ -918,18 +931,23 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
 
     # Medication Review
     med_title = safe_paragraph("<b>Medication Review</b>", styles['CustomSectionHeader'])
+    current_meds = escape(format_value(patient.get('Medications', 'None')))
     med_data = [
         [med_title],
-        [safe_paragraph(f"• <font face='{font_name_bold}'>Current Medication:</font> "
-                        f"{escape(format_value(patient.get('Medications', 'None')))}", styles['CustomTableText'])],
-        [safe_paragraph(f"• <font face='{font_name_bold}'>Dose Adjustment Medications:</font> "
-                        f"{escape(format_value(patient.get('dose_adjustment_prescribed')))}", styles['CustomTableText'])],
-        [safe_paragraph(f"• <font face='{font_name_bold}'>Contraindicated Medications:</font> "
-                        f"{escape(format_value(patient.get('contraindicated_prescribed')))}", styles['CustomTableText'])],
-        [safe_paragraph(f"• <font face='{font_name_bold}'>Suggested Medications:</font> "
-                        f"{escape(format_value(patient.get('Recommended_Medications', 'None')))}", styles['CustomLongText'])],
-        [safe_paragraph(f"• <font face='{font_name_bold}'>Statin Recommendation:</font> "
-                        f"{escape(format_value(patient.get('Statin_Recommendation')))}", styles['CustomTableText'])]
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Current Medication:</font> {current_meds}", 
+                       styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Dose Adjustment Medications:</font> " + 
+                       f"{escape(format_value(patient.get('dose_adjustment_prescribed', 'N/A')))}", 
+                       styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Contraindicated Medications:</font> " +
+                       f"{escape(format_value(patient.get('contraindicated_prescribed', 'N/A')))}", 
+                       styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Suggested Medications:</font> " +
+                       f"{escape(format_value(patient.get('Recommended_Medications', 'None')))}", 
+                       styles['CustomLongText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Statin Recommendation:</font> " +
+                       f"{escape(format_value(patient.get('Statin_Recommendation', 'N/A')))}", 
+                       styles['CustomTableText'])]
     ]
     med_table = create_boxed_table(
         data=med_data,
