@@ -18,6 +18,7 @@ from html import escape
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from datetime import datetime
+from html.parser import HTMLParser
 
 def format_date(date_str):
     if not date_str or pd.isna(date_str) or date_str == "Missing" or date_str == "N/A":
@@ -414,11 +415,31 @@ def create_boxed_table(data, widths, style, radius=5, padding=6, color=colors.gr
         table.setStyle(TableStyle([('SPLITBYROW', (0, 0), (-1, -1), True)]))
     return table
 
+class HTMLTagChecker(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.tags = []
+
+    def handle_starttag(self, tag, attrs):
+        self.tags.append(tag)
+
+    def handle_endtag(self, tag):
+        if tag in self.tags:
+            self.tags.remove(tag)
+
+def ensure_closed_tags(text):
+    parser = HTMLTagChecker()
+    parser.feed(text)
+    for tag in reversed(parser.tags):
+        text += f"</{tag}>"
+    return text
+
 def safe_paragraph(text, style, max_length=500, encoding='utf-8'):
     text_str = str(text)
     if len(text_str) > max_length:
         logging.warning(f"Truncating paragraph: {text_str[:50]}...")
         text_str = text_str[:max_length] + " [Truncated]"
+    text_str = ensure_closed_tags(text_str)
     return Paragraph(text_str, style, encoding=encoding)
 
 def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
