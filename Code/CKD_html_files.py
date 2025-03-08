@@ -3,6 +3,7 @@ import numpy as np  # type: ignore
 import os
 import shutil
 import warnings
+import logging
 import qrcode
 import pathlib
 from datetime import datetime
@@ -392,3 +393,33 @@ delete_ckd_files(date_folder)             # Delete eGFR_check and CKD_review fil
 print("\nCKD Analysis and Reporting Completed ")
 print(f"All reports and data saved in the folder: {date_folder}")
 print("Please review missing file alerts above if applicable.\n")
+
+# Add analysis script execution
+logging.info("Running statistical analysis...")
+
+try:
+    # Import analysis script
+    from analysis_script import analyze_ckd_data, print_results, save_results
+
+    # Construct filepath for analysis input
+    analysis_input = os.path.join(date_folder, f"data_check_{pd.Timestamp.today().date()}.csv")
+    
+    if os.path.exists(analysis_input):
+        # Run analysis
+        results = analyze_ckd_data(analysis_input)
+        
+        # Save results to file
+        analysis_output = os.path.join(date_folder, f"analysis_results_{pd.Timestamp.today().date()}.txt")
+        save_results(results, analysis_output)
+        
+        # Print results to console
+        print_results(results)
+        
+        logging.info(f"Analysis results saved to: {analysis_output}")
+    else:
+        logging.error(f"Analysis input file not found: {analysis_input}")
+
+except Exception as e:
+    logging.error(f"Error running analysis: {e}")
+
+logging.info("Analysis complete.")
