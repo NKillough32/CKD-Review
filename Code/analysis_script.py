@@ -7,7 +7,7 @@ def analyze_ckd_data(filepath):
     # Read the CSV file
     df = pd.read_csv(filepath)
     
-    # Initialize results dictionary
+    # Initialize results dictionary with existing and new metrics
     stats = {
         'total_patients': len(df),
         'staging_mismatch': 0,
@@ -26,9 +26,24 @@ def analyze_ckd_data(filepath):
         'gender_distribution': {},
         'proteinuria_distribution': {},
         'bp_classification': {},
-        'egfr_stats': {}
+        'egfr_stats': {},
+        'baseline_measures': {
+            'albuminuria_tested': 0,
+            'bp_above_threshold': 0
+        },
+        'outcome_measures': {
+            'rapid_egfr_decline': 0,
+            'acei_arb_prescribed': 0
+        },
+        'process_measures': {
+            'annual_screening_done': 0,
+            'high_risk_reviewed': 0
+        },
+        'balancing_measures': {
+            'hyperkalaemia_cases': 0
+        }
     }
-    
+ 
     for _, row in df.iterrows():
         # Original staging checks
         emis_code = str(row['EMIS_CKD_Code']).lower()
@@ -96,6 +111,32 @@ def analyze_ckd_data(filepath):
             stats['proteinuria_distribution'][row['CKD_ACR']] += 1
         else:
             stats['proteinuria_distribution'][row['CKD_ACR']] = 1
+        
+        if not pd.isna(row['ACR']):
+            stats['baseline_measures']['albuminuria_tested'] += 1
+        if row['Systolic_BP'] > 140 or row['Diastolic_BP'] > 90:
+            stats['baseline_measures']['bp_above_threshold'] += 1
+            
+        # Outcome Measures
+        if row['eGFR_Trend'] == 'Rapid Decline':
+            stats['outcome_measures']['rapid_egfr_decline'] += 1
+        if any(med in str(row['Medications']) for med in ['Ramipril', 'Lisinopril', 'Losartan', 'ACEi', 'ARB']):
+            stats['outcome_measures']['acei_arb_prescribed'] += 1
+            
+        # Process Measures
+        if pd.notna(row['Sample_Date']) and pd.notna(row['Sample_Date1']):
+            last_review = pd.to_datetime(row['Sample_Date'])
+            if (pd.Timestamp.now() - last_review).days <= 365:
+                stats['process_measures']['annual_screening_done'] += 1
+                
+        if row['Priority'] == 'High' and pd.notna(row['Sample_Date']):
+            last_review = pd.to_datetime(row['Sample_Date'])
+            if (pd.Timestamp.now() - last_review).days <= 180:
+                stats['process_measures']['high_risk_reviewed'] += 1
+                
+        # Balancing Measures
+        if row['Potassium_Flag'] == 'Hyperkalemia' or (pd.notna(row['Potassium']) and float(row['Potassium']) > 5.5):
+            stats['balancing_measures']['hyperkalaemia_cases'] += 1
 
     # Count contraindicated medications and dose adjustments (excluding "No contraindications" and "No adjustments needed")
     stats['contraindicated_drugs'] = len(df[df['contraindicated_prescribed'].notna() & 
@@ -118,7 +159,6 @@ def analyze_ckd_data(filepath):
         'min': df['eGFR'].min(),
         'max': df['eGFR'].max()
     }
-
     return stats
 
 def print_results(stats):
@@ -173,6 +213,23 @@ def print_results(stats):
     print("\nPriority Distribution:")
     for priority, count in sorted(stats['priority_distribution'].items()):
         print(f"{priority}: {count} patients ({(count/stats['total_patients']*100):.1f}%)")
+    print("\nQuality Measures:")
+    total = stats['total_patients']
+    
+    print("\nBaseline Measures:")
+    print(f"Patients with albuminuria testing: {stats['baseline_measures']['albuminuria_tested']} ({(stats['baseline_measures']['albuminuria_tested']/total*100):.1f}%)")
+    print(f"Patients with BP >140/90 mmHg: {stats['baseline_measures']['bp_above_threshold']} ({(stats['baseline_measures']['bp_above_threshold']/total*100):.1f}%)")
+    
+    print("\nOutcome Measures:")
+    print(f"Patients with rapid eGFR decline: {stats['outcome_measures']['rapid_egfr_decline']} ({(stats['outcome_measures']['rapid_egfr_decline']/total*100):.1f}%)")
+    print(f"Patients on ACEi/ARB therapy: {stats['outcome_measures']['acei_arb_prescribed']} ({(stats['outcome_measures']['acei_arb_prescribed']/total*100):.1f}%)")
+    
+    print("\nProcess Measures:")
+    print(f"Patients with annual screening: {stats['process_measures']['annual_screening_done']} ({(stats['process_measures']['annual_screening_done']/total*100):.1f}%)")
+    print(f"High-risk patients reviewed 6-monthly: {stats['process_measures']['high_risk_reviewed']} ({(stats['process_measures']['high_risk_reviewed']/total*100):.1f}%)")
+    
+    print("\nBalancing Measures:")
+    print(f"Patients with hyperkalaemia: {stats['balancing_measures']['hyperkalaemia_cases']} ({(stats['balancing_measures']['hyperkalaemia_cases']/total*100):.1f}%)")
 
 def save_results(stats, output_path):
     """Save analysis results to a text file"""
@@ -223,7 +280,25 @@ def save_results(stats, output_path):
         f.write("\nPriority Distribution:\n")
         for priority, count in sorted(stats['priority_distribution'].items()):
             f.write(f"{priority}: {count} patients ({(count/stats['total_patients']*100):.1f}%)\n")
-
+        
+        f.write("\nQuality Measures:\n")
+        total = stats['total_patients']
+        
+        f.write("\nBaseline Measures:\n")
+        f.write(f"Patients with albuminuria testing: {stats['baseline_measures']['albuminuria_tested']} ({(stats['baseline_measures']['albuminuria_tested']/total*100):.1f}%)\n")
+        f.write(f"Patients with BP >140/90 mmHg: {stats['baseline_measures']['bp_above_threshold']} ({(stats['baseline_measures']['bp_above_threshold']/total*100):.1f}%)\n")
+        
+        f.write("\nOutcome Measures:\n")
+        f.write(f"Patients with rapid eGFR decline: {stats['outcome_measures']['rapid_egfr_decline']} ({(stats['outcome_measures']['rapid_egfr_decline']/total*100):.1f}%)\n")
+        f.write(f"Patients on ACEi/ARB therapy: {stats['outcome_measures']['acei_arb_prescribed']} ({(stats['outcome_measures']['acei_arb_prescribed']/total*100):.1f}%)\n")
+        
+        f.write("\nProcess Measures:\n")
+        f.write(f"Patients with annual screening: {stats['process_measures']['annual_screening_done']} ({(stats['process_measures']['annual_screening_done']/total*100):.1f}%)\n")
+        f.write(f"High-risk patients reviewed 6-monthly: {stats['process_measures']['high_risk_reviewed']} ({(stats['process_measures']['high_risk_reviewed']/total*100):.1f}%)\n")
+        
+        f.write("\nBalancing Measures:\n")
+        f.write(f"Patients with hyperkalaemia: {stats['balancing_measures']['hyperkalaemia_cases']} ({(stats['balancing_measures']['hyperkalaemia_cases']/total*100):.1f}%)\n")
+   
 # Update the main block to include saving to file
 if __name__ == "__main__":
     # Get current date in YYYY-MM-DD format
