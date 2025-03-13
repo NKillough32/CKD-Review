@@ -112,7 +112,7 @@ def analyze_ckd_data(filepath):
         else:
             stats['proteinuria_distribution'][row['CKD_ACR']] = 1
         
-        if not pd.isna(row['ACR']):
+        if not pd.isna(row['ACR']) and row['ACR'] != 0.019:
             stats['baseline_measures']['albuminuria_tested'] += 1
         if row['Systolic_BP'] > 140 or row['Diastolic_BP'] > 90:
             stats['baseline_measures']['bp_above_threshold'] += 1
