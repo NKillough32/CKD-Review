@@ -1,0 +1,7 @@
+medication,brand_name,egfr_threshold,ckd_indication,diabetes_indication,bnf_link
+dapagliflozin,Forxiga,15,Yes,Yes,https://bnf.nice.org.uk/drugs/dapagliflozin/
+dapagliflozin,Edistride,15,Yes,Yes,https://bnf.nice.org.uk/drugs/dapagliflozin/
+empagliflozin,Jardiance,30,Yes,Yes,https://bnf.nice.org.uk/drugs/empagliflozin/
+empagliflozin,Synjardy,30,No,Yes,https://bnf.nice.org.uk/drugs/empagliflozin/
+canagliflozin,Invokana,30,No,Yes,https://bnf.nice.org.uk/drugs/canagliflozin/
+ertugliflozin,Steglatro,30,No,Yes,https://bnf.nice.org.uk/drugs/ertugliflozin/

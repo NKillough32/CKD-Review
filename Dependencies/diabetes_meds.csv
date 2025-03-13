@@ -1,0 +1,21 @@
+medication,class,bnf_link
+metformin,Biguanide,https://bnf.nice.org.uk/drugs/metformin/
+gliclazide,Sulfonylurea,https://bnf.nice.org.uk/drugs/gliclazide/
+glimepiride,Sulfonylurea,https://bnf.nice.org.uk/drugs/glimepiride/
+glipizide,Sulfonylurea,https://bnf.nice.org.uk/drugs/glipizide/
+insulin,Insulin,https://bnf.nice.org.uk/drugs/insulin/
+sitagliptin,DPP-4 inhibitor,https://bnf.nice.org.uk/drugs/sitagliptin/
+linagliptin,DPP-4 inhibitor,https://bnf.nice.org.uk/drugs/linagliptin/
+alogliptin,DPP-4 inhibitor,https://bnf.nice.org.uk/drugs/alogliptin/
+vildagliptin,DPP-4 inhibitor,https://bnf.nice.org.uk/drugs/vildagliptin/
+saxagliptin,DPP-4 inhibitor,https://bnf.nice.org.uk/drugs/saxagliptin/
+dulaglutide,GLP-1 agonist,https://bnf.nice.org.uk/drugs/dulaglutide/
+semaglutide,GLP-1 agonist,https://bnf.nice.org.uk/drugs/semaglutide/
+liraglutide,GLP-1 agonist,https://bnf.nice.org.uk/drugs/liraglutide/
+lixisenatide,GLP-1 agonist,https://bnf.nice.org.uk/drugs/lixisenatide/
+dapagliflozin,SGLT2 inhibitor,https://bnf.nice.org.uk/drugs/dapagliflozin/
+empagliflozin,SGLT2 inhibitor,https://bnf.nice.org.uk/drugs/empagliflozin/
+canagliflozin,SGLT2 inhibitor,https://bnf.nice.org.uk/drugs/canagliflozin/
+ertugliflozin,SGLT2 inhibitor,https://bnf.nice.org.uk/drugs/ertugliflozin/
+pioglitazone,Thiazolidinedione,https://bnf.nice.org.uk/drugs/pioglitazone/
+repaglinide,Meglitinide,https://bnf.nice.org.uk/drugs/repaglinide/

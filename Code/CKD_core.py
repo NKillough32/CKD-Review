@@ -500,6 +500,8 @@ drug_adjustment_file = os.path.join(dependencies_path, "drug_adjustment.csv")
 statins_file = os.path.join(dependencies_path, "statins.csv")
 surgery_info_file = os.path.join(dependencies_path, "surgery_information.csv")
 template_dir = dependencies_path  # Remove the redundant "Dependencies" subfolder
+diabetes_meds_file = os.path.join(dependencies_path, "diabetes_meds.csv")
+sglt2_inhibitors_file = os.path.join(dependencies_path, "sglt2_inhibitors.csv")
 
 # Output paths
 CKD_review_file = os.path.join(os.getcwd(), "CKD_review.csv")
@@ -512,7 +514,9 @@ check_files_exist(
     contraindicated_drugs_file, 
     drug_adjustment_file,
     statins_file,
-    surgery_info_file
+    surgery_info_file,
+    diabetes_meds_file,
+    sglt2_inhibitors_file
 )
 
 print("Starting CKD Data Analysis Pipeline....")
@@ -848,6 +852,82 @@ CKD_review.loc[:,'Statin_Recommendation'] = CKD_review.apply(
 
 CKD_review.loc[:,'Recommended_Medications'] = CKD_review.apply(
     lambda row: check_recommendations(row['Medications'], recommended_medications(row['eGFR'])), 
+    axis=1
+)
+
+#SGLT2 Inhibitor Recommendation
+# First, add this function after your other classification functions
+def recommend_sglt2(row):
+    """
+    Determine SGLT2 inhibitor recommendations based on NICE NG203 guidelines.
+    """
+    # Check if we have the required data
+    if pd.isna(row['eGFR']) or pd.isna(row['ACR']):
+        return "Unable to determine - Missing data"
+
+    # Base conditions that would prevent recommendation
+    if row['eGFR'] < 15:
+        return "Not recommended - eGFR too low"
+    
+    # Read diabetes medications from file
+    diabetes_meds = []
+    with open(diabetes_meds_file, 'r') as file:
+        reader = csv.DictReader(file)
+        diabetes_meds = [row['medication'].lower() for row in reader]
+    
+    # Check diabetes status
+    has_diabetes = (
+        any(med.lower() in str(row['Medications']).lower() for med in diabetes_meds) or 
+        (pd.notna(row['HbA1c']) and row['HbA1c'] > 48)  # HbA1c > 48 mmol/mol indicates diabetes
+    )
+
+    # Check ACR thresholds based on diabetes status
+    meets_acr_threshold = (
+        (has_diabetes and row['ACR'] >= 3) or  # Type 2 diabetes threshold
+        (not has_diabetes and row['ACR'] >= 22.6)  # Non-diabetes threshold
+    )
+
+    if not meets_acr_threshold:
+        return "Not indicated based on ACR threshold"
+
+    # Specific recommendations based on eGFR
+    if row['eGFR'] >= 30:
+        return "Recommend SGLT2i (dapagliflozin, empagliflozin, or canagliflozin)"
+    elif row['eGFR'] >= 15:
+        return "Consider dapagliflozin only"
+    else:
+        return "Not recommended - eGFR too low"
+
+# Then, add this where you have the #SGLT2 Inhibitor Recommendation comment
+CKD_review.loc[:,'SGLT2i_Recommendation'] = CKD_review.apply(recommend_sglt2, axis=1)
+
+# Add current SGLT2i status check (add this after the above line)
+def get_sglt2_medications():
+    """Read SGLT2 inhibitors from dependency file"""
+    medications = []
+    with open(sglt2_inhibitors_file, 'r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            medications.extend([row['medication'].lower(), row['brand_name'].lower()])
+    return medications
+
+# Update the status check
+CKD_review.loc[:,'Current_SGLT2i_Status'] = CKD_review['Medications'].apply(
+    lambda x: "On SGLT2i" if any(med in str(x).lower() for med in get_sglt2_medications())
+    else "Not on SGLT2i"
+)
+
+# Add combined assessment
+CKD_review.loc[:,'SGLT2i_Action_Needed'] = CKD_review.apply(
+    lambda row: (
+        "Continue current SGLT2i" if row['Current_SGLT2i_Status'] == "On SGLT2i" 
+            and "recommend" in row['SGLT2i_Recommendation'].lower()
+        else "Consider initiating SGLT2i" if row['Current_SGLT2i_Status'] == "Not on SGLT2i" 
+            and "recommend" in row['SGLT2i_Recommendation'].lower()
+        else "Review current SGLT2i" if row['Current_SGLT2i_Status'] == "On SGLT2i" 
+            and "not recommended" in row['SGLT2i_Recommendation'].lower()
+        else "No action needed"
+    ), 
     axis=1
 )
 
