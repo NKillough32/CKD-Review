@@ -37,19 +37,29 @@ jobs:
           pip install -r Dependencies/requirements.txt
           pip install reportlab pyinstaller qrcode
 
-      - name: Verify CKD_core.py exists
+      - name: Verify required files exist
         shell: cmd
         run: |
           if not exist "Code\CKD_core.py" (
             echo "CKD_core.py not found!"
             exit 1
-          ) else (
-            echo "CKD_core.py found."
           )
+          if not exist "Dependencies\version_info.txt" (
+            echo "version_info.txt not found!"
+            exit 1
+          )
+          echo "All required files found."
 
       - name: Build with PyInstaller (Windows)
         run: |
-          python -m PyInstaller --onefile --name=NephroPath --icon=Dependencies/NephroPath_installer_icon.ico --add-data "Code/CKD_core.py;." --add-data "Code/CKD_pdf_files_new.py;." --hidden-import CKD_pdf_files_new Code/CKD_Master_pdf_exefree.py
+          python -m PyInstaller --onefile 
+          --name=NephroPath 
+          --icon=Dependencies/NephroPath_installer_icon.ico 
+          --version-file=Dependencies/version_info.txt `
+          --add-data "Code/CKD_core.py;." 
+          --add-data "Code/CKD_pdf_files_new.py;." 
+          --hidden-import CKD_pdf_files_new 
+          Code/CKD_Master_pdf_exefree.py
 
       - name: Move release
         run: |
@@ -87,7 +97,7 @@ jobs:
 
   build-macos:
     runs-on: macos-latest
-    needs: build-windows  # Ensure this job runs after build-windows
+    needs: build-windows  
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
