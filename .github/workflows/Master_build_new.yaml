@@ -52,13 +52,13 @@ jobs:
 
       - name: Build with PyInstaller (Windows)
         run: |
-          python -m PyInstaller --onefile 
-          --name=NephroPath 
-          --icon=Dependencies/NephroPath_installer_icon.ico 
+          python -m PyInstaller --onefile ` 
+          --name=NephroPath `
+          --icon=Dependencies/NephroPath_installer_icon.ico `
           --version-file=Dependencies/version_info.txt `
-          --add-data "Code/CKD_core.py;." 
-          --add-data "Code/CKD_pdf_files_new.py;." 
-          --hidden-import CKD_pdf_files_new 
+          --add-data "Code/CKD_core.py;." `
+          --add-data "Code/CKD_pdf_files_new.py;." `
+          --hidden-import CKD_pdf_files_new `
           Code/CKD_Master_pdf_exefree.py
 
       - name: Move release
