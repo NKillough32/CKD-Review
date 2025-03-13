@@ -20,6 +20,15 @@ from reportlab.pdfbase.ttfonts import TTFont
 from datetime import datetime
 from html.parser import HTMLParser
 
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler()]
+)
+
+warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
+
 def format_date(date_str):
     if not date_str or pd.isna(date_str) or date_str == "Missing" or date_str == "N/A":
         return "N/A"
@@ -35,15 +44,6 @@ def format_date(date_str):
     except (ValueError, TypeError) as e:
         logging.warning(f"Could not parse date: {date_str}, Error: {str(e)}")
         return "N/A"
-
-# Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler()]
-)
-
-warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
 
 # Update the path setup near the top of the file
 if getattr(sys, 'frozen', False):
@@ -409,9 +409,9 @@ def create_boxed_table(data, widths, style, radius=5, padding=6, color=colors.gr
     )
     table.setStyle(style)
     table_width, table_height = table.wrap(widths[0], 650)
-    logging.info(f"Table height: {table_height} for data: {[str(item)[:50] for item in data]}")
+    #logging.info(f"Table height: {table_height} for data: {[str(item)[:50] for item in data]}")
     if table_height > 650 or table_height < 0:
-        logging.warning(f"Table height {table_height} invalid, forcing split. Full data: {[str(item)[:100] for item in data]}")
+        #logging.warning(f"Table height {table_height} invalid, forcing split. Full data: {[str(item)[:100] for item in data]}")
         table.setStyle(TableStyle([('SPLITBYROW', (0, 0), (-1, -1), True)]))
     return table
 
@@ -625,25 +625,25 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
                         f"<font color='#{acr_color.hexval()[2:8]}'>{escape(acr_value)} mg/mmol</font> | "
                         f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date1')))}", styles['CustomTableText'])],
         [safe_paragraph(f"• <font face='{font_name_bold}'>Creatinine:</font>", styles['CustomTableText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;▪ <font face='{font_name_bold}'>Current:</font> "
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;· <font face='{font_name_bold}'>Current:</font> "
                         f"<font color='#{creatinine_color.hexval()[2:8]}'>{escape(creatinine_value)} µmol/L</font> | "
                         f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date')))}", styles['CustomTableText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;▪ <font face='{font_name_bold}'>3 Months Prior:</font> "
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;· <font face='{font_name_bold}'>3 Months Prior:</font> "
                         f"{escape(format_value(patient.get('Creatinine_3m_prior')))} µmol/L | "
                         f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date2')))}", styles['CustomTableText'])],
         [safe_paragraph(f"• <font face='{font_name_bold}'>eGFR:</font>", styles['CustomTableText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;▪ <font face='{font_name_bold}'>Current:</font> "
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;· <font face='{font_name_bold}'>Current:</font> "
                         f"<font color='#{egfr_color.hexval()[2:8]}'>{escape(egfr_value)} mL/min/1.73m²</font> | "
                         f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date')))}", styles['CustomTableText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;▪ <font face='{font_name_bold}'>3 Months Prior:</font> "
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;· <font face='{font_name_bold}'>3 Months Prior:</font> "
                         f"{escape(format_value(patient.get('eGFR_3m_prior')))} mL/min/1.73m² | "
                         f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date2')))}", styles['CustomTableText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;▪ <font face='{font_name_bold}'>eGFR Trend:</font> "
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;· <font face='{font_name_bold}'>eGFR Trend:</font> "
                         f"{escape(format_value(patient.get('eGFR_Trend')))}", styles['CustomTableText'])],
         [Spacer(1, 0.025 * inch)],
         [safe_paragraph("The eGFR trend is assessed by comparing the most recent value with the reading from three months prior. The change is adjusted to an annualized rate based on the time interval between measurements.", styles['CustomSmallTextItalics'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;▪ <font face='{font_name_bold}'>Rapid Decline:</font> A decrease of more than 5 mL/min/1.73m² per year or a relative drop of 25% or more.", styles['CustomSmallText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;▪ <font face='{font_name_bold}'>Stable:</font> No significant decline.", styles['CustomSmallText'])],
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;· <font face='{font_name_bold}'>Rapid Decline:</font> A decrease of more than 5 mL/min/1.73m² per year or a relative drop of 25% or more.", styles['CustomSmallText'])],
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;· <font face='{font_name_bold}'>Stable:</font> No significant decline.", styles['CustomSmallText'])],
         [safe_paragraph("A rapid decline may indicate progressive CKD, requiring closer monitoring or intervention.", styles['CustomSmallTextItalics'])],
         [Spacer(1, 0.025 * inch)]]
 
@@ -676,9 +676,9 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         [bp_title],
         [safe_paragraph(f"• <font face='{font_name_bold}'>Classification:</font> {escape(format_value(patient.get('BP_Classification')))} | "
                         f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date3')))}", styles['CustomTableText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;▪ <font face='{font_name_bold}'>Systolic:</font> "
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;· <font face='{font_name_bold}'>Systolic:</font> "
                         f"<font color='#{bp_color_sys.hexval()[2:8]}'>{escape(bp_value_sys)} mmHg</font>", styles['CustomTableText'])],
-        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;▪ <font face='{font_name_bold}'>Diastolic:</font> "
+        [safe_paragraph(f"&nbsp;&nbsp;&nbsp;&nbsp;· <font face='{font_name_bold}'>Diastolic:</font> "
                         f"<font color='#{bp_color_dia.hexval()[2:8]}'>{escape(bp_value_dia)} mmHg</font>", styles['CustomTableText'])],
         [safe_paragraph(f"• <font face='{font_name_bold}'>Target BP:</font> {escape(format_value(patient.get('BP_Target')))} | "
                         f"<font face='{font_name_bold}'>BP Status:</font> {escape(format_value(patient.get('BP_Flag')))}", styles['CustomTableText'])]
