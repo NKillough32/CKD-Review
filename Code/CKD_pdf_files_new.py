@@ -947,7 +947,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
                        styles['CustomLongText'])],
         [safe_paragraph(f"• <font face='{font_name_bold}'>Statin Recommendation:</font> " +
                        f"{escape(format_value(patient.get('Statin_Recommendation', 'N/A')))}", 
-                       styles['CustomTableText'])]
+                       styles['CustomTableText'])],
         [safe_paragraph(f"• <font face='{font_name_bold}'>SGLT2i Recommendation:</font> " +
                        f"{escape(format_value(patient.get('SGLT2i_Recommendation', 'N/A')))}", 
                        styles['CustomTableText'])]
