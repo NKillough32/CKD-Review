@@ -935,22 +935,22 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
     med_data = [
         [med_title],
         [safe_paragraph(f"• <font face='{font_name_bold}'>Current Medication:</font> {current_meds}", 
-                       styles['CustomTableText'])],
+                    styles['CustomTableText'])],
         [safe_paragraph(f"• <font face='{font_name_bold}'>Dose Adjustment Medications:</font> " + 
-                       f"{escape(format_value(patient.get('dose_adjustment_prescribed', 'N/A')))}", 
-                       styles['CustomTableText'])],
+                    escape(format_value(patient.get('dose_adjustment_prescribed', 'N/A'))), 
+                    styles['CustomTableText'])],
         [safe_paragraph(f"• <font face='{font_name_bold}'>Contraindicated Medications:</font> " +
-                       f"{escape(format_value(patient.get('contraindicated_prescribed', 'N/A')))}", 
-                       styles['CustomTableText'])],
+                    escape(format_value(patient.get('contraindicated_prescribed', 'N/A'))), 
+                    styles['CustomTableText'])],
         [safe_paragraph(f"• <font face='{font_name_bold}'>Suggested Medications:</font> " +
-                       f"{escape(format_value(patient.get('Recommended_Medications', 'None')))}", 
-                       styles['CustomLongText'])],
+                    escape(format_value(patient.get('Recommended_Medications', 'None'))), 
+                    styles['CustomLongText'])],
         [safe_paragraph(f"• <font face='{font_name_bold}'>Statin Recommendation:</font> " +
-                       f"{escape(format_value(patient.get('Statin_Recommendation', 'N/A')))}", 
-                       styles['CustomTableText'])],
+                    escape(format_value(patient.get('Statin_Recommendation', 'N/A'))), 
+                    styles['CustomTableText'])],
         [safe_paragraph(f"• <font face='{font_name_bold}'>SGLT2i Recommendation:</font> " +
-                       f"{escape(format_value(patient.get('SGLT2i_Recommendation', 'N/A')))}", 
-                       styles['CustomTableText'])]
+                    escape(format_value(patient.get('SGLT2i_Recommendation', 'N/A'))), 
+                    styles['CustomTableText'])]
     ]
     med_table = create_boxed_table(
         data=med_data,
