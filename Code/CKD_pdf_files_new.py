@@ -457,25 +457,37 @@ def ensure_closed_tags(text):
         text += f"</{tag}>"
     return text
 
+def truncate_html_text(text, max_length=500):
+    """
+    Truncates text safely without cutting off in the middle of an HTML tag.
+    """
+    if len(text) <= max_length:
+        return text  # No truncation needed
+
+    truncated = text[:max_length]  # Truncate at max_length
+
+    # Prevent breaking in the middle of a tag
+    if "<" in truncated and ">" not in truncated:
+        truncated = truncated.rsplit("<", 1)[0]  # Remove last incomplete tag
+
+    truncated += " [Truncated]"  # Append truncation marker
+
+    return truncated
+
 def safe_paragraph(text, style, max_length=500, encoding='utf-8'):
     """
-    Creates a safe paragraph with properly closed HTML tags
+    Creates a safe paragraph with properly closed HTML tags.
     """
     text_str = str(text).strip()
-    
-    # Truncate long text
-    if len(text_str) > max_length:
-        logging.warning(f"Truncating paragraph: {text_str[:50]}...")
-        text_str = text_str[:max_length] + " [Truncated]"
-    
-    # Ensure font and bold tags are properly closed
+    text_str = truncate_html_text(text_str, max_length)  # Ensure safe truncation
+
+    # Ensure tags are properly closed
     text_str = ensure_closed_tags(text_str)
 
     try:
         return Paragraph(text_str, style, encoding=encoding)
     except Exception as e:
         logging.error(f"Error creating paragraph: {str(e)}")
-        # Fallback to plain text if HTML parsing fails
         clean_text = re.sub(r"</?font[^>]*>", "", text_str)  # Remove all <font> tags
         clean_text = re.sub(r"</?b>", "", clean_text)  # Remove <b> tags
         return Paragraph(clean_text, style, encoding=encoding)
