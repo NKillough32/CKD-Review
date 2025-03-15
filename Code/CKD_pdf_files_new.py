@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 import warnings
+import re
 import sys
 import logging
 import numpy as np
@@ -28,6 +29,28 @@ logging.basicConfig(
 )
 
 warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
+
+def ensure_closed_tags(text):
+    """
+    Ensures that font and bold tags are properly closed.
+    Uses regex to detect missing closing tags.
+    """
+    open_tags = []
+    tag_pattern = re.compile(r"<(/?)(b|font)(?:\s[^>]*)?>")
+
+    for match in tag_pattern.finditer(text):
+        tag, tag_name = match.groups()
+        if not tag:  # Opening tag
+            open_tags.append(tag_name)
+        elif open_tags and open_tags[-1] == tag_name:  # Matching closing tag
+            open_tags.pop()
+
+    # Close any unclosed tags
+    for tag in reversed(open_tags):
+        text += f"</{tag}>"
+
+    return text
+
 
 def format_date(date_str):
     if not date_str or pd.isna(date_str) or date_str == "Missing" or date_str == "N/A":
@@ -438,21 +461,23 @@ def safe_paragraph(text, style, max_length=500, encoding='utf-8'):
     """
     Creates a safe paragraph with properly closed HTML tags
     """
-    text_str = str(text)
+    text_str = str(text).strip()
+    
+    # Truncate long text
     if len(text_str) > max_length:
         logging.warning(f"Truncating paragraph: {text_str[:50]}...")
         text_str = text_str[:max_length] + " [Truncated]"
     
-    # Ensure font tags are properly closed
-    if "<font" in text_str and not text_str.endswith("</font>"):
-        text_str = ensure_closed_tags(text_str)
-    
+    # Ensure font and bold tags are properly closed
+    text_str = ensure_closed_tags(text_str)
+
     try:
         return Paragraph(text_str, style, encoding=encoding)
     except Exception as e:
         logging.error(f"Error creating paragraph: {str(e)}")
         # Fallback to plain text if HTML parsing fails
-        clean_text = text_str.replace('<font', '').replace('</font>', '').replace('<b>', '').replace('</b>', '')
+        clean_text = re.sub(r"</?font[^>]*>", "", text_str)  # Remove all <font> tags
+        clean_text = re.sub(r"</?b>", "", clean_text)  # Remove <b> tags
         return Paragraph(clean_text, style, encoding=encoding)
 
 def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
