@@ -104,3 +104,19 @@ This process aids in early identification and proactive management of CKD cases,
 - Intervention priorities
 
 This tool supports systematic CKD management, ensuring adherence to clinical guidelines while enabling efficient patient care.
+
+### Output Folder Structure
+Reports are organized in the following hierarchy:
+```
+Patient_Summaries/
+└── YYYY-MM-DD/              # Current date
+    ├── Review_Stage1_2_ACR3/        # Urgent reviews for Stage 1-2 with high ACR
+    ├── Review_Stage3_5_eGFR30/      # Urgent reviews for Stage 3-5 with low eGFR
+    ├── Review_Stage3_5_ACR30/       # Urgent reviews for Stage 3-5 with high ACR
+    ├── Review_Stage3_5_Risk5/       # Urgent reviews for Stage 3-5 with high risk
+    ├── Review_eGFR_Unavailable/     # Missing eGFR data
+    ├── No_Immediate_Review/         # No urgent action needed
+    ├── General_Review_Stage1_2/     # Routine reviews for Stage 1-2
+    ├── General_Review_Stage3_5/     # Routine reviews for Stage 3-5
+    └── General_Review_Unknown/      # Unknown CKD stage
+    
