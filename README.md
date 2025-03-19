@@ -109,7 +109,7 @@ This tool supports systematic CKD management, ensuring adherence to clinical gui
 Reports are organized in the following hierarchy:
 ```
 Patient_Summaries/
-└── YYYY-MM-DD/              # Current date
+└── YYYY-MM-DD/                      # Current date
     ├── Review_Stage1_2_ACR3/        # Urgent reviews for Stage 1-2 with high ACR
     ├── Review_Stage3_5_eGFR30/      # Urgent reviews for Stage 3-5 with low eGFR
     ├── Review_Stage3_5_ACR30/       # Urgent reviews for Stage 3-5 with high ACR
