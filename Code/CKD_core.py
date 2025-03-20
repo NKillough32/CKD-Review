@@ -855,52 +855,6 @@ CKD_review.loc[:,'Recommended_Medications'] = CKD_review.apply(
     axis=1
 )
 
-#SGLT2 Inhibitor Recommendation
-# First, add this function after your other classification functions
-def recommend_sglt2(row):
-    """
-    Determine SGLT2 inhibitor recommendations based on NICE NG203 guidelines.
-    """
-    # Check if we have the required data
-    if pd.isna(row['eGFR']) or pd.isna(row['ACR']):
-        return "Unable to determine - Missing data"
-
-    # Base conditions that would prevent recommendation
-    if row['eGFR'] < 15:
-        return "Not recommended - eGFR too low"
-    
-    # Read diabetes medications from file
-    diabetes_meds = []
-    with open(diabetes_meds_file, 'r') as file:
-        reader = csv.DictReader(file)
-        diabetes_meds = [row['medication'].lower() for row in reader]
-    
-    # Check diabetes status
-    has_diabetes = (
-        any(med.lower() in str(row['Medications']).lower() for med in diabetes_meds) or 
-        (pd.notna(row['HbA1c']) and row['HbA1c'] > 48)  # HbA1c > 48 mmol/mol indicates diabetes
-    )
-
-    # Check ACR thresholds based on diabetes status
-    meets_acr_threshold = (
-        (has_diabetes and row['ACR'] >= 3) or  # Type 2 diabetes threshold
-        (not has_diabetes and row['ACR'] >= 22.6)  # Non-diabetes threshold
-    )
-
-    if not meets_acr_threshold:
-        return "Not indicated based on ACR threshold"
-
-    # Specific recommendations based on eGFR
-    if row['eGFR'] >= 30:
-        return "Recommend SGLT2i (dapagliflozin, empagliflozin, or canagliflozin)"
-    elif row['eGFR'] >= 15:
-        return "Consider dapagliflozin only"
-    else:
-        return "Not recommended - eGFR too low"
-
-# Then, add this where you have the #SGLT2 Inhibitor Recommendation comment
-CKD_review.loc[:,'SGLT2i_Recommendation'] = CKD_review.apply(recommend_sglt2, axis=1)
-
 # Add current SGLT2i status check (add this after the above line)
 def get_sglt2_medications():
     """Read SGLT2 inhibitors from dependency file"""
@@ -911,25 +865,140 @@ def get_sglt2_medications():
             medications.extend([row['medication'].lower(), row['brand_name'].lower()])
     return medications
 
+def check_sglt2i_contraindications(row):
+    """
+    Check for SGLT2i contraindications based on eGFR and medications.
+    """
+    contraindications = []
+    
+    if pd.isna(row['eGFR']):
+        return "Unable to assess - missing eGFR"
+        
+    if row['eGFR'] < 15:
+        contraindications.append("eGFR < 15")
+    elif row['eGFR'] < 25 and "dapagliflozin" not in str(row['Medications']).lower():
+        contraindications.append("eGFR 15-25: only dapagliflozin suitable")
+    
+    diabetes_meds = get_diabetes_medications()
+    has_diabetes = (
+        any(med in str(row['Medications']).lower() for med in diabetes_meds) or 
+        (pd.notna(row['HbA1c']) and row['HbA1c'] > 48)
+    )
+    
+    if not has_diabetes and row['eGFR'] >= 30:
+        contraindications.append("No diabetes diagnosis")
+        
+    return ", ".join(contraindications) if contraindications else "No contraindications"
+
+def get_diabetes_medications():
+    """
+    Read diabetes medications from dependency file.
+    Returns list of medication names and brand names in lowercase.
+    """
+    medications = []
+    try:
+        with open(diabetes_meds_file, 'r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                medications.extend([
+                    row['medication'].lower(),
+                    row['brand_name'].lower() if row['brand_name'] else ''
+                ])
+        return list(set(filter(None, medications)))
+    except Exception as e:
+        print(f"Error reading diabetes medications file: {e}")
+        return []
+
+# Update the recommend_sglt2 function
+def recommend_sglt2(row):
+    """
+    Determine SGLT2 inhibitor recommendations based on NICE NG203 guidelines.
+    """
+    # Check for missing data
+    if pd.isna(row['eGFR']) or pd.isna(row['ACR']):
+        return "Unable to determine - Missing data"
+
+    # Check contraindications
+    contraindications = check_sglt2i_contraindications(row)
+    if contraindications != "No contraindications":
+        return f"Not recommended - {contraindications}"
+    
+    # Get diabetes status using file-based list
+    diabetes_meds = get_diabetes_medications()
+    has_diabetes = (
+        any(med in str(row['Medications']).lower() for med in diabetes_meds) or 
+        (pd.notna(row['HbA1c']) and row['HbA1c'] > 48)
+    )
+
+    # Check ACR thresholds
+    meets_acr_threshold = (
+        (has_diabetes and row['ACR'] >= 3) or
+        (not has_diabetes and row['ACR'] >= 22.6)
+    )
+
+    if not meets_acr_threshold:
+        return "Not indicated based on ACR threshold"
+
+    # eGFR-based recommendations
+    if row['eGFR'] >= 30:
+        current_sglt2i = check_current_sglt2i(row['Medications'])
+        if current_sglt2i:
+            return f"Continue current SGLT2i ({current_sglt2i})"
+        return "Recommend SGLT2i (dapagliflozin, empagliflozin, or canagliflozin)"
+    elif row['eGFR'] >= 15:
+        if "dapagliflozin" in str(row['Medications']).lower():
+            return "Continue dapagliflozin"
+        return "Consider dapagliflozin only"
+    else:
+        return "Not recommended - eGFR too low"
+
+def check_current_sglt2i(medications):
+    """
+    Check which SGLT2i the patient is currently on.
+    """
+    if pd.isna(medications):
+        return None
+        
+    medications_lower = str(medications).lower()
+    sglt2i_meds = get_sglt2_medications()
+    
+    current = []
+    for med in sglt2i_meds:
+        if med in medications_lower:
+            current.append(med)
+            
+    return ", ".join(current) if current else None
+
 # Update the status check
 CKD_review.loc[:,'Current_SGLT2i_Status'] = CKD_review['Medications'].apply(
     lambda x: "On SGLT2i" if any(med in str(x).lower() for med in get_sglt2_medications())
     else "Not on SGLT2i"
 )
 
-# Add combined assessment
+# Then, add this where you have the #SGLT2 Inhibitor Recommendation comment
+CKD_review.loc[:,'SGLT2i_Recommendation'] = CKD_review.apply(recommend_sglt2, axis=1)
+
+# Add these to the CKD_review DataFrame processing
+CKD_review.loc[:,'SGLT2i_Contraindications'] = CKD_review.apply(check_sglt2i_contraindications, axis=1)
+CKD_review.loc[:,'Current_SGLT2i'] = CKD_review['Medications'].apply(check_current_sglt2i)
+
+# Update the SGLT2i action assessment
 CKD_review.loc[:,'SGLT2i_Action_Needed'] = CKD_review.apply(
     lambda row: (
         "Continue current SGLT2i" if row['Current_SGLT2i_Status'] == "On SGLT2i" 
-            and "recommend" in row['SGLT2i_Recommendation'].lower()
+            and "recommend" in str(row['SGLT2i_Recommendation']).lower()
+        else "Switch to dapagliflozin" if row['Current_SGLT2i_Status'] == "On SGLT2i" 
+            and "dapagliflozin only" in str(row['SGLT2i_Recommendation']).lower()
         else "Consider initiating SGLT2i" if row['Current_SGLT2i_Status'] == "Not on SGLT2i" 
-            and "recommend" in row['SGLT2i_Recommendation'].lower()
-        else "Review current SGLT2i" if row['Current_SGLT2i_Status'] == "On SGLT2i" 
-            and "not recommended" in row['SGLT2i_Recommendation'].lower()
+            and "recommend" in str(row['SGLT2i_Recommendation']).lower()
+        else "Review/Stop current SGLT2i" if row['Current_SGLT2i_Status'] == "On SGLT2i" 
+            and "not recommended" in str(row['SGLT2i_Recommendation']).lower()
         else "No action needed"
     ), 
     axis=1
 )
+
+
 
 # HbA1c Target
 CKD_review.loc[:,'HbA1c_Target'] = CKD_review['HbA1c'].apply(
@@ -993,3 +1062,91 @@ print(f"Patients with Contraindications: {len(CKD_review[CKD_review['contraindic
 # Save output to CSV
 output_file_name = f"eGFR_check_{pd.Timestamp.today().date()}.csv"
 CKD_review.to_csv(output_file_name, index=False)
+
+def check_ckd_changes(current_df):
+    """
+    Check for new CKD patients and staging changes by comparing with most recent historical data.
+    
+    Args:
+        current_df: Current DataFrame with CKD data
+    
+    Returns:
+        tuple: (new_patients_df, changed_staging_df)
+    """
+    # Get the Patient_Summaries directory
+    summaries_dir = os.path.join(os.getcwd(), "Patient_Summaries")
+    if not os.path.exists(summaries_dir):
+        print("No historical data found - Patient_Summaries directory doesn't exist")
+        return pd.DataFrame(), pd.DataFrame()
+
+    # Get all date folders
+    date_folders = [d for d in os.listdir(summaries_dir) 
+                   if os.path.isdir(os.path.join(summaries_dir, d))
+                   and d != datetime.now().strftime("%Y-%m-%d")]
+    
+    if not date_folders:
+        print("No historical data folders found")
+        return pd.DataFrame(), pd.DataFrame()
+
+    # Get most recent date folder
+    most_recent = max(date_folders)
+    historical_file = os.path.join(summaries_dir, most_recent, f"data_check_{most_recent}.csv")
+    
+    if not os.path.exists(historical_file):
+        print(f"No data check file found in {most_recent} folder")
+        return pd.DataFrame(), pd.DataFrame()
+
+    try:
+        # Read historical data
+        historical_df = pd.read_csv(historical_file)
+        
+        # Ensure both DataFrames have required columns
+        required_cols = ['HC_Number', 'CKD_Stage']
+        if not all(col in current_df.columns for col in required_cols) or \
+           not all(col in historical_df.columns for col in required_cols):
+            print("Required columns missing from data")
+            return pd.DataFrame(), pd.DataFrame()
+
+        # Convert HC_Number to same type in both DataFrames
+        current_df['HC_Number'] = pd.to_numeric(current_df['HC_Number'], errors='coerce')
+        historical_df['HC_Number'] = pd.to_numeric(historical_df['HC_Number'], errors='coerce')
+
+        # Find new patients (in current but not in historical)
+        new_patients = current_df[
+            ~current_df['HC_Number'].isin(historical_df['HC_Number']) &
+            (current_df['CKD_Stage'].notna()) &
+            (current_df['CKD_Stage'] != "Normal Function")
+        ]
+
+        # Find patients with changed staging
+        merged_df = current_df.merge(
+            historical_df[['HC_Number', 'CKD_Stage']], 
+            on='HC_Number', 
+            how='inner',
+            suffixes=('_current', '_historical')
+        )
+        
+        changed_staging = merged_df[
+            (merged_df['CKD_Stage_current'] != merged_df['CKD_Stage_historical']) &
+            (merged_df['CKD_Stage_current'] != "Normal Function")
+        ]
+
+        # Save results to separate CSV files
+        timestamp = datetime.now().strftime("%Y-%m-%d")
+        if not new_patients.empty:
+            new_patients.to_csv(f'new_ckd_patients_{timestamp}.csv', index=False)
+            print(f"Found {len(new_patients)} new CKD patients")
+        
+        if not changed_staging.empty:
+            changed_staging.to_csv(f'changed_ckd_staging_{timestamp}.csv', index=False)
+            print(f"Found {len(changed_staging)} patients with changed CKD staging")
+
+        return new_patients, changed_staging
+
+    except Exception as e:
+        print(f"Error processing historical data: {str(e)}")
+        return pd.DataFrame(), pd.DataFrame()
+
+# Add this at the end of your main processing code, just before saving the output
+print("\nChecking for CKD staging changes...")
+new_patients, changed_staging = check_ckd_changes(CKD_review)
