@@ -162,6 +162,8 @@ def move_ckd_files(date_folder):
     data_file = f"data_check_{pd.Timestamp.today().date()}.csv"
     ckd_review_file = "CKD_review.csv"
     missing_KFRE_file = "missing_data_subjects.csv"
+    new_ckd_file = f"new_ckd_patients_{pd.Timestamp.today().date()}.csv"
+    changed_staging_file = f"changed_ckd_staging_{pd.Timestamp.today().date()}.csv"
 
     # Construct source and destination paths
     egfr_source = os.path.join(working_base_path, egfr_file)
@@ -194,7 +196,9 @@ def move_ckd_files(date_folder):
         (data_source, data_destination, data_file),
         (egfr_source, egfr_destination, egfr_file),
         (ckd_source, ckd_destination, ckd_review_file),
-        (missing_source, missing_destination, missing_KFRE_file)
+        (missing_source, missing_destination, missing_KFRE_file),
+        (os.path.join(working_base_path, new_ckd_file), os.path.join(date_folder, new_ckd_file), new_ckd_file),
+        (os.path.join(working_base_path, changed_staging_file), os.path.join(date_folder, changed_staging_file), changed_staging_file)
     ]:
         try:
             if os.path.exists(src):
