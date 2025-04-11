@@ -20,6 +20,8 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from datetime import datetime
 from html.parser import HTMLParser
+from xml.sax.saxutils import escape as xml_escape
+from html import escape as html_escape
 
 # Setup logging
 logging.basicConfig(
@@ -971,8 +973,8 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
     current_meds = escape(format_value(patient.get('Medications', 'None')))
     med_data = [
         [med_title],
-        [safe_paragraph(f"• <font face='{font_name_bold}'>Current Medication:</font> {current_meds}", 
-                    styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Current Medication:</font> {xml_escape(format_value(patient.get('Medications', 'None')))}", 
+                styles['CustomTableText'])],
         [safe_paragraph(f"• <font face='{font_name_bold}'>Dose Adjustment Medications:</font> " + 
                     escape(format_value(patient.get('dose_adjustment_prescribed', 'N/A'))), 
                     styles['CustomTableText'])],
