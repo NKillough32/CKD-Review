@@ -14,7 +14,7 @@ import pdfkit
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler()]
+    handlers=[logging.StreamHandler(), logging.FileHandler("windows_core_generation.log")]
 )
 
 # Configuration class for centralizing settings

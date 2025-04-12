@@ -519,8 +519,6 @@ check_files_exist(
     sglt2_inhibitors_file
 )
 
-print("Starting CKD Data Analysis Pipeline....")
-
 # Load the data
 creatinine = pd.read_csv(creatinine_file) if os.path.exists(creatinine_file) else pd.DataFrame()
 CKD_check = pd.read_csv(CKD_check_file) if os.path.exists(CKD_check_file) else pd.DataFrame()

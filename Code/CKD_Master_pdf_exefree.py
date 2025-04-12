@@ -10,7 +10,7 @@ import shutil
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler()]
+    handlers=[logging.StreamHandler(), logging.FileHandler("pdf_generation.log")]
 )
 
 warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)

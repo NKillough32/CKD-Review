@@ -9,7 +9,7 @@ import pandas as pd  # type: ignore
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler()]
+    handlers=[logging.StreamHandler(), logging.FileHandler("html.log")]
 )
 
 # Set up paths before any imports that need them

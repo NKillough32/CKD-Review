@@ -8,11 +8,11 @@ import platform
 import pdfkit  # type: ignore
 import logging
 
-# Setup logging to match CKD pipeline
+# Setup logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler()]
+    handlers=[logging.StreamHandler(), logging.FileHandler("mac_core.log")]
 )
 
 # Define configuration

@@ -10,7 +10,11 @@ import ctypes, sys
 from tqdm import tqdm
 
 # Setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler(), logging.FileHandler("windows_code.log")]
+)
 # Supress warnings
 warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
 
