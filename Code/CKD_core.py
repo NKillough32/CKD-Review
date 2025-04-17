@@ -5,24 +5,47 @@ import re
 import csv
 import sys 
 import warnings
+import logging
 from datetime import datetime, timedelta
 warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # Defined functions
+def setup_logging(log_dir="logs"):
+    """Configure logging with both file and console handlers"""
+    # Create logs directory if it doesn't exist
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
+    # Create a timestamp for the log file name
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    log_file = os.path.join(log_dir, f'ckd_review_{timestamp}.log')
+
+    # Configure logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(log_file),
+            logging.StreamHandler()
+        ]
+    )
+
+    return logging.getLogger(__name__)
+# Removed redundant import for setup_logging
 def check_files_exist(*file_paths):
     missing_files = [file for file in file_paths if not os.path.exists(file)]
     if missing_files:
-        print("\nThe following required files are missing:")
+        logger.info("\nThe following required files are missing:")
         for file in missing_files:
-            print(f"  - {file} (Missing)")
-        print("\nPlease add the required files to the directory.")
+            logger.info(f"  - {file} (Missing)")
+        logger.info("\nPlease add the required files to the directory.")
         
         # Wait for user input after adding the files
         for file in missing_files:
             input(f"Please add '{file}' to the directory for a full analysis, or press Enter to proceed with limited analysis...")
     else:
-        print("All required files are present.")
+        logger.info("All required files are present.")
 def preprocess_data(df):
     # Identify columns with 'Date' in the name
     date_columns = [col for col in df.columns if 'Date' in col]
@@ -474,6 +497,9 @@ def prioritize_patient(row):
 
     return "High" if score >= 3 else "Medium" if score >= 1 else "Low"
 
+# Setup logging at the start of the script
+logger = setup_logging()
+
 # Replace this section:
 if getattr(sys, 'frozen', False):
     base_path = sys._MEIPASS
@@ -584,20 +610,20 @@ mode = 'merged'  # Change to 'creatinine', 'ckd_check', or 'merged' as needed
 if mode == 'creatinine' and not creatinine.empty:
     creatinine.to_csv("CKD_review.csv", index=False)
     CKD_review = creatinine
-    print("Creatinine data saved to CKD_review.csv")
+    logger.info("Creatinine data saved to CKD_review.csv")
 elif mode == 'ckd_check' and not CKD_check.empty:
     CKD_check.to_csv("CKD_review.csv", index=False)
     CKD_review = CKD_check
-    print("CKD Check data saved to CKD_review.csv")
+    logger.info("CKD Check data saved to CKD_review.csv")
 elif mode == 'merged' and not merged_data.empty:
     merged_data.to_csv("CKD_review.csv", index=False)
     CKD_review = merged_data
-    print("Merged data saved to CKD_review.csv")
+    logger.info("Merged data saved to CKD_review.csv")
 else:
-    print("No data available for the selected mode.")
+    logger.info("No data available for the selected mode.")
     CKD_review = pd.DataFrame()  # Define CKD_review as an empty DataFrame if no data is available
 
-print("Preprocessing data and performing CKD metrics calculations...")
+logger.info("Preprocessing data and performing CKD metrics calculations...")
 
 # Confirm conversion of dates
 CKD_review['Date'] = pd.to_datetime(CKD_review['Date'], errors='coerce')
@@ -730,7 +756,7 @@ if not missing_data_df.empty:
     missing_data_df.loc[:, 'risk_2yr'] = "Error: Missing required values"
     missing_data_df.loc[:, 'CKD_Stage'] = "Error: Insufficient data"
 else:
-    print("Warning: missing_data_df is empty, skipping error message assignments.")
+    logger.info("Warning: missing_data_df is empty, skipping error message assignments.")
 
 # Ensure missing_data_df exists and is a valid DataFrame
 if 'missing_data_df' not in locals() or 'missing_data_df' not in globals():
@@ -904,7 +930,7 @@ def get_diabetes_medications():
                 ])
         return list(set(filter(None, medications)))
     except Exception as e:
-        print(f"Error reading diabetes medications file: {e}")
+        logger.info(f"Error reading diabetes medications file: {e}")
         return []
 
 # Update the recommend_sglt2 function
@@ -1052,11 +1078,11 @@ CKD_review.rename(columns={
 # Convert HC_Number to integer safely
 CKD_review['HC_Number'] = pd.to_numeric(CKD_review['HC_Number'], errors='coerce').astype('Int64')
 
-print("Data preprocessing and metrics calculation complete.")
-print("Writing Output Data ...")
-print("Summary Statistics:")
-print(f"Patients with CKD Stage 3+: {len(CKD_review[CKD_review['CKD_Stage'].isin(['Stage 3A', 'Stage 3B', 'Stage 4', 'Stage 5'])])}")
-print(f"Patients with Contraindications: {len(CKD_review[CKD_review['contraindicated_prescribed'] != 'No contraindications'])}")
+logger.info("Data preprocessing and metrics calculation complete.")
+logger.info("Writing Output Data ...")
+logger.info("Summary Statistics:")
+logger.info(f"Patients with CKD Stage 3+: {len(CKD_review[CKD_review['CKD_Stage'].isin(['Stage 3A', 'Stage 3B', 'Stage 4', 'Stage 5'])])}")
+logger.info(f"Patients with Contraindications: {len(CKD_review[CKD_review['contraindicated_prescribed'] != 'No contraindications'])}")
 # Save output to CSV
 output_file_name = f"eGFR_check_{pd.Timestamp.today().date()}.csv"
 CKD_review.to_csv(output_file_name, index=False)
@@ -1074,7 +1100,7 @@ def check_ckd_changes(current_df):
     # Get the Patient_Summaries directory
     summaries_dir = os.path.join(os.getcwd(), "Patient_Summaries")
     if not os.path.exists(summaries_dir):
-        print("No historical data found - Patient_Summaries directory doesn't exist")
+        logger.info("No historical data found - Patient_Summaries directory doesn't exist")
         return pd.DataFrame(), pd.DataFrame()
 
     # Get all date folders
@@ -1083,7 +1109,7 @@ def check_ckd_changes(current_df):
                    and d != datetime.now().strftime("%Y-%m-%d")]
     
     if not date_folders:
-        print("No historical data folders found")
+        logger.info("No historical data folders found")
         return pd.DataFrame(), pd.DataFrame()
 
     # Get most recent date folder
@@ -1091,7 +1117,7 @@ def check_ckd_changes(current_df):
     historical_file = os.path.join(summaries_dir, most_recent, f"data_check_{most_recent}.csv")
     
     if not os.path.exists(historical_file):
-        print(f"No data check file found in {most_recent} folder")
+        logger.info(f"No data check file found in {most_recent} folder")
         return pd.DataFrame(), pd.DataFrame()
 
     try:
@@ -1102,7 +1128,7 @@ def check_ckd_changes(current_df):
         required_cols = ['HC_Number', 'CKD_Stage']
         if not all(col in current_df.columns for col in required_cols) or \
            not all(col in historical_df.columns for col in required_cols):
-            print("Required columns missing from data")
+            logger.info("Required columns missing from data")
             return pd.DataFrame(), pd.DataFrame()
 
         # Convert HC_Number to same type in both DataFrames
@@ -1133,18 +1159,18 @@ def check_ckd_changes(current_df):
         timestamp = datetime.now().strftime("%Y-%m-%d")
         if not new_patients.empty:
             new_patients.to_csv(f'new_ckd_patients_{timestamp}.csv', index=False)
-            print(f"Found {len(new_patients)} new CKD patients")
+            logger.info(f"Found {len(new_patients)} new CKD patients")
         
         if not changed_staging.empty:
             changed_staging.to_csv(f'changed_ckd_staging_{timestamp}.csv', index=False)
-            print(f"Found {len(changed_staging)} patients with changed CKD staging")
+            logger.info(f"Found {len(changed_staging)} patients with changed CKD staging")
 
         return new_patients, changed_staging
 
     except Exception as e:
-        print(f"Error processing historical data: {str(e)}")
+        logger.info(f"Error processing historical data: {str(e)}")
         return pd.DataFrame(), pd.DataFrame()
 
 # Add this at the end of your main processing code, just before saving the output
-print("\nChecking for CKD staging changes...")
+logger.info("\nChecking for CKD staging changes...")
 new_patients, changed_staging = check_ckd_changes(CKD_review)
