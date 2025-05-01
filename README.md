@@ -43,7 +43,7 @@ The NephroPath program is a tool designed to streamline the creation of Chronic 
 ## Setup Instructions
 ### Option 1: Simple Setup (Recommended)
 1. Download the latest release from:  
-   [https://github.com/NKillough32/CKD-Review/releases](https://github.com/NKillough32/CKD-Review/releases)
+   [https://github.com/NKillough32/CKD-Review/archive/refs/heads/main.zip]
 2. Extract the ZIP file to a location of your choice
 3. Copy your EMIS exports (`Creatinine.csv`, `CKD_check.csv`) to the `EMIS_Files` folder
 
