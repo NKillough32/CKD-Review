@@ -6,10 +6,12 @@ on:
     paths-ignore:
       - 'NephroPath.exe'
       - 'NephroPath_mac'
+      - '**.md'  # Ignore markdown files
+      - '.github/**'  # Ignore workflow changes to prevent loops
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false  # Don't cancel in progress to avoid conflicts
 
 permissions:
   contents: write
@@ -125,13 +127,46 @@ jobs:
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
+          
+          # Check if there are actually changes to commit
           git add -f NephroPath.exe
-          git commit -m "Update built NephroPath.exe" || echo "No changes to commit"
-          git stash
-          git fetch origin main
-          git pull --rebase origin main || (git rebase --abort && echo "Rebase failed, aborting" && exit 1)
-          git stash pop || echo "No changes to apply"
-          git push origin main
+          if git diff --staged --quiet; then
+            echo "No changes to NephroPath.exe, skipping commit"
+            exit 0
+          fi
+          
+          # Retry logic for concurrent pushes
+          for i in {1..5}; do
+            echo "Attempt $i to push changes..."
+            
+            # Fetch latest changes
+            git fetch origin main
+            
+            # Try to rebase
+            if git rebase origin/main; then
+              echo "Rebase successful"
+            else
+              echo "Rebase failed, aborting and retrying..."
+              git rebase --abort
+              sleep $((i * 2))  # Exponential backoff
+              continue
+            fi
+            
+            # Commit changes
+            git commit -m "Update built NephroPath.exe [skip ci]" || echo "No changes to commit"
+            
+            # Try to push
+            if git push origin main; then
+              echo "Push successful on attempt $i"
+              exit 0
+            else
+              echo "Push failed on attempt $i, retrying..."
+              sleep $((i * 2))  # Exponential backoff
+            fi
+          done
+          
+          echo "Failed to push after 5 attempts"
+          exit 1
 
       - name: Upload Windows executable
         uses: actions/upload-artifact@v4
@@ -141,12 +176,14 @@ jobs:
 
   build-macos:
     runs-on: macos-13  # Use macOS 13 for stability
-    needs: build-windows  
+    needs: build-windows  # Wait for Windows build to complete first
+    if: success()  # Only run if Windows build succeeded
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: main  # Ensure we get the latest main branch with Windows changes
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -235,13 +272,46 @@ jobs:
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
+          
+          # Check if there are actually changes to commit
           git add -f NephroPath_mac
-          git commit -m "Update built NephroPath_mac" || echo "No changes to commit"
-          git stash
-          git fetch origin main
-          git pull --rebase origin main || (git rebase --abort && echo "Rebase failed, aborting" && exit 1)
-          git stash pop || echo "No changes to apply"
-          git push origin main
+          if git diff --staged --quiet; then
+            echo "No changes to NephroPath_mac, skipping commit"
+            exit 0
+          fi
+          
+          # Retry logic for concurrent pushes
+          for i in {1..5}; do
+            echo "Attempt $i to push changes..."
+            
+            # Fetch latest changes
+            git fetch origin main
+            
+            # Try to rebase
+            if git rebase origin/main; then
+              echo "Rebase successful"
+            else
+              echo "Rebase failed, aborting and retrying..."
+              git rebase --abort
+              sleep $((i * 2))  # Exponential backoff
+              continue
+            fi
+            
+            # Commit changes
+            git commit -m "Update built NephroPath_mac [skip ci]" || echo "No changes to commit"
+            
+            # Try to push
+            if git push origin main; then
+              echo "Push successful on attempt $i"
+              exit 0
+            else
+              echo "Push failed on attempt $i, retrying..."
+              sleep $((i * 2))  # Exponential backoff
+            fi
+          done
+          
+          echo "Failed to push after 5 attempts"
+          exit 1
 
       - name: Upload macOS executable
         uses: actions/upload-artifact@v4
