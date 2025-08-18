@@ -319,11 +319,21 @@ def get_contraindicated_drugs(eGFR):
 
     return contraindicated
 def check_contraindications(medications, contraindicated_list):
-    prescribed_contraindicated = [
-        f"{drug} ({link})" if link else drug  # Add link if available
-        for drug, link in contraindicated_list 
-        if re.search(r'\b' + re.escape(drug) + r'\b', medications, re.IGNORECASE)
-    ]
+    """Enhanced medication matching with token-based approach"""
+    if pd.isna(medications):
+        return "No contraindications"
+    
+    # Tokenize medications string
+    med_tokens = set(re.findall(r'\b\w+\b', str(medications).lower()))
+    
+    prescribed_contraindicated = []
+    for drug, link in contraindicated_list:
+        drug_tokens = set(re.findall(r'\b\w+\b', drug.lower()))
+        
+        # Check for exact match or significant token overlap
+        if drug_tokens.issubset(med_tokens) or len(drug_tokens.intersection(med_tokens)) >= max(1, len(drug_tokens) * 0.7):
+            prescribed_contraindicated.append(f"{drug} ({link})" if link else drug)
+    
     return ", ".join(prescribed_contraindicated) if prescribed_contraindicated else "No contraindications"
 def recommended_medications(eGFR):
     if pd.isna(eGFR):
@@ -418,18 +428,38 @@ def drug_adjustment(eGFR):
 
     return adjustments
 def check_dose_adjustments(medications, adjustment_list):
-    prescribed_adjustments = [
-        f"{drug} ({link})" if link else drug  # Add link if available
-        for drug, link in adjustment_list 
-        if re.search(r'\b' + re.escape(drug) + r'\b', medications, re.IGNORECASE)
-    ]
+    """Enhanced medication matching with token-based approach"""
+    if pd.isna(medications):
+        return "No adjustments needed"
+    
+    # Tokenize medications string
+    med_tokens = set(re.findall(r'\b\w+\b', str(medications).lower()))
+    
+    prescribed_adjustments = []
+    for drug, link in adjustment_list:
+        drug_tokens = set(re.findall(r'\b\w+\b', drug.lower()))
+        
+        # Check for exact match or significant token overlap
+        if drug_tokens.issubset(med_tokens) or len(drug_tokens.intersection(med_tokens)) >= max(1, len(drug_tokens) * 0.7):
+            prescribed_adjustments.append(f"{drug} ({link})" if link else drug)
+    
     return ", ".join(prescribed_adjustments) if prescribed_adjustments else "No adjustments needed"
 def check_all_contraindications(medications, contraindicated_list):
-    prescribed_contraindicated = [
-        f"{drug} ({link})" if link else drug  # Add BNF link if available
-        for drug, link in contraindicated_list  # Extract drug name from tuple
-        if re.search(r'\b' + re.escape(drug) + r'\b', medications, re.IGNORECASE)
-    ]
+    """Enhanced medication matching with token-based approach"""
+    if pd.isna(medications):
+        return "No contraindications"
+    
+    # Tokenize medications string
+    med_tokens = set(re.findall(r'\b\w+\b', str(medications).lower()))
+    
+    prescribed_contraindicated = []
+    for drug, link in contraindicated_list:
+        drug_tokens = set(re.findall(r'\b\w+\b', drug.lower()))
+        
+        # Check for exact match or significant token overlap
+        if drug_tokens.issubset(med_tokens) or len(drug_tokens.intersection(med_tokens)) >= max(1, len(drug_tokens) * 0.7):
+            prescribed_contraindicated.append(f"{drug} ({link})" if link else drug)
+    
     return ", ".join(prescribed_contraindicated) if prescribed_contraindicated else "No contraindications"
 def parse_any_date(date_str):
     if pd.isna(date_str):
@@ -643,15 +673,15 @@ CKD_review.rename(
     inplace=True
 )
 
-# Replace missing ACR values with 0
-CKD_review.loc[:,'ACR'] = CKD_review['ACR'].fillna(0)
+# Replace missing ACR values with 0.019 (detection limit) instead of 0
+CKD_review.loc[:,'ACR'] = CKD_review['ACR'].replace(0, 0.019).fillna(0.019)
 
 # Ensure numeric types for Age and Creatinine
 CKD_review['Creatinine'] = pd.to_numeric(CKD_review['Creatinine'], errors='coerce')
 CKD_review['Age'] = pd.to_numeric(CKD_review['Age'], errors='coerce')
 CKD_review['Gender'] = CKD_review['Gender'].astype('category')
 
-# Apply eGFR calculation
+# Apply eGFR calculation - Keep float precision for KFRE calculations
 CKD_review['eGFR'] = CKD_review.apply(
     lambda row: calculate_eGFR(row['Age'], row['Gender'], row['Creatinine'], row.get('Height', None)), axis=1
 )
@@ -659,7 +689,11 @@ CKD_review['eGFR_3m_prior'] = CKD_review.apply(
     lambda row: calculate_eGFR(row['Age'], row['Gender'], row['Creatinine_3m_prior'], row.get('Height', None)), axis=1
 )
 
-# Ensure eGFR values are rounded to whole numbers, handling NA values safely
+# Store original float eGFR values for KFRE calculations
+CKD_review['eGFR_float'] = CKD_review['eGFR'].copy()
+CKD_review['eGFR_3m_prior_float'] = CKD_review['eGFR_3m_prior'].copy()
+
+# Round eGFR values for display purposes only - after KFRE calculations
 CKD_review['eGFR'] = CKD_review['eGFR'].apply(lambda x: round(x) if pd.notna(x) else pd.NA).astype('Int64')
 CKD_review['eGFR_3m_prior'] = CKD_review['eGFR_3m_prior'].apply(lambda x: round(x) if pd.notna(x) else pd.NA).astype('Int64')
 
@@ -714,10 +748,10 @@ CKD_review_complete['sex'] = CKD_review_complete['sex'].astype(float)
 # Adjust ACR to avoid math domain error (log of zero or negative)
 CKD_review_complete['ACR'] = CKD_review_complete['ACR'].replace(0, 0.019)
 
-# Centering variables
+# Centering variables - Use float eGFR values for precision
 CKD_review_complete['Age_centered'] = (CKD_review_complete['Age'] / 10) - Age_mean
 CKD_review_complete['Sex_centered'] = CKD_review_complete['sex'] - Sex_mean
-CKD_review_complete['eGFR_centered'] = (CKD_review_complete['eGFR'] / 5) - eGFR_mean
+CKD_review_complete['eGFR_centered'] = (CKD_review_complete['eGFR_float'] / 5) - eGFR_mean
 CKD_review_complete['ACR_ln_centered'] = np.log(CKD_review_complete['ACR'] / 0.113) - ACR_ln_mean
 
 # Linear predictor L for 5-year and 2-year risks
@@ -802,10 +836,18 @@ CKD_review.loc[:,'Modality_Education'] = CKD_review.apply(
 # Anaemia Classification
 CKD_review.loc[:,'Anaemia_Classification'] = CKD_review.apply(lambda row: classify_anaemia(row['haemoglobin'], row['Gender']), axis=1)
 
-# BP Target and Flag
+# BP Target and Flag - Updated to NICE guidelines
+def has_diabetes_row(row):
+    """Check if patient has diabetes based on medications and HbA1c"""
+    diabetes_meds = get_diabetes_medications()
+    meds_lower = str(row['Medications']).lower()
+    has_diabetes_meds = any(med in meds_lower for med in diabetes_meds)
+    has_diabetes_hba1c = pd.notna(row['HbA1c']) and row['HbA1c'] > 48  # WHO diabetes threshold
+    return has_diabetes_meds or has_diabetes_hba1c
+
 CKD_review.loc[:, 'BP_Target'] = CKD_review.apply(
     lambda row: "<130/80" if pd.notna(row['ACR']) and row['ACR'] >= 70 
-    else "<130/80" if pd.notna(row['HbA1c']) and row['HbA1c'] > 53 
+    else "<130/80" if has_diabetes_row(row)
     else "<140/90", axis=1
 )
 
@@ -828,14 +870,13 @@ CKD_review.loc[:,'CKD_MBD_Flag'] = CKD_review.apply(
     lambda row: classify_ckd_mbd(row['Calcium_Flag'], row['Phosphate_Flag'], row['Parathyroid_Flag']),
     axis=1
 )
-# Proteinuria Flag
+# Proteinuria Flag - Updated to handle missing ACR values more clearly
 CKD_review.loc[:, 'Proteinuria_Flag'] = CKD_review.apply(
     lambda row: (
         "Immediate Referral - Severe Proteinuria (ACR ≥70)" if pd.notna(row['ACR']) and row['ACR'] >= 70 
         else "High Proteinuria - Urgent Referral (ACR 30-69)" if pd.notna(row['ACR']) and row['ACR'] >= 30 
         else "Raised Proteinuria - Consider Referral (ACR 3-29)" if pd.notna(row['ACR']) and row['ACR'] >= 3 
-        else "Review Required (ACR Missing)" if pd.notna(row['ACR']) and row['ACR'] == 0.019 
-        else "Review Required (ACR Missing)" if pd.isna(row['ACR'])  
+        else "Missing ACR - Test Required" if row['ACR'] == 0.019  # Detection limit indicates missing
         else "No Referral Needed"
     ), axis=1
 )
@@ -851,15 +892,28 @@ CKD_review.loc[:,'dose_adjustment_prescribed'] = CKD_review.apply(
     axis=1
 )
 
-# Statin Recommendation
-# Read statins from the file and store them in a list
-with open(statins_file, 'r') as file:
-    statins = [line.strip() for line in file]
-
+# Enhanced statin detection function
 def on_statin(meds: str) -> bool:
-    meds_l = str(meds).lower()
-    return any(st.lower() in meds_l for st in statins)
+    """Enhanced statin detection with token-based matching"""
+    if pd.isna(meds):
+        return False
+    
+    # Read statins from the file
+    with open(statins_file, 'r') as file:
+        statins = [line.strip() for line in file]
+    
+    # Tokenize medications string
+    med_tokens = set(re.findall(r'\b\w+\b', str(meds).lower()))
+    
+    for statin in statins:
+        statin_tokens = set(re.findall(r'\b\w+\b', statin.lower()))
+        # Check for exact match or significant token overlap
+        if statin_tokens.issubset(med_tokens) or len(statin_tokens.intersection(med_tokens)) >= max(1, len(statin_tokens) * 0.7):
+            return True
+    
+    return False
 
+# Statin Recommendation - Updated with enhanced matching
 CKD_review.loc[:,'Statin_Recommendation'] = CKD_review.apply(
     lambda row: "On Statin" if on_statin(row['Medications'])
     else "Offer atorvastatin 20 mg",  # NICE QS5 / NG203
@@ -892,12 +946,22 @@ def check_sglt2i_contraindications(row):
         
     if row['eGFR'] < 15:
         contraindications.append("eGFR < 15")
-    elif row['eGFR'] < 25 and "dapagliflozin" not in str(row['Medications']).lower():
-        contraindications.append("eGFR 15-25: only dapagliflozin suitable")
+    elif row['eGFR'] < 25:
+        # Check if patient is on dapagliflozin specifically using token matching
+        med_tokens = set(re.findall(r'\b\w+\b', str(row['Medications']).lower()))
+        dapa_tokens = set(['dapagliflozin'])
+        if not dapa_tokens.issubset(med_tokens):
+            contraindications.append("eGFR 15-25: only dapagliflozin suitable")
     
     diabetes_meds = get_diabetes_medications()
+    # Enhanced diabetes detection with token matching
+    med_tokens = set(re.findall(r'\b\w+\b', str(row['Medications']).lower()))
+    has_diabetes_meds = any(
+        set(re.findall(r'\b\w+\b', med.lower())).intersection(med_tokens) 
+        for med in diabetes_meds if med
+    )
     has_diabetes = (
-        any(med in str(row['Medications']).lower() for med in diabetes_meds) or 
+        has_diabetes_meds or 
         (pd.notna(row['HbA1c']) and row['HbA1c'] > 48)
     )
     
@@ -929,7 +993,7 @@ def get_diabetes_medications():
 UKKA_UACR_NO_DM = 25.0  # mg/mmol
 UKKA_EGFR_INIT  = 20    # mL/min/1.73m2
 
-# Update the recommend_sglt2 function
+# Update the recommend_sglt2 function with enhanced diabetes detection
 def recommend_sglt2(row):
     """
     Determine SGLT2 inhibitor recommendations based on UKKA guidelines.
@@ -938,8 +1002,14 @@ def recommend_sglt2(row):
     if pd.isna(e) or pd.isna(acr):
         return "Unable to determine - Missing data"
 
-    meds_l = str(row['Medications']).lower()
-    has_diabetes = any(m in meds_l for m in get_diabetes_medications()) or (pd.notna(row['HbA1c']) and row['HbA1c'] > 48)
+    # Enhanced diabetes detection with token matching
+    diabetes_meds = get_diabetes_medications()
+    med_tokens = set(re.findall(r'\b\w+\b', str(row['Medications']).lower()))
+    has_diabetes_meds = any(
+        set(re.findall(r'\b\w+\b', med.lower())).intersection(med_tokens) 
+        for med in diabetes_meds if med
+    )
+    has_diabetes = has_diabetes_meds or (pd.notna(row['HbA1c']) and row['HbA1c'] > 48)
 
     # Indications
     if has_diabetes and acr >= 3 and e >= UKKA_EGFR_INIT:
@@ -947,36 +1017,44 @@ def recommend_sglt2(row):
     if (not has_diabetes) and acr >= UKKA_UACR_NO_DM and e >= UKKA_EGFR_INIT:
         return "Recommend SGLT2i (CKD without diabetes, albuminuric)"
 
-    # Continuation if already on
-    if any(m in meds_l for m in get_sglt2_medications()):
+    # Continuation if already on - enhanced detection
+    sglt2_meds = get_sglt2_medications()
+    on_sglt2 = any(
+        set(re.findall(r'\b\w+\b', med.lower())).intersection(med_tokens) 
+        for med in sglt2_meds if med
+    )
+    
+    if on_sglt2:
         return "Continue SGLT2i unless contraindicated"
 
     return "Not indicated based on current eGFR/ACR"
 
 def check_current_sglt2i(medications):
     """
-    Check which SGLT2i the patient is currently on.
+    Check which SGLT2i the patient is currently on with enhanced token matching.
     """
     if pd.isna(medications):
         return None
         
-    medications_lower = str(medications).lower()
+    med_tokens = set(re.findall(r'\b\w+\b', str(medications).lower()))
     sglt2i_meds = get_sglt2_medications()
     
     current = []
     for med in sglt2i_meds:
-        if med in medications_lower:
+        if not med:  # Skip empty strings
+            continue
+        med_tokens_drug = set(re.findall(r'\b\w+\b', med.lower()))
+        if med_tokens_drug.intersection(med_tokens):
             current.append(med)
             
     return ", ".join(current) if current else None
 
-# Update the status check
+# Update the status check with enhanced token matching
 CKD_review.loc[:,'Current_SGLT2i_Status'] = CKD_review['Medications'].apply(
-    lambda x: "On SGLT2i" if any(med in str(x).lower() for med in get_sglt2_medications())
-    else "Not on SGLT2i"
+    lambda x: "On SGLT2i" if check_current_sglt2i(x) is not None else "Not on SGLT2i"
 )
 
-# Then, add this where you have the #SGLT2 Inhibitor Recommendation comment
+# SGLT2 Inhibitor Recommendation - Updated to UKKA guidelines
 CKD_review.loc[:,'SGLT2i_Recommendation'] = CKD_review.apply(recommend_sglt2, axis=1)
 
 # Add these to the CKD_review DataFrame processing
