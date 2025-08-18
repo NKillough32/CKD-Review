@@ -6,7 +6,7 @@ import sys
 import logging
 import numpy as np
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
@@ -32,27 +32,11 @@ logging.basicConfig(
 
 warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
 
-def ensure_closed_tags(text):
-    """
-    Ensures that font and bold tags are properly closed.
-    Uses regex to detect missing closing tags.
-    """
-    open_tags = []
-    tag_pattern = re.compile(r"<(/?)(b|font)(?:\s[^>]*)?>")
-
-    for match in tag_pattern.finditer(text):
-        tag, tag_name = match.groups()
-        if not tag:  # Opening tag
-            open_tags.append(tag_name)
-        elif open_tags and open_tags[-1] == tag_name:  # Matching closing tag
-            open_tags.pop()
-
-    # Close any unclosed tags
-    for tag in reversed(open_tags):
-        text += f"</{tag}>"
-
-    return text
-
+def _dedupe_meds(m):
+    """Deduplicate medication strings to keep PDFs compact."""
+    if pd.isna(m): return m
+    items = [s.strip() for s in str(m).split(',')]
+    return ', '.join(sorted(set(i for i in items if i)))
 
 def format_date(date_str):
     if not date_str or pd.isna(date_str) or date_str == "Missing" or date_str == "N/A":
@@ -226,9 +210,10 @@ def classify_status(value, thresholds, field):
         if value < 2.2 or value > 2.6: return colors.Color(0.69, 0, 0.125), formatted_value  # #B00020
         else: return colors.Color(0, 0.392, 0), formatted_value  # #006400
     elif field == "Vitamin_D":
-        if value < 30: return colors.Color(0.69, 0, 0.125), formatted_value  # #B00020
-        elif value < 50: return colors.Color(0.827, 0.329, 0), formatted_value  # #D35400
-        else: return colors.Color(0, 0.392, 0), formatted_value  # #006400
+        # values assumed in nmol/L (UK)
+        if value < 25:   return colors.Color(0.69, 0, 0.125), formatted_value  # Deficient
+        elif value < 50: return colors.Color(0.827, 0.329, 0), formatted_value  # Insufficient
+        else:            return colors.Color(0, 0.392, 0), formatted_value      # Sufficient
     elif field == "HbA1c":
         if value > 53: return colors.Color(0.69, 0, 0.125), formatted_value  # #B00020
         elif value > 48: return colors.Color(0.827, 0.329, 0), formatted_value  # #D35400
@@ -433,7 +418,7 @@ def create_boxed_table(data, widths, style, radius=5, padding=6, color=colors.gr
         fill_color=fill_color
     )
     table.setStyle(style)
-    table_width, table_height = table.wrap(widths[0], 650)
+    table_width, table_height = table.wrap(sum(widths), 650)
     #logging.info(f"Table height: {table_height} for data: {[str(item)[:50] for item in data]}")
     if table_height > 650 or table_height < 0:
         #logging.warning(f"Table height {table_height} invalid, forcing split. Full data: {[str(item)[:100] for item in data]}")
@@ -567,7 +552,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
 
     doc = SimpleDocTemplate(
         output_path,
-        pagesize=letter,
+        pagesize=A4,   # was: letter
         leftMargin=0.5*inch,
         rightMargin=0.5*inch,
         topMargin=0.5*inch,
@@ -623,7 +608,8 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
     elements.append(Spacer(1, 0.025 * inch))
 
     # Patient Information
-    nhs_content = f"""• <font face="{font_name_bold}">NHS Number:</font> {int(patient['HC_Number']) if pd.notna(patient['HC_Number']) else 'N/A'}"""
+    id_label = "NHS Number" if str(patient.get('HC_Number','')).isdigit() and len(str(int(float(patient['HC_Number'])))) in (10,) else "HC Number"
+    nhs_content = f"• <font face='{font_name_bold}'>{id_label}:</font> {escape(format_value(patient.get('HC_Number')))}"
     age_content = f"""• <font face="{font_name_bold}">Age:</font> {int(patient['Age']) if pd.notna(patient['Age']) else 'N/A'}"""
     gender_content = f"""• <font face="{font_name_bold}">Gender:</font> {escape(format_value(patient.get('Gender', 'N/A')))}"""
     
@@ -805,7 +791,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
                         f"<font face='{font_name_bold}'>Status:</font> {escape(format_value(patient.get('Bicarbonate_Flag')))} | "
                         f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date13')))}", styles['CustomTableText'])],
         [safe_paragraph(f"• <font face='{font_name_bold}'>Parathyroid Hormone (PTH):</font> "
-                        f"<font color='#{parathyroid_color.hexval()[2:8]}'>{escape(parathyroid_value)} pg/mL</font> | "
+                        f"<font color='#{parathyroid_color.hexval()[2:8]}'>{escape(parathyroid_value)}</font> | "
                         f"<font face='{font_name_bold}'>Status:</font> {escape(format_value(patient.get('Parathyroid_Flag')))} | "
                         f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(patient.get('Sample_Date12')))}", styles['CustomTableText'])],
         [safe_paragraph(f"• <font face='{font_name_bold}'>Phosphate:</font> "
@@ -821,7 +807,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         vit_d_color, vit_d_value = classify_status(value, None, 'Vitamin_D')
         mbd_data.append(
             [safe_paragraph(f"• <font face='{font_name_bold}'>Vitamin D Level:</font> "
-                            f"<font color='#{vit_d_color.hexval()[2:8]}'>{escape(vit_d_value)} ng/mL</font> | "
+                            f"<font color='#{vit_d_color.hexval()[2:8]}'>{escape(vit_d_value)} nmol/L</font> | "  # was ng/mL
                             f"<font face='{font_name_bold}'>Status:</font> {escape(format_value(flag))} | "
                             f"<font face='{font_name_bold}'>Date:</font> {escape(format_value(date))}", styles['CustomTableText'])]
         )
@@ -969,6 +955,9 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
     elements.append(Spacer(1, 0.35 * inch))
 
     # Medication Review
+    # Deduplicate medications before displaying
+    patient['Medications'] = _dedupe_meds(patient.get('Medications'))
+    
     med_title = safe_paragraph("<b>Medication Review</b>", styles['CustomSectionHeader'])
     current_meds = escape(format_value(patient.get('Medications', 'None')))
     med_data = [
@@ -1174,7 +1163,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             padding=6,
             color=colors.grey
         )
-        elements.append(final_recs_table)
+        elements.append(KeepTogether(final_recs_table))
         elements.append(Spacer(1, 0.35 * inch))
 
     # QR Code Section
@@ -1247,15 +1236,23 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         canvas.saveState()
         canvas.setFont(font_name, 10)
         canvas.setFillColor(colors.black)
-        canvas.drawString(doc.leftMargin, doc.pagesize[1] - doc.topMargin + 20, f"{surgery_info.get('surgery_name', 'Unknown Surgery')}")
-        canvas.drawCentredString(doc.pagesize[0]/2, doc.pagesize[1] - doc.topMargin + 20, "Chronic Kidney Disease Review")
-        canvas.drawRightString(doc.pagesize[0] - doc.rightMargin, doc.pagesize[1] - doc.topMargin + 20, f"Date: {datetime.now().strftime('%d-%m-%Y')}")
-        canvas.line(doc.leftMargin, doc.pagesize[1] - doc.topMargin + 10, doc.pagesize[0] - doc.rightMargin, doc.pagesize[1] - doc.topMargin + 10)
+        canvas.drawString(doc.leftMargin, doc.pagesize[1] - doc.topMargin + 20,
+                          f"{surgery_info.get('surgery_name','Unknown Surgery')}")
+        canvas.drawCentredString(doc.pagesize[0]/2, doc.pagesize[1] - doc.topMargin + 20,
+                                 "Chronic Kidney Disease Review")
+        canvas.drawRightString(doc.pagesize[0] - doc.rightMargin, doc.pagesize[1] - doc.topMargin + 20,
+                               f"Date: {datetime.now().strftime('%d-%m-%Y')}")
+        canvas.line(doc.leftMargin, doc.pagesize[1] - doc.topMargin + 10,
+                    doc.pagesize[0] - doc.rightMargin, doc.pagesize[1] - doc.topMargin + 10)
+
         canvas.setFont(font_name, 8)
         canvas.setFillColor(colors.grey)
-        canvas.drawString(doc.leftMargin, doc.bottomMargin - 10, f"Page {doc.page}")
-        canvas.drawRightString(doc.pagesize[0] - doc.rightMargin, doc.bottomMargin - 10, f"Tel: {surgery_info.get('surgery_phone', 'N/A')}")
-        canvas.line(doc.leftMargin, doc.bottomMargin, doc.pagesize[0] - doc.rightMargin, doc.bottomMargin)
+        canvas.drawString(doc.leftMargin, doc.bottomMargin - 10,
+                          f"Page {canvas.getPageNumber()}")  # was: doc.page
+        canvas.drawRightString(doc.pagesize[0] - doc.rightMargin, doc.bottomMargin - 10,
+                               f"Tel: {surgery_info.get('surgery_phone','N/A')}")
+        canvas.line(doc.leftMargin, doc.bottomMargin,
+                    doc.pagesize[0] - doc.rightMargin, doc.bottomMargin)
         canvas.restoreState()
 
     doc.build(elements, onFirstPage=add_header_footer, onLaterPages=add_header_footer)

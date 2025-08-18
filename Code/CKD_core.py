@@ -119,9 +119,9 @@ def update_df_with_newest_value2(df, group_col="HC Number"):
         
         # Only update if the original row's Date is missing
         if is_missing(row['Date']):
-            # Convert to a desired string format (dd/mm/YYYY) or leave it as datetime
+            # Keep as datetime; format only at export if needed
             if pd.notna(nr['Date.2']):
-                row['Date'] = nr['Date.2'].strftime('%d/%m/%Y')
+                row['Date'] = nr['Date.2']
 
         return row
 
@@ -129,32 +129,20 @@ def update_df_with_newest_value2(df, group_col="HC Number"):
     df = df.apply(update_row, axis=1)
     return df
 def select_closest_3m_prior_creatinine(row, df):
-    # Ensure 'Date' is valid
-    if pd.isna(row['Date']) or not isinstance(row['Date'], pd.Timestamp):
-        return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
+    idx_date = row['Date']
+    if not isinstance(idx_date, pd.Timestamp):
+        return pd.Series([np.nan, pd.NaT], index=['Creatinine_3m_prior', 'Date_3m_prior'])
 
-    target_date = row['Date'] - timedelta(days=90)
+    target = idx_date - timedelta(days=90)
+    hc = df.loc[df['HC Number'] == row['HC Number'], ['Date.2','Value.2']].dropna().copy()
+    # restrict to measurements prior to or on the index date
+    hc = hc[hc['Date.2'] <= idx_date]
+    if hc.empty:
+        return pd.Series([np.nan, pd.NaT], index=['Creatinine_3m_prior','Date_3m_prior'])
 
-    hc_data = df[df['HC Number'] == row['HC Number']].copy()
-
-    # Extract valid (Date.2, Value.2) pairs
-    valid_pairs = hc_data[['Date.2', 'Value.2']].dropna().values.tolist()
-
-    if not valid_pairs:
-        return pd.Series([np.nan, np.nan], index=['Creatinine_3m_prior', 'Date_3m_prior'])
-
-    closest_date = None
-    closest_value = None
-    min_diff = timedelta.max  # Initialize with the largest possible Timedelta
-
-    for date, value in valid_pairs:
-        diff = abs(date - target_date)
-        if diff < min_diff:  # Now comparing Timedelta with Timedelta
-            min_diff = diff
-            closest_date = date
-            closest_value = value
-
-    return pd.Series([closest_value, closest_date], index=['Creatinine_3m_prior', 'Date_3m_prior'])
+    # choose prior value closest to target (90d before)
+    i = (hc['Date.2'] - target).abs().idxmin()
+    return pd.Series([hc.at[i,'Value.2'], hc.at[i,'Date.2']], index=['Creatinine_3m_prior','Date_3m_prior'])
 def summarize_medications(df):
     return (
         df.groupby('HC Number')['Name, Dosage and Quantity']
@@ -458,7 +446,8 @@ def convert_date_columns(df):
         if 'Date' in col:
             df[col] = df[col].apply(parse_any_date)
     return df
-def flag_aki(row):
+def flag_akd(row):
+    """Flag AKD (Acute Kidney Disease) trend based on 90-day comparison"""
     if any(pd.isna(x) for x in [row['Creatinine'], row['Creatinine_3m_prior'], row['Date'], row['Date_3m_prior']]):
         return "Insufficient Data"
     delta_creat = row['Creatinine'] - row['Creatinine_3m_prior']
@@ -466,13 +455,13 @@ def flag_aki(row):
     days = (row['Date'] - row['Date_3m_prior']).days
     if days <= 0 or days > 90:
         return "Invalid Timeframe"
-    if ratio >= 3 or delta_creat >= 354:  # Stage 3
-        return "AKI Stage 3 - Urgent"
-    elif ratio >= 2:  # Stage 2
-        return "AKI Stage 2 - Urgent"
-    elif ratio >= 1.5 or delta_creat >= 26.5:  # Stage 1
-        return "AKI Stage 1 - Review"
-    return "No AKI"
+    if ratio >= 3 or delta_creat >= 354:  # Severe decline
+        return "Severe AKD Trend - Urgent Review"
+    elif ratio >= 2:  # Moderate decline
+        return "Moderate AKD Trend - Urgent Review"
+    elif ratio >= 1.5 or delta_creat >= 26.5:  # Mild decline
+        return "Mild AKD Trend - Review"
+    return "No AKD Trend"
 def simple_cv_risk(age, gender, systolic_bp, hba1c, smoking=None):
     if any(pd.isna(x) for x in [age, gender, systolic_bp, hba1c]):
         return "Missing Data"
@@ -691,7 +680,9 @@ missing_data_df.to_csv("missing_data_subjects.csv", index=False)
 # Remove subjects with missing data from the main DataFrame for KFRE calculations
 CKD_review_complete = CKD_review.dropna(subset=required_columns).copy()
 
-# Step 2: Constants and Centering Values
+# Step 2: KFRE Constants and Centering Values (UK-validated 4-variable model)
+# Source: Kidney Failure Risk Equation (kidneyfailurerisk.co.uk)
+# Units: Age in decades, eGFR in 5-unit bands, ln-ACR ratio to 0.113
 Age_mean = 7.036
 Sex_mean = 0.5642
 eGFR_mean = 7.222
@@ -865,12 +856,13 @@ CKD_review.loc[:,'dose_adjustment_prescribed'] = CKD_review.apply(
 with open(statins_file, 'r') as file:
     statins = [line.strip() for line in file]
 
+def on_statin(meds: str) -> bool:
+    meds_l = str(meds).lower()
+    return any(st.lower() in meds_l for st in statins)
+
 CKD_review.loc[:,'Statin_Recommendation'] = CKD_review.apply(
-    lambda row: (
-        "On Statin" if any(statin in row['Medications'] for statin in statins)
-        else "Consider Statin" if row['eGFR'] < 60 or pd.isna(row['Medications'])
-        else "Not on Statin"
-    ),
+    lambda row: "On Statin" if on_statin(row['Medications'])
+    else "Offer atorvastatin 20 mg",  # NICE QS5 / NG203
     axis=1
 )
 
@@ -933,48 +925,33 @@ def get_diabetes_medications():
         logger.info(f"Error reading diabetes medications file: {e}")
         return []
 
+# UKKA thresholds for SGLT2i
+UKKA_UACR_NO_DM = 25.0  # mg/mmol
+UKKA_EGFR_INIT  = 20    # mL/min/1.73m2
+
 # Update the recommend_sglt2 function
 def recommend_sglt2(row):
     """
-    Determine SGLT2 inhibitor recommendations based on NICE NG203 guidelines.
+    Determine SGLT2 inhibitor recommendations based on UKKA guidelines.
     """
-    # Check for missing data
-    if pd.isna(row['eGFR']) or pd.isna(row['ACR']):
+    e = row['eGFR']; acr = row['ACR']
+    if pd.isna(e) or pd.isna(acr):
         return "Unable to determine - Missing data"
 
-    # Check contraindications
-    contraindications = check_sglt2i_contraindications(row)
-    if contraindications != "No contraindications":
-        return f"Not recommended - {contraindications}"
-    
-    # Get diabetes status using file-based list
-    diabetes_meds = get_diabetes_medications()
-    has_diabetes = (
-        any(med in str(row['Medications']).lower() for med in diabetes_meds) or 
-        (pd.notna(row['HbA1c']) and row['HbA1c'] > 48)
-    )
+    meds_l = str(row['Medications']).lower()
+    has_diabetes = any(m in meds_l for m in get_diabetes_medications()) or (pd.notna(row['HbA1c']) and row['HbA1c'] > 48)
 
-    # Check ACR thresholds
-    meets_acr_threshold = (
-        (has_diabetes and row['ACR'] >= 3) or
-        (not has_diabetes and row['ACR'] >= 22.6)
-    )
+    # Indications
+    if has_diabetes and acr >= 3 and e >= UKKA_EGFR_INIT:
+        return "Recommend SGLT2i (CKD with diabetes)"
+    if (not has_diabetes) and acr >= UKKA_UACR_NO_DM and e >= UKKA_EGFR_INIT:
+        return "Recommend SGLT2i (CKD without diabetes, albuminuric)"
 
-    if not meets_acr_threshold:
-        return "Not indicated based on ACR threshold"
+    # Continuation if already on
+    if any(m in meds_l for m in get_sglt2_medications()):
+        return "Continue SGLT2i unless contraindicated"
 
-    # eGFR-based recommendations
-    if row['eGFR'] >= 30:
-        current_sglt2i = check_current_sglt2i(row['Medications'])
-        if current_sglt2i:
-            return f"Continue current SGLT2i ({current_sglt2i})"
-        return "Recommend SGLT2i (dapagliflozin, empagliflozin, or canagliflozin)"
-    elif row['eGFR'] >= 15:
-        if "dapagliflozin" in str(row['Medications']).lower():
-            return "Continue dapagliflozin"
-        return "Consider dapagliflozin only"
-    else:
-        return "Not recommended - eGFR too low"
+    return "Not indicated based on current eGFR/ACR"
 
 def check_current_sglt2i(medications):
     """
@@ -1043,8 +1020,8 @@ CKD_review.loc[:,'All_Contraindications'] = CKD_review.apply(
     axis=1
 )
 
-# AKI Flag
-CKD_review['AKI_Flag'] = CKD_review.apply(flag_aki, axis=1)
+# AKD Flag
+CKD_review['AKD_Flag'] = CKD_review.apply(flag_akd, axis=1)
 
 # Calculate CV Risk
 CKD_review['CV_Risk'] = CKD_review.apply(
