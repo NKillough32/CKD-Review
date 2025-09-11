@@ -90,7 +90,7 @@ This process aids in early identification and proactive management of CKD cases,
 ### Individual Patient Reports
 - Demographics
 - Current CKD Stage (1-5)
-- eGFR Trend Graph
+- eGFR Trend
 - Risk Stratification
 - Clinical Recommendations
   - Monitoring frequency
