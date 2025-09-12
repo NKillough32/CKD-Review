@@ -836,6 +836,25 @@ CKD_review.loc[:,'Modality_Education'] = CKD_review.apply(
 # Anaemia Classification
 CKD_review.loc[:,'Anaemia_Classification'] = CKD_review.apply(lambda row: classify_anaemia(row['haemoglobin'], row['Gender']), axis=1)
 
+def get_diabetes_medications():
+    """
+    Read diabetes medications from dependency file.
+    Returns list of medication names and brand names in lowercase.
+    """
+    medications = []
+    try:
+        with open(diabetes_meds_file, 'r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                medications.extend([
+                    row['medication'].lower(),
+                    row['brand_name'].lower() if row['brand_name'] else ''
+                ])
+        return list(set(filter(None, medications)))
+    except Exception as e:
+        logger.info(f"Error reading diabetes medications file: {e}")
+        return []
+
 # BP Target and Flag - Updated to NICE guidelines
 def has_diabetes_row(row):
     """Check if patient has diabetes based on medications and HbA1c"""
@@ -969,25 +988,6 @@ def check_sglt2i_contraindications(row):
         contraindications.append("No diabetes diagnosis")
         
     return ", ".join(contraindications) if contraindications else "No contraindications"
-
-def get_diabetes_medications():
-    """
-    Read diabetes medications from dependency file.
-    Returns list of medication names and brand names in lowercase.
-    """
-    medications = []
-    try:
-        with open(diabetes_meds_file, 'r') as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                medications.extend([
-                    row['medication'].lower(),
-                    row['brand_name'].lower() if row['brand_name'] else ''
-                ])
-        return list(set(filter(None, medications)))
-    except Exception as e:
-        logger.info(f"Error reading diabetes medications file: {e}")
-        return []
 
 # UKKA thresholds for SGLT2i
 UKKA_UACR_NO_DM = 25.0  # mg/mmol
