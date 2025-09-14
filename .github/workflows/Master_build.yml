@@ -157,6 +157,7 @@ jobs:
 
   build-macos:
     runs-on: macos-13  # Use macOS 13 for stability
+    needs: build-windows  # Wait for Windows build to complete first
     strategy:
       matrix:
         include:
@@ -240,6 +241,7 @@ jobs:
           fi
 
       - name: Commit and push changes
+        shell: bash
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
