@@ -86,6 +86,7 @@ jobs:
           "Code/CKD_Master_pdf_exefree.py"
 
       - name: Move release
+        shell: pwsh
         run: |
           if (-not (Test-Path "dist\NephroPath.exe")) {
             Write-Error "dist\NephroPath.exe not found. PyInstaller build may have failed."
@@ -124,48 +125,54 @@ jobs:
           }
 
       - name: Commit and push changes
+        shell: pwsh
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
           
           # Check if there are actually changes to commit
           git add -f NephroPath.exe
-          if git diff --staged --quiet; then
-            echo "No changes to NephroPath.exe, skipping commit"
+          if ((git diff --staged) -eq $null -or (git diff --staged).Trim() -eq "") {
+            Write-Host "No changes to NephroPath.exe, skipping commit"
             exit 0
-          fi
+          }
           
           # Retry logic for concurrent pushes
-          for i in {1..5}; do
-            echo "Attempt $i to push changes..."
+          for ($i = 1; $i -le 5; $i++) {
+            Write-Host "Attempt $i to push changes..."
             
             # Fetch latest changes
             git fetch origin main
             
             # Try to rebase
-            if git rebase origin/main; then
-              echo "Rebase successful"
-            else
-              echo "Rebase failed, aborting and retrying..."
+            $rebaseResult = git rebase origin/main
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "Rebase successful"
+            } else {
+              Write-Host "Rebase failed, aborting and retrying..."
               git rebase --abort
-              sleep $((i * 2))  # Exponential backoff
+              Start-Sleep ($i * 2)  # Exponential backoff
               continue
-            fi
+            }
             
             # Commit changes
-            git commit -m "Update built NephroPath.exe [skip ci]" || echo "No changes to commit"
+            git commit -m "Update built NephroPath.exe [skip ci]"
+            if ($LASTEXITCODE -ne 0) {
+              Write-Host "No changes to commit"
+            }
             
             # Try to push
-            if git push origin main; then
-              echo "Push successful on attempt $i"
+            git push origin main
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "Push successful on attempt $i"
               exit 0
-            else
-              echo "Push failed on attempt $i, retrying..."
-              sleep $((i * 2))  # Exponential backoff
-            fi
-          done
+            } else {
+              Write-Host "Push failed on attempt $i, retrying..."
+              Start-Sleep ($i * 2)  # Exponential backoff
+            }
+          }
           
-          echo "Failed to push after 5 attempts"
+          Write-Host "Failed to push after 5 attempts"
           exit 1
 
       - name: Upload Windows executable
@@ -269,6 +276,7 @@ jobs:
           fi
 
       - name: Commit and push changes
+        shell: bash
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
