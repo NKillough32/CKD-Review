@@ -116,15 +116,37 @@ jobs:
           }
   
       - name: Commit and push changes
+        shell: pwsh
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
           git add -f Alternative_versions/${{ matrix.output }}
-          git commit -m "Update built ${{ matrix.output }}" || echo "No changes to commit"
+          
+          # Check if there are changes to commit
+          $commitResult = git commit -m "Update built ${{ matrix.output }}"
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "No changes to commit"
+          }
+          
+          # Stash any uncommitted changes
           git stash
+          
+          # Fetch and rebase
           git fetch origin main
-          git pull --rebase origin main || (git rebase --abort && echo "Rebase failed, aborting" && exit 1)
-          git stash pop || echo "No changes to apply"
+          $pullResult = git pull --rebase origin main
+          if ($LASTEXITCODE -ne 0) {
+            git rebase --abort
+            Write-Error "Rebase failed, aborting"
+            exit 1
+          }
+          
+          # Apply stashed changes if any
+          $stashResult = git stash pop
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "No changes to apply from stash"
+          }
+          
+          # Push changes
           git push origin main
 
       - name: Upload Windows executable
