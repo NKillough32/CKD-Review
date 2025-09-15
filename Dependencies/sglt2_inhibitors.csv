@@ -16,9 +16,9 @@ empagliflozin,Glyxambi,30,No,Yes,https://bnf.nice.org.uk/drugs/empagliflozin/
 empagliflozin,Trijardy,30,No,Yes,https://bnf.nice.org.uk/drugs/empagliflozin/
 canagliflozin,Invokamet,30,No,Yes,https://bnf.nice.org.uk/drugs/canagliflozin/
 ertugliflozin,Steglujan,30,No,Yes,https://bnf.nice.org.uk/drugs/ertugliflozin/
-ipragliflozin,Suglat,30,No,Yes,
-luseogliflozin,Lusefi,30,No,Yes,
-tofogliflozin,Apleway,30,No,Yes,
-remogliflozin,,30,No,Yes,
-bexagliflozin,,30,No,Yes,
-henagliflozin,,30,No,Yes,
+ipragliflozin,Suglat,30,No,Yes,https://go.drugbank.com/drugs/DB11698
+luseogliflozin,Lusefi,30,No,Yes,https://go.drugbank.com/drugs/DB12214
+tofogliflozin,Apleway,30,No,Yes,https://go.drugbank.com/drugs/DB11824
+remogliflozin,,30,No,Yes,https://go.drugbank.com/drugs/DB12935
+bexagliflozin,,30,No,Yes,https://go.drugbank.com/drugs/DB12236
+henagliflozin,,30,No,Yes,https://go.drugbank.com/drugs/DB11939

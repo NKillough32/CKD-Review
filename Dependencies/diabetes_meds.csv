@@ -43,8 +43,8 @@ insulin human,Insuman,Insulin,https://bnf.nice.org.uk/drugs/insulin-human/
 chlorpropamide,Diabinese,Sulfonylurea,https://bnf.nice.org.uk/drugs/chlorpropamide/
 acarbose,Glucobay,Alpha-glucosidase inhibitor,https://bnf.nice.org.uk/drugs/acarbose/
 sotagliflozin,Zynquista,SGLT1/2 inhibitor,https://bnf.nice.org.uk/drugs/sotagliflozin/
-ipragliflozin,,SGLT2 inhibitor,
-luseogliflozin,,SGLT2 inhibitor,
-tofogliflozin,,SGLT2 inhibitor,
+ipragliflozin,,SGLT2 inhibitor,https://go.drugbank.com/drugs/DB11698
+luseogliflozin,,SGLT2 inhibitor,https://go.drugbank.com/drugs/DB12214
+tofogliflozin,,SGLT2 inhibitor,https://go.drugbank.com/drugs/DB11824
 glibenclamide,Daonil,Sulfonylurea,https://bnf.nice.org.uk/drugs/glibenclamide/
 gliquidone,Glurenorm,Sulfonylurea,https://bnf.nice.org.uk/drugs/gliquidone/
