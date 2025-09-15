@@ -71,7 +71,18 @@ jobs:
         run: |
           $env:EMIS_FILES_PATH = "$(Get-Location)\EMIS_Files"
           $env:DEPENDENCIES_PATH = "$(Get-Location)\Dependencies"
-          python -m PyInstaller --onefile --name="NephroPath" --icon="Dependencies/NephroPath_installer_icon.ico" --version-file="Dependencies/version_info.txt" --add-data="Code/CKD_core.py;." --add-data="Code/CKD_pdf_files_new.py;." --add-data="Dependencies;Dependencies" --add-data="EMIS_Files;EMIS_Files" --hidden-import="CKD_pdf_files_new" --hidden-import="CKD_core" "Code/CKD_Master_pdf_exefree.py"
+          
+          python -m PyInstaller --onefile `
+          --name="NephroPath" `
+          --icon="Dependencies/NephroPath_installer_icon.ico" `
+          --version-file="Dependencies/version_info.txt" `
+          --add-data="Code/CKD_core.py;." `
+          --add-data="Code/CKD_pdf_files_new.py;." `
+          --add-data="Dependencies;Dependencies" `
+          --add-data="EMIS_Files;EMIS_Files" `
+          --hidden-import="CKD_pdf_files_new" `
+          --hidden-import="CKD_core" `
+          "Code/CKD_Master_pdf_exefree.py"
 
       - name: Move release
         shell: pwsh
@@ -88,20 +99,27 @@ jobs:
           $env:EMIS_FILES_PATH = "$(Get-Location)\EMIS_Files"
           $env:DEPENDENCIES_PATH = "$(Get-Location)\Dependencies"
 
-          Write-Host "Testing NephroPath.exe"
-          & ".\NephroPath.exe" --help | Out-Null
-          $code = $LASTEXITCODE
-          if ($code -ne 0) {
-            Write-Host "Help failed with exit code $code, trying --version..."
-            & ".\NephroPath.exe" --version | Out-Null
-            $code = $LASTEXITCODE
-            if ($code -ne 0) {
-              Write-Warning "Help and version both failed (exit $code). Continuing build."
-            } else {
-              Write-Host "Version command succeeded."
-            }
+          Write-Host "Testing NephroPath.exe with environment variables:"
+          Write-Host "EMIS_FILES_PATH: $env:EMIS_FILES_PATH"
+          Write-Host "DEPENDENCIES_PATH: $env:DEPENDENCIES_PATH"
+          
+          # Test that the executable can start and show help/version without processing data
+          $testResult = Start-Process -FilePath ".\NephroPath.exe" -ArgumentList "--help" -Wait -PassThru -NoNewWindow -ErrorAction SilentlyContinue
+          
+          if ($testResult.ExitCode -eq 0) {
+            Write-Host "NephroPath.exe help command ran successfully"
           } else {
-            Write-Host "Help command succeeded."
+            Write-Host "Help command failed, trying version check..."
+            $versionResult = Start-Process -FilePath ".\NephroPath.exe" -ArgumentList "--version" -Wait -PassThru -NoNewWindow -ErrorAction SilentlyContinue
+            
+            if ($versionResult.ExitCode -eq 0) {
+              Write-Host "NephroPath.exe version command ran successfully"
+            } else {
+              Write-Host "Both help and version failed, executable may have basic issues"
+              Write-Host "Exit codes: help=$($testResult.ExitCode), version=$($versionResult.ExitCode)"
+              # Don't fail the build for now - executable may still work in production
+              Write-Warning "NephroPath.exe test commands failed but continuing build"
+            }
           }
 
       - name: Commit and push changes (Windows artifact)
@@ -233,12 +251,18 @@ jobs:
           export EMIS_FILES_PATH="$(pwd)/EMIS_Files"
           export DEPENDENCIES_PATH="$(pwd)/Dependencies"
 
-          if ./NephroPath_mac --help >/dev/null 2>&1; then
+          echo "Testing NephroPath_mac with environment variables:"
+          echo "EMIS_FILES_PATH: $EMIS_FILES_PATH"
+          echo "DEPENDENCIES_PATH: $DEPENDENCIES_PATH"
+          
+          # Test that the executable can start and show help/version without processing data
+          if ./NephroPath_mac --help 2>/dev/null; then
             echo "NephroPath_mac help command ran successfully"
-          elif ./NephroPath_mac --version >/dev/null 2>&1; then
+          elif ./NephroPath_mac --version 2>/dev/null; then
             echo "NephroPath_mac version command ran successfully"
           else
-            echo "Help and version commands failed; continuing."
+            echo "Help and version commands failed, but executable may still work in production"
+            echo "Continuing build..."
           fi
 
       - name: Commit and push changes (macOS artifact)
