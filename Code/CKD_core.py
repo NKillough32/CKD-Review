@@ -680,6 +680,34 @@ CKD_review['Creatinine'] = pd.to_numeric(CKD_review['Creatinine'], errors='coerc
 CKD_review['Age'] = pd.to_numeric(CKD_review['Age'], errors='coerce')
 CKD_review['Gender'] = CKD_review['Gender'].astype('category')
 
+# Define functions needed for BP calculations
+def get_diabetes_medications():
+    """
+    Read diabetes medications from dependency file.
+    Returns list of medication names and brand names in lowercase.
+    """
+    medications = []
+    try:
+        with open(diabetes_meds_file, 'r') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                medications.extend([
+                    row['medication'].lower(),
+                    row['brand_name'].lower() if row['brand_name'] else ''
+                ])
+        return list(set(filter(None, medications)))
+    except Exception as e:
+        logger.info(f"Error reading diabetes medications file: {e}")
+        return []
+
+def has_diabetes_row(row):
+    """Check if patient has diabetes based on medications and HbA1c"""
+    diabetes_meds = get_diabetes_medications()
+    meds_lower = str(row['Medications']).lower()
+    has_diabetes_meds = any(med in meds_lower for med in diabetes_meds)
+    has_diabetes_hba1c = pd.notna(row['HbA1c']) and row['HbA1c'] > 48  # WHO diabetes threshold
+    return has_diabetes_meds or has_diabetes_hba1c
+
 # Apply eGFR calculation - Keep float precision for KFRE calculations
 CKD_review['eGFR'] = CKD_review.apply(
     lambda row: calculate_eGFR(row['Age'], row['Gender'], row['Creatinine'], row.get('Height', None)), axis=1
@@ -835,34 +863,7 @@ CKD_review.loc[:,'Modality_Education'] = CKD_review.apply(
 # Anaemia Classification
 CKD_review.loc[:,'Anaemia_Classification'] = CKD_review.apply(lambda row: classify_anaemia(row['haemoglobin'], row['Gender']), axis=1)
 
-def get_diabetes_medications():
-    """
-    Read diabetes medications from dependency file.
-    Returns list of medication names and brand names in lowercase.
-    """
-    medications = []
-    try:
-        with open(diabetes_meds_file, 'r') as file:
-            reader = csv.DictReader(file)
-            for row in reader:
-                medications.extend([
-                    row['medication'].lower(),
-                    row['brand_name'].lower() if row['brand_name'] else ''
-                ])
-        return list(set(filter(None, medications)))
-    except Exception as e:
-        logger.info(f"Error reading diabetes medications file: {e}")
-        return []
-
 # BP Target and Flag - Updated to NICE guidelines
-def has_diabetes_row(row):
-    """Check if patient has diabetes based on medications and HbA1c"""
-    diabetes_meds = get_diabetes_medications()
-    meds_lower = str(row['Medications']).lower()
-    has_diabetes_meds = any(med in meds_lower for med in diabetes_meds)
-    has_diabetes_hba1c = pd.notna(row['HbA1c']) and row['HbA1c'] > 48  # WHO diabetes threshold
-    return has_diabetes_meds or has_diabetes_hba1c
-
 CKD_review.loc[:, 'BP_Target'] = CKD_review.apply(
     lambda row: "<130/80" if pd.notna(row['ACR']) and row['ACR'] >= 70 
     else "<130/80" if has_diabetes_row(row)
