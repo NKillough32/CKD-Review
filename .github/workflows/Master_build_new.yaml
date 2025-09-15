@@ -113,9 +113,15 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
           git add -f NephroPath.exe
+<<<<<<< Updated upstream
 
           if git diff --staged --quiet; then
             echo "No changes to NephroPath.exe, skipping commit."
+=======
+          $stagedChanges = git diff --staged
+          if ([string]::IsNullOrWhiteSpace($stagedChanges)) {
+            Write-Host "No changes to NephroPath.exe, skipping commit"
+>>>>>>> Stashed changes
             exit 0
           fi
 
