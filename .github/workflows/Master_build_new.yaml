@@ -137,30 +137,37 @@ jobs:
             exit 0
           fi
 
+          # Commit changes first
+          git commit -m "Update built NephroPath.exe [skip ci]"
+
           # Retry push up to 5 times with backoff
           for i in $(seq 1 5); do
             echo "Attempt $i to push changes..."
             git fetch origin main
-            if git rebase origin/main; then
-              echo "Rebase successful."
+            
+            # Check if we need to rebase
+            if ! git push origin HEAD:main; then
+              echo "Push failed, trying rebase..."
+              if git rebase origin/main; then
+                echo "Rebase successful."
+              else
+                echo "Rebase failed, aborting and retrying..."
+                git rebase --abort || true
+                sleep $((i * 2))
+                continue
+              fi
+              
+              # Try push again after rebase
+              if git push origin HEAD:main; then
+                echo "Push successful on attempt $i after rebase"
+                exit 0
+              else
+                echo "Push failed on attempt $i after rebase, retrying..."
+                sleep $((i * 2))
+              fi
             else
-              echo "Rebase failed, aborting and retrying..."
-              git rebase --abort || true
-              sleep $((i * 2))
-              continue
-            fi
-
-            git commit -m "Update built NephroPath.exe [skip ci]" || {
-              echo "No changes to commit after rebase."
-              exit 0
-            }
-
-            if git push origin HEAD:main; then
               echo "Push successful on attempt $i"
               exit 0
-            else
-              echo "Push failed on attempt $i, retrying..."
-              sleep $((i * 2))
             fi
           done
 
@@ -280,29 +287,36 @@ jobs:
             exit 0
           fi
 
+          # Commit changes first
+          git commit -m "Update built NephroPath_mac [skip ci]"
+
           for i in $(seq 1 5); do
             echo "Attempt $i to push changes..."
             git fetch origin main
-            if git rebase origin/main; then
-              echo "Rebase successful."
+            
+            # Check if we need to rebase
+            if ! git push origin HEAD:main; then
+              echo "Push failed, trying rebase..."
+              if git rebase origin/main; then
+                echo "Rebase successful."
+              else
+                echo "Rebase failed, aborting and retrying..."
+                git rebase --abort || true
+                sleep $((i * 2))
+                continue
+              fi
+              
+              # Try push again after rebase
+              if git push origin HEAD:main; then
+                echo "Push successful on attempt $i after rebase"
+                exit 0
+              else
+                echo "Push failed on attempt $i after rebase, retrying..."
+                sleep $((i * 2))
+              fi
             else
-              echo "Rebase failed, aborting and retrying..."
-              git rebase --abort || true
-              sleep $((i * 2))
-              continue
-            fi
-
-            git commit -m "Update built NephroPath_mac [skip ci]" || {
-              echo "No changes to commit after rebase."
-              exit 0
-            }
-
-            if git push origin HEAD:main; then
               echo "Push successful on attempt $i"
               exit 0
-            else
-              echo "Push failed on attempt $i, retrying..."
-              sleep $((i * 2))
             fi
           done
 
