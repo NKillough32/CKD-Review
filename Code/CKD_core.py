@@ -10,7 +10,6 @@ from datetime import datetime, timedelta
 warnings.filterwarnings("ignore", category=pd.errors.SettingWithCopyWarning)
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-# Defined functions
 def setup_logging(log_dir="logs"):
     """Configure logging with both file and console handlers"""
     # Create logs directory if it doesn't exist
