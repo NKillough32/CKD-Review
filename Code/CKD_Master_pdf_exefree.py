@@ -234,11 +234,12 @@ def rename_folders(date_folder):
     """Rename folders to match current review folder names."""
     logging.info(f"Renaming folders in {date_folder}")
     # Map created by map_review_message_to_folder(...) in CKD_pdf_files_new
+    # Fixed folder names to avoid Windows invalid characters (>, <, :)
     folder_mapping = {
-        "Review_Stage1_2_ACR3":           "Stages_1-2_ACR>=3",
-        "Review_Stage3_5_eGFR30":         "Stages_3-5_eGFR<30",
-        "Review_Stage3_5_ACR30":          "Stages_3-5_ACR>=30",
-        "Review_Stage3_5_Risk5":          "Stages_3-5_KFRE5y>5pct",
+        "Review_Stage1_2_ACR3":           "Stages_1-2_ACR_gte_3",
+        "Review_Stage3_5_eGFR30":         "Stages_3-5_eGFR_lt_30",
+        "Review_Stage3_5_ACR30":          "Stages_3-5_ACR_gte_30",
+        "Review_Stage3_5_Risk5":          "Stages_3-5_KFRE5y_gt_5pct",
         "Review_eGFR_Unavailable":        "Review_eGFR_Unavailable",
         "No_Immediate_Review":            "No_Immediate_Review",
         "General_Review_Stage1_2":        "General_Review_Stages_1-2",

@@ -152,6 +152,9 @@ def classify_status(value, thresholds, field):
     elif field == "Systolic_BP":
         if pd.isna(value) or value == "Missing":
             return colors.grey, "Missing"
+        # Safely convert to scalar value if it's a Series
+        if hasattr(value, 'iloc'):
+            value = value.iloc[0] if len(value) > 0 else float('nan')
         value = int(float(value))  # Convert to integer
         formatted_value = str(value)
         if value >= 180: return colors.Color(0.69, 0, 0.125), formatted_value  # #B00020
@@ -161,6 +164,9 @@ def classify_status(value, thresholds, field):
     elif field == "Diastolic_BP":
         if pd.isna(value) or value == "Missing":
             return colors.grey, "Missing"
+        # Safely convert to scalar value if it's a Series
+        if hasattr(value, 'iloc'):
+            value = value.iloc[0] if len(value) > 0 else float('nan')
         value = int(float(value))  # Convert to integer
         formatted_value = str(value)
         if value >= 120: return colors.Color(0.69, 0, 0.125), formatted_value  # #B00020
