@@ -863,18 +863,17 @@ CKD_review.loc[:,'Modality_Education'] = CKD_review.apply(
 # Anaemia Classification
 CKD_review.loc[:,'Anaemia_Classification'] = CKD_review.apply(lambda row: classify_anaemia(row['haemoglobin'], row['Gender']), axis=1)
 
-# BP Target and Flag - Updated to NICE guidelines
+# BP Target and Flag - Updated to NICE NG203 guidelines
 CKD_review.loc[:, 'BP_Target'] = CKD_review.apply(
-    lambda row: "<130/80" if pd.notna(row['ACR']) and row['ACR'] >= 70 
-    else "<130/80" if has_diabetes_row(row)
-    else "<140/90", axis=1
+    lambda row: "<130" if has_diabetes_row(row) or (pd.notna(row['ACR']) and row['ACR'] >= 30)
+    else "<140", axis=1
 )
 
 CKD_review.loc[:,'BP_Flag'] = CKD_review.apply(
     lambda row: "Above Target" if (
-        ((row['Systolic_BP'] >= 140 or row['Diastolic_BP'] >= 90) and row['BP_Target'] == "<140/90") or 
-        ((row['Systolic_BP'] >= 130 or row['Diastolic_BP'] >= 80) and row['BP_Target'] == "<130/80")
-    ) else "On Target", 
+        (pd.notna(row['Systolic_BP']) and row['Systolic_BP'] >= 140 and row['BP_Target'] == "<140") or
+        (pd.notna(row['Systolic_BP']) and row['Systolic_BP'] >= 130 and row['BP_Target'] == "<130")
+    ) else "On Target",
     axis=1
 )
 
@@ -990,13 +989,13 @@ def check_sglt2i_contraindications(row):
     return ", ".join(contraindications) if contraindications else "No contraindications"
 
 # UKKA thresholds for SGLT2i
-UKKA_UACR_NO_DM = 25.0  # mg/mmol
+UKKA_UACR_NO_DM = 22.6  # mg/mmol (NICE NG203 recommendation)
 UKKA_EGFR_INIT  = 20    # mL/min/1.73m2
 
 # Update the recommend_sglt2 function with enhanced diabetes detection
 def recommend_sglt2(row):
     """
-    Determine SGLT2 inhibitor recommendations based on UKKA guidelines.
+    Determine SGLT2 inhibitor recommendations based on UKKA and NICE guidelines.
     """
     e = row['eGFR']; acr = row['ACR']
     if pd.isna(e) or pd.isna(acr):
@@ -1004,23 +1003,23 @@ def recommend_sglt2(row):
 
     # Enhanced diabetes detection with token matching
     diabetes_meds = get_diabetes_medications()
-    med_tokens = set(re.findall(r'\b\w+\b', str(row['Medications']).lower()))
+    med_tokens = set(re.findall(r'\\b\\w+\\b', str(row['Medications']).lower()))
     has_diabetes_meds = any(
-        set(re.findall(r'\b\w+\b', med.lower())).intersection(med_tokens) 
+        set(re.findall(r'\\b\\w+\\b', med.lower())).intersection(med_tokens) 
         for med in diabetes_meds if med
     )
     has_diabetes = has_diabetes_meds or (pd.notna(row['HbA1c']) and row['HbA1c'] > 48)
 
     # Indications
     if has_diabetes and acr >= 3 and e >= UKKA_EGFR_INIT:
-        return "Recommend SGLT2i (CKD with diabetes)"
+        return "Recommend SGLT2i (CKD with T2D)"
     if (not has_diabetes) and acr >= UKKA_UACR_NO_DM and e >= UKKA_EGFR_INIT:
-        return "Recommend SGLT2i (CKD without diabetes, albuminuric)"
+        return "Consider SGLT2i (CKD, non-diabetic, albuminuric)"
 
     # Continuation if already on - enhanced detection
     sglt2_meds = get_sglt2_medications()
     on_sglt2 = any(
-        set(re.findall(r'\b\w+\b', med.lower())).intersection(med_tokens) 
+        set(re.findall(r'\\b\\w+\\b', med.lower())).intersection(med_tokens) 
         for med in sglt2_meds if med
     )
     
@@ -1229,3 +1228,33 @@ def check_ckd_changes(current_df):
 # Add this at the end of your main processing code, just before saving the output
 logger.info("\nChecking for CKD staging changes...")
 new_patients, changed_staging = check_ckd_changes(CKD_review)
+
+def on_finereone(meds: str) -> bool:
+    """Check if the patient is on Finerenone."""
+    if pd.isna(meds):
+        return False
+    return "finerenone" in meds.lower() or "kerendia" in meds.lower()
+
+def recommend_finerenone(row):
+    """Recommend Finerenone based on NICE TA877."""
+    e = row['eGFR']
+    acr = row['ACR']
+    meds = row['Medications']
+    
+    if pd.isna(e) or pd.isna(acr):
+        return "Unable to determine - Missing data"
+
+    # Check if patient has Type 2 Diabetes
+    has_t2d = has_diabetes_row(row)
+
+    # Finerenone is recommended if T2D, ACR >= 30, eGFR >= 25, and on max tolerated ACEi/ARB
+    if has_t2d and acr >= 30 and e >= 25:
+        # Simple check for ACEi/ARB - can be improved with a more comprehensive list
+        on_acei_arb = "pril" in str(meds).lower() or "sartan" in str(meds).lower()
+        if on_acei_arb:
+            if on_finereone(meds):
+                return "Continue Finerenone"
+            else:
+                return "Consider Finerenone (if on max tolerated ACEi/ARB)"
+    
+    return "Not indicated"

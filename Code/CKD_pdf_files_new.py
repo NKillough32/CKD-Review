@@ -541,6 +541,60 @@ def generate_patient_pdf(CKD_review, template_dir=None, output_dir=output_dir):
         logging.info(f"Report saved as Patient_Summary_{patient['HC_Number']}.pdf in {review_folder}")
     return date_folder
 
+def get_nice_recommendations(ckd_stage):
+    """Returns NICE guideline recommendations for a given CKD stage."""
+    recommendations = {
+        "Normal Function": [
+            ("Monitoring", "Regular monitoring is not required unless risk factors are present."),
+            ("Blood Pressure", "Monitor and maintain within normal ranges (less than 140/90 mmHg)."),
+            ("Lifestyle", "Maintain a balanced diet, regular physical activity, and healthy weight. Encourage smoking cessation and limit alcohol intake."),
+            ("Medications", "Avoid excessive use of NSAIDs and other nephrotoxic agents. No specific renal medications required.")
+        ],
+        "Stage 1": [
+            ("Monitoring", "Annual monitoring if ACR > 3 mg/mmol. Less frequent if ACR < 3 mg/mmol without other risk factors."),
+            ("Blood Pressure", "Target < 140/90 mmHg generally, or < 130/80 mmHg with diabetes or ACR > 70 mg/mmol."),
+            ("Laboratory Tests", "Regular ACR testing, haematuria screening, and eGFR monitoring. Re-evaluate renal function within 14 days if no prior results."),
+            ("Management", "Primary care-based. Consider cardiovascular risk assessment and appropriate statin therapy."),
+            ("Lifestyle", "Encourage regular exercise, smoking cessation, and maintaining healthy weight.")
+        ],
+        "Stage 2": [
+            ("Monitoring", "Annual monitoring with ACR > 3 mg/mmol. Consider less frequent monitoring if ACR < 3 mg/mmol and stable."),
+            ("Blood Pressure", "Target < 140/90 mmHg, or < 130/80 mmHg with diabetes or significant proteinuria."),
+            ("Laboratory Tests", "Regular ACR, haematuria screening, and eGFR monitoring. Confirm stability with repeat testing."),
+            ("Medications", "Consider ACE inhibitor or ARB if proteinuria present. Evaluate need for statin therapy."),
+            ("Lifestyle", "Regular exercise, weight management, smoking cessation, and dietary advice.")
+        ],
+        "Stage 3A": [
+            ("Monitoring", "6-monthly monitoring with ACR > 3 mg/mmol, annual if stable and ACR < 3 mg/mmol."),
+            ("Blood Pressure", "Target < 140/90 mmHg, or < 130/80 mmHg with diabetes or significant proteinuria."),
+            ("Referral Criteria", "Refer to nephrology if ACR > 70 mg/mmol, rapid eGFR decline (>25% in 12 months), or 5-year risk > 5%."),
+            ("Medications", "Prescribe Atorvastatin 20mg unless contraindicated. Optimize ACE inhibitor/ARB if proteinuria present."),
+            ("Risk Assessment", "Regular KFRE calculation to estimate progression risk.")
+        ],
+        "Stage 3B": [
+            ("Monitoring", "Minimum 6-monthly renal function tests. More frequent if rapid progression or complications."),
+            ("Nephrology Input", "Consider referral, especially with complications or 5-year risk > 5%."),
+            ("Complications", "Monitor for anaemia, electrolyte imbalances, and bone mineral disorders."),
+            ("Medications", "Optimize ACE inhibitor/ARB therapy. Continue statin therapy. Review medication doses."),
+            ("Education", "Discuss progression risk and importance of treatment adherence.")
+        ],
+        "Stage 4": [
+            ("Specialist Care", "Regular nephrology review for co-management and RRT planning."),
+            ("Monitoring", "Regular comprehensive testing including eGFR, electrolytes, bone profile, and haemoglobin."),
+            ("Medications", "Review and adjust all medications. Stop nephrotoxic drugs. Discontinue metformin if eGFR < 30."),
+            ("Preventive Care", "Ensure vaccinations up to date. Continue statin therapy unless contraindicated."),
+            ("Patient Support", "Discuss RRT options and provide dietary/lifestyle guidance.")
+        ],
+        "Stage 5": [
+            ("Specialist Management", "Close nephrology supervision with comprehensive care plan."),
+            ("Monitoring", "Frequent monitoring of renal function, electrolytes, acid-base status, and other parameters."),
+            ("Complications", "Active management of anaemia, electrolyte disorders, and metabolic acidosis."),
+            ("RRT Planning", "Detailed discussion and preparation for dialysis/transplantation as appropriate."),
+            ("Support", "Comprehensive dietary advice, psychological support, and advance care planning.")
+        ]
+    }
+    return recommendations.get(ckd_stage, [])
+
 def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font_name, font_name_bold, font_name_italic):
     for key in patient:
         if isinstance(patient[key], str) and len(patient[key]) > 1000:
@@ -984,6 +1038,9 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
                     styles['CustomTableText'])],
         [safe_paragraph(f"• <font face='{font_name_bold}'>SGLT2i Recommendation:</font> " +
                     escape(format_value(patient.get('SGLT2i_Recommendation', 'N/A'))), 
+                    styles['CustomTableText'])],
+        [safe_paragraph(f"• <font face='{font_name_bold}'>Finerenone Recommendation:</font> " +
+                    escape(format_value(patient.get('Finerenone_Recommendation', 'N/A'))),
                     styles['CustomTableText'])]
     ]
     med_table = create_boxed_table(
@@ -1041,70 +1098,14 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
         [safe_paragraph("For detailed guidance, refer to <a href='https://www.nice.org.uk/guidance/ng203' color='#00008B'><font color='#00008B'>NICE NG203 guideline on Chronic Kidney Disease</font></a>.", styles['CustomTableText'])]
     ]
     ckd_stage = patient.get('CKD_Stage', 'Unknown')
-    if ckd_stage == "Normal Function":
-        nice_data.extend([
-            [safe_paragraph(f"<font face='{font_name_bold}'>NICE Recommendations for Normal Kidney Function</font>", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Monitoring:</font> Regular monitoring is not required unless risk factors are present.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Blood Pressure:</font> Monitor and maintain within normal ranges (less than 140/90 mmHg).", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Lifestyle:</font> Maintain a balanced diet, regular physical activity, and healthy weight. Encourage smoking cessation and limit alcohol intake.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Medications:</font> Avoid excessive use of NSAIDs and other nephrotoxic agents. No specific renal medications required.", styles['CustomTableText'])]
-        ])
-    elif ckd_stage == "Stage 1":
-        nice_data.extend([
-            [safe_paragraph(f"<font face='{font_name_bold}'>NICE Recommendations for CKD Stage 1</font>", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Monitoring:</font> Annual monitoring if ACR > 3 mg/mmol. Less frequent if ACR < 3 mg/mmol without other risk factors.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Blood Pressure:</font> Target < 140/90 mmHg generally, or < 130/80 mmHg with diabetes or ACR > 70 mg/mmol.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Laboratory Tests:</font> Regular ACR testing, haematuria screening, and eGFR monitoring. Re-evaluate renal function within 14 days if no prior results.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Management:</font> Primary care-based. Consider cardiovascular risk assessment and appropriate statin therapy.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Lifestyle:</font> Encourage regular exercise, smoking cessation, and maintaining healthy weight.", styles['CustomTableText'])]
-        ])
-    elif ckd_stage == "Stage 2":
-        nice_data.extend([
-            [safe_paragraph(f"<font face='{font_name_bold}'>NICE Recommendations for CKD Stage 2</font>", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Monitoring:</font> Annual monitoring with ACR > 3 mg/mmol. Consider less frequent monitoring if ACR < 3 mg/mmol and stable.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Blood Pressure:</font> Target < 140/90 mmHg, or < 130/80 mmHg with diabetes or significant proteinuria.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Laboratory Tests:</font> Regular ACR, haematuria screening, and eGFR monitoring. Confirm stability with repeat testing.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Medications:</font> Consider ACE inhibitor or ARB if proteinuria present. Evaluate need for statin therapy.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Lifestyle:</font> Regular exercise, weight management, smoking cessation, and dietary advice.", styles['CustomTableText'])]
-        ])
-    elif ckd_stage == "Stage 3A":
-        nice_data.extend([
-            [safe_paragraph(f"<font face='{font_name_bold}'>NICE Recommendations for CKD Stage 3A</font>", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Monitoring:</font> 6-monthly monitoring with ACR > 3 mg/mmol, annual if stable and ACR < 3 mg/mmol.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Blood Pressure:</font> Target < 140/90 mmHg, or < 130/80 mmHg with diabetes or significant proteinuria.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Referral Criteria:</font> Refer to nephrology if ACR > 70 mg/mmol, rapid eGFR decline (>25% in 12 months), or 5-year risk > 5%.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Medications:</font> Prescribe Atorvastatin 20mg unless contraindicated. Optimize ACE inhibitor/ARB if proteinuria present.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Risk Assessment:</font> Regular KFRE calculation to estimate progression risk.", styles['CustomTableText'])]
-        ])
-    elif ckd_stage == "Stage 3B":
-        nice_data.extend([
-            [safe_paragraph(f"<font face='{font_name_bold}'>NICE Recommendations for CKD Stage 3B</font>", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Monitoring:</font> Minimum 6-monthly renal function tests. More frequent if rapid progression or complications.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Nephrology Input:</font> Consider referral, especially with complications or 5-year risk > 5%.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Complications:</font> Monitor for anaemia, electrolyte imbalances, and bone mineral disorders.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Medications:</font> Optimize ACE inhibitor/ARB therapy. Continue statin therapy. Review medication doses.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Education:</font> Discuss progression risk and importance of treatment adherence.", styles['CustomTableText'])]
-        ])
-    elif ckd_stage == "Stage 4":
-        nice_data.extend([
-            [safe_paragraph(f"<font face='{font_name_bold}'>NICE Recommendations for CKD Stage 4</font>", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Specialist Care:</font> Regular nephrology review for co-management and RRT planning.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Monitoring:</font> Regular comprehensive testing including eGFR, electrolytes, bone profile, and haemoglobin.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Medications:</font> Review and adjust all medications. Stop nephrotoxic drugs. Discontinue metformin if eGFR < 30.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Preventive Care:</font> Ensure vaccinations up to date. Continue statin therapy unless contraindicated.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Patient Support:</font> Discuss RRT options and provide dietary/lifestyle guidance.", styles['CustomTableText'])]
-        ])
-    elif ckd_stage == "Stage 5":
-        nice_data.extend([
-            [safe_paragraph(f"<font face='{font_name_bold}'>NICE Recommendations for CKD Stage 5</font>", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Specialist Management:</font> Close nephrology supervision with comprehensive care plan.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Monitoring:</font> Frequent monitoring of renal function, electrolytes, acid-base status, and other parameters.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Complications:</font> Active management of anaemia, electrolyte disorders, and metabolic acidosis.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>RRT Planning:</font> Detailed discussion and preparation for dialysis/transplantation as appropriate.", styles['CustomTableText'])],
-            [safe_paragraph(f"• <font face='{font_name_bold}'>Support:</font> Comprehensive dietary advice, psychological support, and advance care planning.", styles['CustomTableText'])]
-        ])
+    recommendations = get_nice_recommendations(ckd_stage)
+    if recommendations:
+        nice_data.append([safe_paragraph(f"<font face='{font_name_bold}'>NICE Recommendations for CKD {ckd_stage}</font>", styles['CustomTableText'])])
+        for title, text in recommendations:
+            nice_data.append([safe_paragraph(f"• <font face='{font_name_bold}'>{title}:</font> {text}", styles['CustomTableText'])])
     else:
         nice_data.append([safe_paragraph(f"<font face='{font_name_bold}'>No specific recommendations available for this CKD stage.</font>", styles['CustomTableText'])])
+
     nice_table = create_boxed_table(
         data=nice_data,
         widths=[doc.width - 0.15 * inch],
@@ -1144,6 +1145,8 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ("Nephrology Referral", patient.get('Nephrology_Referral'), ["Not Indicated", "N/A", "Missing", None]),
             ("Medication Adjustments Required", patient.get('dose_adjustment_prescribed'), ["No adjustments needed", "N/A", "Missing", None]),
             ("Consider Statin Therapy", patient.get('Statin_Recommendation'), ["On Statin", "Not Indicated", "N/A", "Missing", None]),
+            ("Consider SGLT2i Therapy", patient.get('SGLT2i_Recommendation'), ["Not indicated based on current eGFR/ACR", "Continue SGLT2i unless contraindicated", "N/A", "Missing", None]),
+            ("Consider Finerenone Therapy", patient.get('Finerenone_Recommendation'), ["Not indicated", "Continue Finerenone", "N/A", "Missing", None]),
             ("Consider Nephrology Referral", patient.get('Proteinuria_Flag'), ["No Referral Needed", "N/A", "Missing", None]),
             ("Blood Pressure Management", patient.get('BP_Flag'), ["On Target", "N/A", "Missing", None])
         ]
@@ -1263,6 +1266,7 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
 
     doc.build(elements, onFirstPage=add_header_footer, onLaterPages=add_header_footer)
     logging.info(f"PDF generated successfully at {output_path}")
+
 
 if __name__ == "__main__":
     try:
