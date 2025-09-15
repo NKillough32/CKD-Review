@@ -865,14 +865,16 @@ CKD_review.loc[:,'Anaemia_Classification'] = CKD_review.apply(lambda row: classi
 
 # BP Target and Flag - Updated to NICE NG203 guidelines
 CKD_review.loc[:, 'BP_Target'] = CKD_review.apply(
-    lambda row: "<130" if has_diabetes_row(row) or (pd.notna(row['ACR']) and row['ACR'] >= 30)
-    else "<140", axis=1
+    lambda row: "<130/80 mmHg" if has_diabetes_row(row) or (pd.notna(row['ACR']) and row['ACR'] >= 30)
+    else "<140/90 mmHg", axis=1
 )
 
 CKD_review.loc[:,'BP_Flag'] = CKD_review.apply(
     lambda row: "Above Target" if (
-        (pd.notna(row['Systolic_BP']) and row['Systolic_BP'] >= 140 and row['BP_Target'] == "<140") or
-        (pd.notna(row['Systolic_BP']) and row['Systolic_BP'] >= 130 and row['BP_Target'] == "<130")
+        (pd.notna(row['Systolic_BP']) and pd.notna(row['Diastolic_BP']) and 
+         ((row['Systolic_BP'] >= 140 or row['Diastolic_BP'] >= 90) and row['BP_Target'] == "<140/90 mmHg")) or
+        (pd.notna(row['Systolic_BP']) and pd.notna(row['Diastolic_BP']) and 
+         ((row['Systolic_BP'] >= 130 or row['Diastolic_BP'] >= 80) and row['BP_Target'] == "<130/80 mmHg"))
     ) else "On Target",
     axis=1
 )
@@ -1078,9 +1080,26 @@ CKD_review.loc[:,'SGLT2i_Action_Needed'] = CKD_review.apply(
 
 
 
-# HbA1c Target
-CKD_review.loc[:,'HbA1c_Target'] = CKD_review['HbA1c'].apply(
-    lambda x: "Adjust Diabetes Management" if pd.notna(x) and x > 53 else "On Target" if pd.notna(x) else None
+# HbA1c Target - Adjusted for CKD patients per NICE guidance
+def get_hba1c_target_ckd(hba1c, ckd_stage, age):
+    """
+    Determine HbA1c target for CKD patients based on NICE recommendations.
+    CKD patients may need less stringent targets due to hypoglycemia risk.
+    """
+    if pd.isna(hba1c):
+        return None
+    
+    # More relaxed targets for advanced CKD (stages 4-5) or elderly patients
+    if ckd_stage in ['Stage 4', 'Stage 5'] or (pd.notna(age) and age >= 75):
+        target_threshold = 64  # 8.0% - relaxed target
+    else:
+        target_threshold = 58  # 7.5% - standard target
+    
+    return "Adjust Diabetes Management" if hba1c > target_threshold else "On Target"
+
+CKD_review.loc[:,'HbA1c_Target'] = CKD_review.apply(
+    lambda row: get_hba1c_target_ckd(row['HbA1c'], row['CKD_Stage'], row['Age']), 
+    axis=1
 )
 
 # Lifestyle Advice
