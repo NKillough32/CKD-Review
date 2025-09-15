@@ -6,12 +6,12 @@ on:
     paths-ignore:
       - 'NephroPath.exe'
       - 'NephroPath_mac'
-      - '**.md'  # Ignore markdown files
-      - '.github/**'  # Ignore workflow changes to prevent loops
+      - '**.md'
+      - '.github/**'  # Prevent loops from workflow edits
 
 concurrency:
   group: build-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false  # Don't cancel in progress to avoid conflicts
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   build-windows:
-    runs-on: windows-2022  # Explicitly use Windows Server 2022 to avoid migration issues
+    runs-on: windows-2022
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -69,21 +69,9 @@ jobs:
       - name: Build with PyInstaller (Windows)
         shell: pwsh
         run: |
-          # Set environment variables for build process
           $env:EMIS_FILES_PATH = "$(Get-Location)\EMIS_Files"
           $env:DEPENDENCIES_PATH = "$(Get-Location)\Dependencies"
-          
-          python -m PyInstaller --onefile `
-          --name="NephroPath" `
-          --icon="Dependencies/NephroPath_installer_icon.ico" `
-          --version-file="Dependencies/version_info.txt" `
-          --add-data="Code/CKD_core.py;." `
-          --add-data="Code/CKD_pdf_files_new.py;." `
-          --add-data="Dependencies;Dependencies" `
-          --add-data="EMIS_Files;EMIS_Files" `
-          --hidden-import="CKD_pdf_files_new" `
-          --hidden-import="CKD_core" `
-          "Code/CKD_Master_pdf_exefree.py"
+          python -m PyInstaller --onefile --name="NephroPath" --icon="Dependencies/NephroPath_installer_icon.ico" --version-file="Dependencies/version_info.txt" --add-data="Code/CKD_core.py;." --add-data="Code/CKD_pdf_files_new.py;." --add-data="Dependencies;Dependencies" --add-data="EMIS_Files;EMIS_Files" --hidden-import="CKD_pdf_files_new" --hidden-import="CKD_core" "Code/CKD_Master_pdf_exefree.py"
 
       - name: Move release
         shell: pwsh
@@ -97,82 +85,68 @@ jobs:
       - name: Test NephroPath.exe
         shell: pwsh
         run: |
-          # Set environment variables for testing
           $env:EMIS_FILES_PATH = "$(Get-Location)\EMIS_Files"
           $env:DEPENDENCIES_PATH = "$(Get-Location)\Dependencies"
-          
-          Write-Host "Testing NephroPath.exe with environment variables:"
-          Write-Host "EMIS_FILES_PATH: $env:EMIS_FILES_PATH"
-          Write-Host "DEPENDENCIES_PATH: $env:DEPENDENCIES_PATH"
-          
-          # Test that the executable can start and show help/version without processing data
-          $testResult = Start-Process -FilePath ".\NephroPath.exe" -ArgumentList "--help" -Wait -PassThru -NoNewWindow -ErrorAction SilentlyContinue
-          
-          if ($testResult.ExitCode -eq 0) {
-            Write-Host "NephroPath.exe help command ran successfully"
-          } else {
-            Write-Host "Help command failed, trying version check..."
-            $versionResult = Start-Process -FilePath ".\NephroPath.exe" -ArgumentList "--version" -Wait -PassThru -NoNewWindow -ErrorAction SilentlyContinue
-            
-            if ($versionResult.ExitCode -eq 0) {
-              Write-Host "NephroPath.exe version command ran successfully"
+
+          Write-Host "Testing NephroPath.exe"
+          & ".\NephroPath.exe" --help | Out-Null
+          $code = $LASTEXITCODE
+          if ($code -ne 0) {
+            Write-Host "Help failed with exit code $code, trying --version..."
+            & ".\NephroPath.exe" --version | Out-Null
+            $code = $LASTEXITCODE
+            if ($code -ne 0) {
+              Write-Warning "Help and version both failed (exit $code). Continuing build."
             } else {
-              Write-Host "Both help and version failed, executable may have basic issues"
-              Write-Host "Exit codes: help=$($testResult.ExitCode), version=$($versionResult.ExitCode)"
-              # Don't fail the build for now - executable may still work in production
-              Write-Warning "NephroPath.exe test commands failed but continuing build"
+              Write-Host "Version command succeeded."
             }
+          } else {
+            Write-Host "Help command succeeded."
           }
 
-      - name: Commit and push changes
-        shell: pwsh
+      - name: Commit and push changes (Windows artifact)
+        shell: bash
         run: |
-          git config user.email "actions@github.com"
-          git config user.name "GitHub Actions"
-          
-          # Check if there are actually changes to commit
+          set -e
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
           git add -f NephroPath.exe
-          if ((git diff --staged) -eq $null -or (git diff --staged).Trim() -eq "") {
-            Write-Host "No changes to NephroPath.exe, skipping commit"
+
+          if git diff --staged --quiet; then
+            echo "No changes to NephroPath.exe, skipping commit."
             exit 0
-          }
-          
-          # Retry logic for concurrent pushes
-          for ($i = 1; $i -le 5; $i++) {
-            Write-Host "Attempt $i to push changes..."
-            
-            # Fetch latest changes
+          fi
+
+          # Retry push up to 5 times with backoff
+          for i in $(seq 1 5); do
+            echo "Attempt $i to push changes..."
             git fetch origin main
-            
-            # Try to rebase
-            $rebaseResult = git rebase origin/main
-            if ($LASTEXITCODE -eq 0) {
-              Write-Host "Rebase successful"
-            } else {
-              Write-Host "Rebase failed, aborting and retrying..."
-              git rebase --abort
-              Start-Sleep ($i * 2)  # Exponential backoff
+            if git rebase origin/main; then
+              echo "Rebase successful."
+            else
+              echo "Rebase failed, aborting and retrying..."
+              git rebase --abort || true
+              sleep $((i * 2))
               continue
-            }
-            
-            # Commit changes
-            git commit -m "Update built NephroPath.exe [skip ci]"
-            if ($LASTEXITCODE -ne 0) {
-              Write-Host "No changes to commit"
-            }
-            
-            # Try to push
-            git push origin main
-            if ($LASTEXITCODE -eq 0) {
-              Write-Host "Push successful on attempt $i"
+            fi
+
+            git commit -m "Update built NephroPath.exe [skip ci]" || {
+              echo "No changes to commit after rebase."
               exit 0
-            } else {
-              Write-Host "Push failed on attempt $i, retrying..."
-              Start-Sleep ($i * 2)  # Exponential backoff
             }
-          }
-          
-          Write-Host "Failed to push after 5 attempts"
+
+            if git push origin HEAD:main; then
+              echo "Push successful on attempt $i"
+              exit 0
+            else
+              echo "Push failed on attempt $i, retrying..."
+              sleep $((i * 2))
+            fi
+          done
+
+          echo "Failed to push after 5 attempts."
           exit 1
 
       - name: Upload Windows executable
@@ -182,15 +156,15 @@ jobs:
           path: NephroPath.exe
 
   build-macos:
-    runs-on: macos-13  # Use macOS 13 for stability
-    needs: build-windows  # Wait for Windows build to complete first
-    if: success()  # Only run if Windows build succeeded
+    runs-on: macos-13
+    needs: build-windows
+    if: success()
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: main  # Ensure we get the latest main branch with Windows changes
+          ref: main
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -232,20 +206,19 @@ jobs:
 
       - name: Build with PyInstaller (macOS)
         run: |
-          # Set environment variables for build process
           export EMIS_FILES_PATH="$(pwd)/EMIS_Files"
           export DEPENDENCIES_PATH="$(pwd)/Dependencies"
-          
+
           python -m PyInstaller --onefile \
-          --name=NephroPath_mac \
-          --icon="Dependencies/NephroPath_installer_icon.icns" \
-          --add-data "Code/CKD_core.py:." \
-          --add-data "Code/CKD_pdf_files_new.py:." \
-          --add-data "Dependencies:Dependencies" \
-          --add-data "EMIS_Files:EMIS_Files" \
-          --hidden-import CKD_pdf_files_new \
-          --hidden-import CKD_core \
-          Code/CKD_Master_pdf_exefree.py
+            --name=NephroPath_mac \
+            --icon="Dependencies/NephroPath_installer_icon.icns" \
+            --add-data "Code/CKD_core.py:." \
+            --add-data "Code/CKD_pdf_files_new.py:." \
+            --add-data "Dependencies:Dependencies" \
+            --add-data "EMIS_Files:EMIS_Files" \
+            --hidden-import CKD_pdf_files_new \
+            --hidden-import CKD_core \
+            Code/CKD_Master_pdf_exefree.py
 
       - name: Move release
         run: |
@@ -257,68 +230,59 @@ jobs:
 
       - name: Test NephroPath_mac
         run: |
-          # Set environment variables for testing
           export EMIS_FILES_PATH="$(pwd)/EMIS_Files"
           export DEPENDENCIES_PATH="$(pwd)/Dependencies"
-          
-          echo "Testing NephroPath_mac with environment variables:"
-          echo "EMIS_FILES_PATH: $EMIS_FILES_PATH"
-          echo "DEPENDENCIES_PATH: $DEPENDENCIES_PATH"
-          
-          # Test that the executable can start and show help/version without processing data
-          if ./NephroPath_mac --help 2>/dev/null; then
+
+          if ./NephroPath_mac --help >/dev/null 2>&1; then
             echo "NephroPath_mac help command ran successfully"
-          elif ./NephroPath_mac --version 2>/dev/null; then
+          elif ./NephroPath_mac --version >/dev/null 2>&1; then
             echo "NephroPath_mac version command ran successfully"
           else
-            echo "Help and version commands failed, but executable may still work in production"
-            echo "Continuing build..."
+            echo "Help and version commands failed; continuing."
           fi
 
-      - name: Commit and push changes
+      - name: Commit and push changes (macOS artifact)
         shell: bash
         run: |
-          git config user.email "actions@github.com"
-          git config user.name "GitHub Actions"
-          
-          # Check if there are actually changes to commit
+          set -e
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
           git add -f NephroPath_mac
+
           if git diff --staged --quiet; then
-            echo "No changes to NephroPath_mac, skipping commit"
+            echo "No changes to NephroPath_mac, skipping commit."
             exit 0
           fi
-          
-          # Retry logic for concurrent pushes
-          for i in {1..5}; do
+
+          for i in $(seq 1 5); do
             echo "Attempt $i to push changes..."
-            
-            # Fetch latest changes
             git fetch origin main
-            
-            # Try to rebase
             if git rebase origin/main; then
-              echo "Rebase successful"
+              echo "Rebase successful."
             else
               echo "Rebase failed, aborting and retrying..."
-              git rebase --abort
-              sleep $((i * 2))  # Exponential backoff
+              git rebase --abort || true
+              sleep $((i * 2))
               continue
             fi
-            
-            # Commit changes
-            git commit -m "Update built NephroPath_mac [skip ci]" || echo "No changes to commit"
-            
-            # Try to push
-            if git push origin main; then
+
+            git commit -m "Update built NephroPath_mac [skip ci]" || {
+              echo "No changes to commit after rebase."
+              exit 0
+            }
+
+            if git push origin HEAD:main; then
               echo "Push successful on attempt $i"
               exit 0
             else
               echo "Push failed on attempt $i, retrying..."
-              sleep $((i * 2))  # Exponential backoff
+              sleep $((i * 2))
             fi
           done
-          
-          echo "Failed to push after 5 attempts"
+
+          echo "Failed to push after 5 attempts."
           exit 1
 
       - name: Upload macOS executable
