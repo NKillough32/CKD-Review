@@ -188,16 +188,47 @@ def classify_CKD_stage(eGFR):
     else:
         return "No Data"
 def calculate_egfr_trend(row):
+    """
+    Calculate eGFR trend based on NICE NG203 guidelines for rapid decline detection.
+    
+    NICE defines rapid decline as:
+    - Sustained decrease in eGFR of ≥25% over 12 months (or equivalent annualized)
+    - OR sustained decrease of ≥15 mL/min/1.73m² over 12 months (or equivalent annualized)
+    
+    Requires adequate time interval (≥60 days) for meaningful assessment.
+    """
     if pd.isna(row['eGFR']) or pd.isna(row['eGFR_3m_prior']) or pd.isna(row['Date']) or pd.isna(row['Date_3m_prior']):
         return "No Data"
+    
     days_between = (row['Date'] - row['Date_3m_prior']).days
-    if days_between == 0:
+    
+    # Ensure adequate time interval for meaningful assessment (minimum 60 days)
+    if days_between < 60:
+        return "Insufficient Time Interval"
+    
+    # Handle edge cases
+    if row['eGFR_3m_prior'] <= 0:
         return "No Data"
-    annualized_change = (row['eGFR'] - row['eGFR_3m_prior']) * (365 / abs(days_between))
-    if annualized_change < -5 or (row['eGFR_3m_prior'] > 0 and 
-                                  (row['eGFR_3m_prior'] - row['eGFR']) / row['eGFR_3m_prior'] >= 0.25):
+    
+    # Calculate absolute and relative changes
+    absolute_change = row['eGFR_3m_prior'] - row['eGFR']  # Positive = decline
+    relative_change = absolute_change / row['eGFR_3m_prior']
+    
+    # Annualize the changes based on actual time interval
+    annualized_absolute_change = absolute_change * (365 / days_between)
+    annualized_relative_change = relative_change * (365 / days_between)
+    
+    # NICE criteria for rapid decline (annualized)
+    # 1. Relative decline ≥25% per year
+    # 2. Absolute decline ≥15 mL/min/1.73m² per year (more stringent than previous 5)
+    if annualized_relative_change >= 0.25 or annualized_absolute_change >= 15:
         return "Rapid Decline"
-    return "Stable"
+    elif annualized_relative_change >= 0.15 or annualized_absolute_change >= 10:
+        return "Moderate Decline"
+    elif annualized_absolute_change > 0:  # Any decline
+        return "Mild Decline"
+    else:
+        return "Stable or Improving"
 def classify_BP(systolic, diastolic):
     if pd.isna(systolic) or pd.isna(diastolic):
         return None
@@ -510,6 +541,7 @@ def prioritize_patient(row):
         return "Unknown"  # If conversion fails, return 'Unknown'
 
     score += 2 if row['eGFR_Trend'] == "Rapid Decline" else 0
+    score += 1 if row['eGFR_Trend'] == "Moderate Decline" else 0  # Add moderate decline consideration
     score += 1 if risk_2yr > 20 else 0
     score += 1 if row['Proteinuria_Flag'].startswith("Immediate") else 0
 
