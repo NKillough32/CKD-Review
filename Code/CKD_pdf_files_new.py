@@ -814,13 +814,12 @@ def create_patient_pdf(patient, surgery_info, output_path, qr_path, styles, font
             ('PADDING', (0, 0), (-1, -1), 8),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('LEADING', (0, 0), (-1, -1), 12),
-            ('SPLITBYROW', (0, 0), (-1, -1), True)
         ]),
         radius=5,
         padding=6,
         color=colors.grey
     )
-    elements.append(anaemia_table)
+    elements.append(KeepTogether(anaemia_table))
     elements.append(Spacer(1, 0.35 * inch))
 
     # Electrolyte and MBD Management
