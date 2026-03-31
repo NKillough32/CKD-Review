@@ -119,38 +119,42 @@ jobs:
           }
   
       - name: Commit and push changes
-        shell: pwsh
+        shell: bash
         run: |
+          set -e
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
           git add -f Alternative_versions/${{ matrix.output }}
-          
-          # Check if there are changes to commit
-          $commitResult = git commit -m "Update built ${{ matrix.output }}"
-          if ($LASTEXITCODE -ne 0) {
-            Write-Host "No changes to commit"
-          }
-          
-          # Stash any uncommitted changes
-          git stash
-          
-          # Fetch and rebase
-          git fetch origin main
-          $pullResult = git pull --rebase origin main
-          if ($LASTEXITCODE -ne 0) {
-            git rebase --abort
-            Write-Error "Rebase failed, aborting"
-            exit 1
-          }
-          
-          # Apply stashed changes if any
-          $stashResult = git stash pop
-          if ($LASTEXITCODE -ne 0) {
-            Write-Host "No changes to apply from stash"
-          }
-          
-          # Push changes
-          git push origin main
+
+          if git diff --staged --quiet; then
+            echo "No changes to ${{ matrix.output }}, skipping commit."
+            exit 0
+          fi
+
+          git commit -m "Update built ${{ matrix.output }} [skip ci]"
+
+          # Retry push with rebase up to 5 times
+          for i in $(seq 1 5); do
+            echo "Attempt $i to push..."
+            git fetch origin main
+            if git push origin HEAD:main; then
+              echo "Push successful on attempt $i"
+              exit 0
+            fi
+            echo "Push failed, rebasing..."
+            if git rebase origin/main; then
+              if git push origin HEAD:main; then
+                echo "Push successful after rebase on attempt $i"
+                exit 0
+              fi
+            else
+              git rebase --abort || true
+            fi
+            sleep $((i * 2))
+          done
+
+          echo "Failed to push after 5 attempts."
+          exit 1
 
       - name: Upload Windows executable
         uses: actions/upload-artifact@v4
