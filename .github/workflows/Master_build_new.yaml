@@ -143,6 +143,9 @@ jobs:
           # Commit changes first
           git commit -m "Update built NephroPath.exe [skip ci]"
 
+          # Stash any remaining build artifacts so rebase can proceed cleanly
+          git stash --include-untracked || true
+
           # Retry push up to 5 times with backoff
           for i in $(seq 1 5); do
             echo "Attempt $i to push changes..."
@@ -163,6 +166,7 @@ jobs:
               # Try push again after rebase
               if git push origin HEAD:main; then
                 echo "Push successful on attempt $i after rebase"
+                git stash pop || true
                 exit 0
               else
                 echo "Push failed on attempt $i after rebase, retrying..."
@@ -170,9 +174,12 @@ jobs:
               fi
             else
               echo "Push successful on attempt $i"
+              git stash pop || true
               exit 0
             fi
           done
+
+          git stash pop || true
 
           echo "Failed to push after 5 attempts."
           exit 1
@@ -293,6 +300,9 @@ jobs:
           # Commit changes first
           git commit -m "Update built NephroPath_mac [skip ci]"
 
+          # Stash any remaining build artifacts so rebase can proceed cleanly
+          git stash --include-untracked || true
+
           for i in $(seq 1 5); do
             echo "Attempt $i to push changes..."
             git fetch origin main
@@ -312,6 +322,7 @@ jobs:
               # Try push again after rebase
               if git push origin HEAD:main; then
                 echo "Push successful on attempt $i after rebase"
+                git stash pop || true
                 exit 0
               else
                 echo "Push failed on attempt $i after rebase, retrying..."
@@ -319,9 +330,12 @@ jobs:
               fi
             else
               echo "Push successful on attempt $i"
+              git stash pop || true
               exit 0
             fi
           done
+
+          git stash pop || true
 
           echo "Failed to push after 5 attempts."
           exit 1
