@@ -133,18 +133,23 @@ jobs:
 
           git commit -m "Update built ${{ matrix.output }} [skip ci]"
 
+          # Stash any remaining build artifacts (build/, dist/, .spec) so rebase can proceed cleanly
+          git stash --include-untracked || true
+
           # Retry push with rebase up to 5 times
           for i in $(seq 1 5); do
             echo "Attempt $i to push..."
             git fetch origin main
             if git push origin HEAD:main; then
               echo "Push successful on attempt $i"
+              git stash pop || true
               exit 0
             fi
             echo "Push failed, rebasing..."
             if git rebase origin/main; then
               if git push origin HEAD:main; then
                 echo "Push successful after rebase on attempt $i"
+                git stash pop || true
                 exit 0
               fi
             else
@@ -153,6 +158,7 @@ jobs:
             sleep $((i * 2))
           done
 
+          git stash pop || true
           echo "Failed to push after 5 attempts."
           exit 1
 
