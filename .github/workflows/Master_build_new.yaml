@@ -9,6 +9,9 @@ on:
       - '**.md'
       - '.github/**'  # Prevent loops from workflow edits
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 concurrency:
   group: build-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
@@ -181,7 +184,7 @@ jobs:
           path: NephroPath.exe
 
   build-macos:
-    runs-on: macos-13
+    runs-on: macos-14
     needs: build-windows
     if: success()
     steps:

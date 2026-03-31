@@ -15,6 +15,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 permissions:
   contents: write
   id-token: write
@@ -156,7 +159,7 @@ jobs:
           path: Alternative_versions/${{ matrix.output }}
 
   build-macos:
-    runs-on: macos-13  # Use macOS 13 for stability
+    runs-on: macos-14
     needs: build-windows  # Wait for Windows build to complete first
     strategy:
       matrix:
