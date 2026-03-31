@@ -124,42 +124,43 @@ jobs:
           set -e
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          git add -f Alternative_versions/${{ matrix.output }}
 
-          if git diff --staged --quiet; then
-            echo "No changes to ${{ matrix.output }}, skipping commit."
-            exit 0
-          fi
+          # Preserve the built binary outside git so hard resets can't touch it
+          artifact_tmp=$(mktemp)
+          cp "Alternative_versions/${{ matrix.output }}" "$artifact_tmp"
 
-          git commit -m "Update built ${{ matrix.output }} [skip ci]"
-
-          # Stash any remaining build artifacts (build/, dist/, .spec) so rebase can proceed cleanly
-          git stash --include-untracked || true
-
-          # Retry push with rebase up to 5 times
           for i in $(seq 1 5); do
             echo "Attempt $i to push..."
+
+            # Reset to latest remote state — avoids all rebase/binary-conflict issues
             git fetch origin main
-            if git push origin HEAD:main; then
-              echo "Push successful on attempt $i"
-              git stash pop || true
+            git reset --hard origin/main
+
+            # Re-apply the freshly built binary
+            mkdir -p Alternative_versions
+            cp "$artifact_tmp" "Alternative_versions/${{ matrix.output }}"
+            git add -f "Alternative_versions/${{ matrix.output }}"
+
+            if git diff --staged --quiet; then
+              echo "No changes to ${{ matrix.output }}, skipping commit."
+              rm -f "$artifact_tmp"
               exit 0
             fi
-            echo "Push failed, rebasing..."
-            # -X theirs: on conflict, prefer our commit (freshly-built binary)
-            if git rebase -X theirs origin/main; then
-              if git push origin HEAD:main; then
-                echo "Push successful after rebase on attempt $i"
-                git stash pop || true
-                exit 0
-              fi
-            else
-              git rebase --abort || true
+
+            git commit -m "Update built ${{ matrix.output }} [skip ci]"
+
+            if git push origin HEAD:main; then
+              echo "Push successful on attempt $i"
+              rm -f "$artifact_tmp"
+              exit 0
             fi
+
+            echo "Push failed on attempt $i, retrying..."
+            git reset --hard HEAD~1
             sleep $((i * 2))
           done
 
-          git stash pop || true
+          rm -f "$artifact_tmp"
           echo "Failed to push after 5 attempts."
           exit 1
 
@@ -260,41 +261,43 @@ jobs:
           set -e
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          git add -f Alternative_versions/${{ matrix.output }}
 
-          if git diff --staged --quiet; then
-            echo "No changes to ${{ matrix.output }}, skipping commit."
-            exit 0
-          fi
-
-          git commit -m "Update built ${{ matrix.output }} [skip ci]"
-
-          # Stash any remaining build artifacts so rebase can proceed cleanly
-          git stash --include-untracked || true
+          # Preserve the built binary outside git so hard resets can't touch it
+          artifact_tmp=$(mktemp)
+          cp "Alternative_versions/${{ matrix.output }}" "$artifact_tmp"
 
           for i in $(seq 1 5); do
             echo "Attempt $i to push..."
+
+            # Reset to latest remote state — avoids all rebase/binary-conflict issues
             git fetch origin main
-            if git push origin HEAD:main; then
-              echo "Push successful on attempt $i"
-              git stash pop || true
+            git reset --hard origin/main
+
+            # Re-apply the freshly built binary
+            mkdir -p Alternative_versions
+            cp "$artifact_tmp" "Alternative_versions/${{ matrix.output }}"
+            git add -f "Alternative_versions/${{ matrix.output }}"
+
+            if git diff --staged --quiet; then
+              echo "No changes to ${{ matrix.output }}, skipping commit."
+              rm -f "$artifact_tmp"
               exit 0
             fi
-            echo "Push failed, rebasing..."
-            # -X theirs: on conflict, prefer our commit (freshly-built binary)
-            if git rebase -X theirs origin/main; then
-              if git push origin HEAD:main; then
-                echo "Push successful after rebase on attempt $i"
-                git stash pop || true
-                exit 0
-              fi
-            else
-              git rebase --abort || true
+
+            git commit -m "Update built ${{ matrix.output }} [skip ci]"
+
+            if git push origin HEAD:main; then
+              echo "Push successful on attempt $i"
+              rm -f "$artifact_tmp"
+              exit 0
             fi
+
+            echo "Push failed on attempt $i, retrying..."
+            git reset --hard HEAD~1
             sleep $((i * 2))
           done
 
-          git stash pop || true
+          rm -f "$artifact_tmp"
           echo "Failed to push after 5 attempts."
           exit 1
 

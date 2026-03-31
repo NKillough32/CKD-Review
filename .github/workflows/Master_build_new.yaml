@@ -133,55 +133,41 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-          git add -f NephroPath.exe
+          # Preserve the built binary outside git so hard resets can't touch it
+          artifact_tmp=$(mktemp)
+          cp NephroPath.exe "$artifact_tmp"
 
-          if git diff --staged --quiet; then
-            echo "No changes to NephroPath.exe, skipping commit."
-            exit 0
-          fi
-
-          # Commit changes first
-          git commit -m "Update built NephroPath.exe [skip ci]"
-
-          # Stash any remaining build artifacts so rebase can proceed cleanly
-          git stash --include-untracked || true
-
-          # Retry push up to 5 times with backoff
           for i in $(seq 1 5); do
-            echo "Attempt $i to push changes..."
+            echo "Attempt $i to push..."
+
+            # Reset to latest remote state — avoids all rebase/binary-conflict issues
             git fetch origin main
-            
-            # Check if we need to rebase
-            if ! git push origin HEAD:main; then
-              echo "Push failed, trying rebase..."
-              # -X theirs: on conflict, prefer our commit (freshly-built binary)
-              if git rebase -X theirs origin/main; then
-                echo "Rebase successful."
-              else
-                echo "Rebase failed, aborting and retrying..."
-                git rebase --abort || true
-                sleep $((i * 2))
-                continue
-              fi
-              
-              # Try push again after rebase
-              if git push origin HEAD:main; then
-                echo "Push successful on attempt $i after rebase"
-                git stash pop || true
-                exit 0
-              else
-                echo "Push failed on attempt $i after rebase, retrying..."
-                sleep $((i * 2))
-              fi
-            else
-              echo "Push successful on attempt $i"
-              git stash pop || true
+            git reset --hard origin/main
+
+            # Re-apply the freshly built binary
+            cp "$artifact_tmp" NephroPath.exe
+            git add -f NephroPath.exe
+
+            if git diff --staged --quiet; then
+              echo "No changes to NephroPath.exe, skipping commit."
+              rm -f "$artifact_tmp"
               exit 0
             fi
+
+            git commit -m "Update built NephroPath.exe [skip ci]"
+
+            if git push origin HEAD:main; then
+              echo "Push successful on attempt $i"
+              rm -f "$artifact_tmp"
+              exit 0
+            fi
+
+            echo "Push failed on attempt $i, retrying..."
+            git reset --hard HEAD~1
+            sleep $((i * 2))
           done
 
-          git stash pop || true
-
+          rm -f "$artifact_tmp"
           echo "Failed to push after 5 attempts."
           exit 1
 
@@ -291,54 +277,41 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-          git add -f NephroPath_mac
-
-          if git diff --staged --quiet; then
-            echo "No changes to NephroPath_mac, skipping commit."
-            exit 0
-          fi
-
-          # Commit changes first
-          git commit -m "Update built NephroPath_mac [skip ci]"
-
-          # Stash any remaining build artifacts so rebase can proceed cleanly
-          git stash --include-untracked || true
+          # Preserve the built binary outside git so hard resets can't touch it
+          artifact_tmp=$(mktemp)
+          cp NephroPath_mac "$artifact_tmp"
 
           for i in $(seq 1 5); do
-            echo "Attempt $i to push changes..."
+            echo "Attempt $i to push..."
+
+            # Reset to latest remote state — avoids all rebase/binary-conflict issues
             git fetch origin main
-            
-            # Check if we need to rebase
-            if ! git push origin HEAD:main; then
-              echo "Push failed, trying rebase..."
-              # -X theirs: on conflict, prefer our commit (freshly-built binary)
-              if git rebase -X theirs origin/main; then
-                echo "Rebase successful."
-              else
-                echo "Rebase failed, aborting and retrying..."
-                git rebase --abort || true
-                sleep $((i * 2))
-                continue
-              fi
-              
-              # Try push again after rebase
-              if git push origin HEAD:main; then
-                echo "Push successful on attempt $i after rebase"
-                git stash pop || true
-                exit 0
-              else
-                echo "Push failed on attempt $i after rebase, retrying..."
-                sleep $((i * 2))
-              fi
-            else
-              echo "Push successful on attempt $i"
-              git stash pop || true
+            git reset --hard origin/main
+
+            # Re-apply the freshly built binary
+            cp "$artifact_tmp" NephroPath_mac
+            git add -f NephroPath_mac
+
+            if git diff --staged --quiet; then
+              echo "No changes to NephroPath_mac, skipping commit."
+              rm -f "$artifact_tmp"
               exit 0
             fi
+
+            git commit -m "Update built NephroPath_mac [skip ci]"
+
+            if git push origin HEAD:main; then
+              echo "Push successful on attempt $i"
+              rm -f "$artifact_tmp"
+              exit 0
+            fi
+
+            echo "Push failed on attempt $i, retrying..."
+            git reset --hard HEAD~1
+            sleep $((i * 2))
           done
 
-          git stash pop || true
-
+          rm -f "$artifact_tmp"
           echo "Failed to push after 5 attempts."
           exit 1
 
