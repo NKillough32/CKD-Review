@@ -154,7 +154,8 @@ jobs:
             # Check if we need to rebase
             if ! git push origin HEAD:main; then
               echo "Push failed, trying rebase..."
-              if git rebase origin/main; then
+              # -X theirs: on conflict, prefer our commit (freshly-built binary)
+              if git rebase -X theirs origin/main; then
                 echo "Rebase successful."
               else
                 echo "Rebase failed, aborting and retrying..."
@@ -310,7 +311,8 @@ jobs:
             # Check if we need to rebase
             if ! git push origin HEAD:main; then
               echo "Push failed, trying rebase..."
-              if git rebase origin/main; then
+              # -X theirs: on conflict, prefer our commit (freshly-built binary)
+              if git rebase -X theirs origin/main; then
                 echo "Rebase successful."
               else
                 echo "Rebase failed, aborting and retrying..."

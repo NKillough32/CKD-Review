@@ -146,7 +146,8 @@ jobs:
               exit 0
             fi
             echo "Push failed, rebasing..."
-            if git rebase origin/main; then
+            # -X theirs: on conflict, prefer our commit (freshly-built binary)
+            if git rebase -X theirs origin/main; then
               if git push origin HEAD:main; then
                 echo "Push successful after rebase on attempt $i"
                 git stash pop || true
@@ -256,15 +257,46 @@ jobs:
       - name: Commit and push changes
         shell: bash
         run: |
+          set -e
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
           git add -f Alternative_versions/${{ matrix.output }}
-          git commit -m "Update built ${{ matrix.output }}" || echo "No changes to commit"
-          git stash
-          git fetch origin main
-          git pull --rebase origin main || (git rebase --abort && echo "Rebase failed, aborting" && exit 1)
-          git stash pop || echo "No changes to apply"
-          git push origin main
+
+          if git diff --staged --quiet; then
+            echo "No changes to ${{ matrix.output }}, skipping commit."
+            exit 0
+          fi
+
+          git commit -m "Update built ${{ matrix.output }} [skip ci]"
+
+          # Stash any remaining build artifacts so rebase can proceed cleanly
+          git stash --include-untracked || true
+
+          for i in $(seq 1 5); do
+            echo "Attempt $i to push..."
+            git fetch origin main
+            if git push origin HEAD:main; then
+              echo "Push successful on attempt $i"
+              git stash pop || true
+              exit 0
+            fi
+            echo "Push failed, rebasing..."
+            # -X theirs: on conflict, prefer our commit (freshly-built binary)
+            if git rebase -X theirs origin/main; then
+              if git push origin HEAD:main; then
+                echo "Push successful after rebase on attempt $i"
+                git stash pop || true
+                exit 0
+              fi
+            else
+              git rebase --abort || true
+            fi
+            sleep $((i * 2))
+          done
+
+          git stash pop || true
+          echo "Failed to push after 5 attempts."
+          exit 1
 
       - name: Upload macOS executable
         uses: actions/upload-artifact@v4
