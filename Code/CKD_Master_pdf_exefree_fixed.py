@@ -81,7 +81,11 @@ except Exception as e:
     logging.error(f"Failed to list contents of working directory: {e}")
 
 # Import the PDF generation logic
-from CKD_pdf_files_new import generate_patient_pdf
+try:
+    from CKD_pdf_files_new import generate_patient_pdf
+except ImportError as e:
+    logging.error(f"Failed to import CKD_pdf_files_new: {e}. Ensure all dependencies (reportlab, qrcode) are installed.")
+    sys.exit(1)
 
 logging.info("Preprocessing data and performing CKD metrics calculations...")
 logging.info("Data preprocessing and metrics calculation complete.")
@@ -258,7 +262,10 @@ def rename_folders(date_folder):
                 dst = os.path.join(date_folder, new_name)
                 try:
                     if os.path.abspath(src) != os.path.abspath(dst):
-                        os.replace(src, dst)
+                        # shutil.move handles pre-existing destination on Windows (unlike os.replace)
+                        if os.path.exists(dst):
+                            shutil.rmtree(dst)
+                        shutil.move(src, dst)
                         logging.info(f"Renamed '{folder}' -> '{new_name}'")
                 except Exception as e:
                     logging.error(f"Failed to rename '{folder}' to '{new_name}': {e}")

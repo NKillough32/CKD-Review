@@ -537,8 +537,8 @@ def prioritize_patient(row):
     # Ensure risk_2yr is numeric, or default to NaN
     try:
         risk_2yr = float(row['risk_2yr'])  # Convert to float
-    except ValueError:
-        return "Unknown"  # If conversion fails, return 'Unknown'
+    except (ValueError, TypeError):
+        return "Unknown"  # If conversion fails (incl. pd.NA), return 'Unknown'
 
     score += 2 if row['eGFR_Trend'] == "Rapid Decline" else 0
     score += 1 if row['eGFR_Trend'] == "Moderate Decline" else 0  # Add moderate decline consideration
@@ -658,17 +658,14 @@ else:
 # Allow mode selection at the end of the processing
 mode = 'merged'  # Change to 'creatinine', 'ckd_check', or 'merged' as needed
 if mode == 'creatinine' and not creatinine.empty:
-    creatinine.to_csv("CKD_review.csv", index=False)
     CKD_review = creatinine
-    logger.info("Creatinine data saved to CKD_review.csv")
+    logger.info("Using Creatinine data")
 elif mode == 'ckd_check' and not CKD_check.empty:
-    CKD_check.to_csv("CKD_review.csv", index=False)
     CKD_review = CKD_check
-    logger.info("CKD Check data saved to CKD_review.csv")
+    logger.info("Using CKD Check data")
 elif mode == 'merged' and not merged_data.empty:
-    merged_data.to_csv("CKD_review.csv", index=False)
     CKD_review = merged_data
-    logger.info("Merged data saved to CKD_review.csv")
+    logger.info("Using merged data")
 else:
     logger.info("No data available for the selected mode.")
     CKD_review = pd.DataFrame()  # Define CKD_review as an empty DataFrame if no data is available
@@ -1037,9 +1034,9 @@ def recommend_sglt2(row):
 
     # Enhanced diabetes detection with token matching
     diabetes_meds = get_diabetes_medications()
-    med_tokens = set(re.findall(r'\\b\\w+\\b', str(row['Medications']).lower()))
+    med_tokens = set(re.findall(r'\b\w+\b', str(row['Medications']).lower()))
     has_diabetes_meds = any(
-        set(re.findall(r'\\b\\w+\\b', med.lower())).intersection(med_tokens) 
+        set(re.findall(r'\b\w+\b', med.lower())).intersection(med_tokens) 
         for med in diabetes_meds if med
     )
     has_diabetes = has_diabetes_meds or (pd.notna(row['HbA1c']) and row['HbA1c'] > 48)
@@ -1053,7 +1050,7 @@ def recommend_sglt2(row):
     # Continuation if already on - enhanced detection
     sglt2_meds = get_sglt2_medications()
     on_sglt2 = any(
-        set(re.findall(r'\\b\\w+\\b', med.lower())).intersection(med_tokens) 
+        set(re.findall(r'\b\w+\b', med.lower())).intersection(med_tokens) 
         for med in sglt2_meds if med
     )
     
@@ -1236,7 +1233,8 @@ def check_ckd_changes(current_df):
             logger.info("Required columns missing from data")
             return pd.DataFrame(), pd.DataFrame()
 
-        # Convert HC_Number to same type in both DataFrames
+        # Convert HC_Number to same type in both DataFrames — use a local copy to avoid mutating the caller's DataFrame
+        current_df = current_df.copy()
         current_df['HC_Number'] = pd.to_numeric(current_df['HC_Number'], errors='coerce')
         historical_df['HC_Number'] = pd.to_numeric(historical_df['HC_Number'], errors='coerce')
 
@@ -1280,7 +1278,7 @@ def check_ckd_changes(current_df):
 logger.info("\nChecking for CKD staging changes...")
 new_patients, changed_staging = check_ckd_changes(CKD_review)
 
-def on_finereone(meds: str) -> bool:
+def on_finerenone(meds: str) -> bool:
     """Check if the patient is on Finerenone."""
     if pd.isna(meds):
         return False
@@ -1303,9 +1301,12 @@ def recommend_finerenone(row):
         # Simple check for ACEi/ARB - can be improved with a more comprehensive list
         on_acei_arb = "pril" in str(meds).lower() or "sartan" in str(meds).lower()
         if on_acei_arb:
-            if on_finereone(meds):
+            if on_finerenone(meds):
                 return "Continue Finerenone"
             else:
                 return "Consider Finerenone (if on max tolerated ACEi/ARB)"
     
     return "Not indicated"
+
+# Apply Finerenone recommendation
+CKD_review.loc[:, 'Finerenone_Recommendation'] = CKD_review.apply(recommend_finerenone, axis=1)

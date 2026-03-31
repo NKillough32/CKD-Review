@@ -90,9 +90,9 @@ def analyze_ckd_data(filepath):
 
     referral_needed = (df.get("Nephrology_Referral") == "Indicated on the basis of risk calculation").sum()
 
-    # AKI: your pipeline produces strings e.g. "AKI Stage 1 - Review"
-    aki_series = df.get("AKI_Flag", pd.Series(index=df.index)).astype(str)
-    aki_cases = aki_series.str.startswith("AKI", na=False).sum()
+    # AKD Flag: pipeline column is 'AKD_Flag' (Acute Kidney Disease, 90-day comparison)
+    aki_series = df.get("AKD_Flag", pd.Series(index=df.index)).astype(str)
+    aki_cases = aki_series.str.startswith("AKI", na=False).sum() + aki_series.str.contains("AKD", na=False).sum()
     # Optional: breakdown by stage
     # aki_breakdown = aki_series[aki_series.str.startswith("AKI", na=False)].value_counts().to_dict()
 
@@ -125,7 +125,7 @@ def analyze_ckd_data(filepath):
 
     # Baseline measures
     acr = pd.to_numeric(df.get("ACR", pd.Series(index=df.index)), errors="coerce")
-    albuminuria_tested = int((acr.notna()) & (acr != 0.019)).sum()
+    albuminuria_tested = int(((acr.notna()) & (acr != 0.019)).sum())
 
     # BP above threshold ≥140/90 (use ≥ per common audit definitions)
     sbp = pd.to_numeric(df.get("Systolic_BP", np.nan), errors="coerce")
@@ -140,9 +140,9 @@ def analyze_ckd_data(filepath):
 
     # Process measures
     annual_screening_done = int(
-        (days_since_creat <= 365) &
-        (days_since_acr <= 365)
-    ).sum()
+        ((days_since_creat <= 365) &
+        (days_since_acr <= 365)).sum()
+    )
 
     high_risk = (df.get("Priority") == "High")
     high_risk_reviewed = int((high_risk) & (days_since_creat <= 180)).sum()
